@@ -75,3 +75,7 @@ infra/envs/staging-free/cloud-init.rendered.yaml
 # Claude Code: Leitplanken (.claude/hooks, harness.yml, settings.json) sind versioniert, Lokales nicht
 .claude/worktrees/
 .claude/settings.local.json
+
+# Python-Bytecode der Skripte unter .github/scripts
+__pycache__/
+*.pyc
