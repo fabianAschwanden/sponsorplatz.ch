@@ -104,6 +104,7 @@ public class SecurityConfig {
                         .requestMatchers("/einladung/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/livez").permitAll()
                         // /medien/** + /og/** bleiben öffentlich aus technischen Gründen
                         // (OpenGraph-Crawler, Mail-Bilder). Beim Payment ist nur der
                         // Provider-Webhook + die drei Post-HPP-Redirect-Seiten öffentlich;
@@ -205,6 +206,9 @@ public class SecurityConfig {
                                 "/actuator/health/liveness",
                                 "/actuator/health/readiness",
                                 "/actuator/info").permitAll()
+                        // Prüfpfad des Deploys auf dem Anwendungs-Port (nur Liveness,
+                        // ohne Details). /readyz bleibt hinter der Anmeldung.
+                        .requestMatchers("/livez").permitAll()
                         // /medien/** + /og/** bleiben öffentlich aus technischen Gründen
                         // (OpenGraph-Crawler, Mail-Bilder). Beim Payment ist nur der
                         // Provider-Webhook + die drei Post-HPP-Redirect-Seiten öffentlich;
