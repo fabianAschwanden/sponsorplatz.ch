@@ -1,7 +1,7 @@
 # Design Document — 01 Übernahme und Betrieb
 
 ## Overview
-Die bestehende Spring-Boot-Plattform bleibt der Code-Kern (offen: E1). Sie läuft als ein Compose-Projekt mit den
+Die bestehende Spring-Boot-Plattform bleibt der Code-Kern (Entscheid E1, 26.11.2026). Sie läuft als ein Compose-Projekt mit den
 Diensten `app` und `db` hinter einem Reverse Proxy (Traefik). Deployt wird nur aus GitHub Actions: Der Workflow
 baut die Images, schnürt ein Bundle und schickt es an den Server; der Server prüft die Compose-Datei gegen seine
 eigene Policy, bevor sich etwas ändert.

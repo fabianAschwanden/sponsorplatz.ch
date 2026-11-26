@@ -17,7 +17,7 @@ inclusion: always
 | Sicherung | nächtlicher `pg_dump` und Medien in einem Volume, abgeholt von der zentralen Sicherung | Wiederherstellung als Probe geprüft |
 | Tests | JUnit 5, Cucumber (Features mit Tag `@req-<x.y>`), Playwright und axe für Browser-Prüfungen, Testcontainers (PostgreSQL), ArchUnit | Details unter «Tests und Qualität» |
 
-Offen ist der Entscheid E1 (Stack behalten oder portieren); die Specs rechnen mit «behalten».
+Entscheid E1 vom 26.11.2026 (Fabian): Der Stack bleibt; portiert wird nicht.
 
 ## Nicht verhandelbare Regeln
 1. **Schema nur über Flyway, nie rückwirkend, nur additiv.** Bestehende Migrationen werden nie geändert, nur
@@ -49,7 +49,7 @@ Offen ist der Entscheid E1 (Stack behalten oder portieren); die Specs rechnen mi
     Server-Adressen und keine internen Betriebsdetails in Code, Specs, Workflows oder Logs.
 13. **Neue Fachbereiche sind hexagonal.** Abhängigkeiten nur `adapter → application → domain`; die Domain ist
     framework-frei. ArchUnit erzwingt das für die neuen Pakete (`structure.md`); der Bestand bleibt unter seinen
-    bisherigen Regeln (offen, Entscheid E2; Annahme der Specs).
+    bisherigen Regeln (Entscheid E2, 26.11.2026).
 
 ## Bestandsschutz
 Die Plattform ist ein bestehendes System. Für sie gilt:
@@ -82,7 +82,7 @@ Die Plattform ist ein bestehendes System. Für sie gilt:
   JPA-Entities; die Regeln ARCH-01 bis ARCH-22 gelten unverändert (`docs/bestand/specs/TESTSTRATEGIE.md`).
 - Templates liegen im Ordner ihres Pakets (ARCH-14). Deutscher Text in HTML-Attributen braucht eine
   Thymeleaf-Bindung, ausser das Template steht auf der Ausnahmeliste (ARCH-15). Öffentliche Seiten sind vorerst
-  nur deutsch (offen, Entscheid U3).
+  nur deutsch (Entscheid U3, 26.11.2026).
 - Rechte: Der Bestand prüft in den Controllern über `AccessControl`. Neue Fachbereiche prüfen in der
   `application`-Schicht. Die Grundrechte stehen als Tabelle in Spec 01 und sind dort die einzige Quelle
   (`RechtematrixSpecTest`).

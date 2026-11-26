@@ -16,11 +16,13 @@ heisst erfüllt, «anpassen» heisst Vorhandenes ändern, «neu» heisst es gibt
 Schreibweise, Nachweis und Verweise wie in Spec 01; Feature-Dateien tragen `@spec-03`.
 
 ### Offene Entscheide
-| Nr. | Frage | Annahme dieser Spec |
+Am 26.11.2026 hat Fabian U2, U3 und E6 nach Empfehlung entschieden.
+
+| Nr. | Frage | Stand |
 | --- | --- | --- |
-| U2 | Pilot-Anfrage mit Zusage statt direkter Registrierung | ja; `/registrieren` bleibt für Eingeladene |
-| U3 | Öffentliche Seiten vorerst nur deutsch | ja |
-| E6 | Gestaltung | «Hallenboden» öffentlich, bisheriger Stil hinter dem Login |
+| U2 | Pilot-Anfrage mit Zusage statt direkter Registrierung | **entschieden 26.11.2026:** ja; `/registrieren` bleibt für Eingeladene |
+| U3 | Öffentliche Seiten vorerst nur deutsch | **entschieden 26.11.2026:** ja |
+| E6 | Gestaltung | **entschieden 26.11.2026:** «Hallenboden» öffentlich, bisheriger Stil hinter dem Login |
 | O1 | Nennt die Startseite eine Marke und ihre Programme? | offen; die Plattform und `/kunde/` sind neutral |
 | O5 | Kontakt-Anfrage des Vereins an Sponsoren | nur an verbundene Sponsoren |
 | E5a | Pilot-Anfragen auf dem gemeinsamen Server | ja, als bewusster Entscheid |
@@ -48,7 +50,7 @@ Stand der Plattform: neu. `/registrieren` legt direkt ein Konto an und kennt die
 #### Acceptance Criteria
 1. Die Plattform SOLL eine Anfrage mit diesen Pflichtangaben annehmen: Rolle (Verein oder Sponsor), Name der
    Organisation, Bereich bzw. Sponsor-Art, PLZ und Ort, Vor- und Nachname, E-Mail; dazu die Bestätigung, für die
-   Organisation sprechen zu dürfen. `[offen: U2]`
+   Organisation sprechen zu dürfen. (Entscheid U2, 26.11.2026)
 2. Die Plattform SOLL die freiwilligen Angaben speichern: Paketname und gewählte Gegenleistungen, Mitgliederzahl,
    nächster Anlass, Interessen, Zielgruppe, Marktgebiet, Programme, UID, Funktion, Telefon, Wunsch nach Updates.
 3. WENN dieselbe Anfrage (E-Mail, Organisation, Rolle) innert 10 Minuten erneut eintrifft, DANN SOLL die
