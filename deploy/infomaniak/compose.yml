@@ -90,6 +90,8 @@ services:
       # verweist der Router nicht mehr auf diese beiden Middlewares.
       traefik.http.middlewares.sponsorplatz-vorschau.basicauth.users: ${VORSCHAU_BENUTZER:-}
       traefik.http.middlewares.sponsorplatz-vorschau.basicauth.realm: Sponsorplatz Vorschau
+      # Der Vorschau-Zugang endet am Reverse-Proxy und erreicht die Anwendung nicht
+      traefik.http.middlewares.sponsorplatz-vorschau.basicauth.removeheader: "true"
       traefik.http.middlewares.sponsorplatz-noindex.headers.customresponseheaders.X-Robots-Tag: noindex, nofollow
       # Anwendung: alles ausser dem Prüfpfad
       traefik.http.routers.sponsorplatz.rule: Host(`sponsorplatz.apps.urinet.ch`) && !Path(`/livez`)

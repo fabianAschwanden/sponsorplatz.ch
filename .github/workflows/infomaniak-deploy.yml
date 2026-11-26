@@ -1,0 +1,287 @@
+# Deploy auf die Infomaniak-VPS (Umsetzungsplan Kapitel 3.3; Spec 01, Requirement 6).
+# Einziger Weg auf den Server: Bundle (image.tar, compose.yml, .env, secrets/) per SSH an den
+# Deploy-Befehl des Servers, danach Prüfung von aussen; schlägt sie fehl, Rollback auf den Vorgänger.
+# Kein Server-Zugriff aus Sitzungen, kein «docker compose up» von Hand.
+#
+# Das Repo ist öffentlich, die Logs dieses Workflows sind es auch: Schritte geben keine
+# Serverdetails, keine Werte von Geheimnissen und keine Logs der Anwendung aus, nur Namen und Zählungen.
+name: Infomaniak Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: infomaniak-deploy-sponsorplatz
+  cancel-in-progress: false
+
+env:
+  APP: sponsorplatz
+  HOST_APP: sponsorplatz.apps.urinet.ch
+  # Speicherbudget der App auf der gemeinsamen VPS (tech.md); liegt compose.yml darüber, gibt es keinen Deploy
+  BUDGET_MEM_MIB: '1024'
+  BUDGET_CPUS: '1.0'
+
+jobs:
+  deploy:
+    name: Deploy
+    # Nur main oder ein Release-Tag; ohne Server-Variable läuft nichts
+    if: vars.INFOMANIAK_HOST != '' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # ganze Historie für die Prüfung «Commit liegt auf main»
+          fetch-depth: 0
+
+      - name: Commit liegt auf main
+        run: |
+          # Auch ein Release-Tag deployt nur einen Stand, der über einen PR auf main kam
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Commit ${GITHUB_SHA::7} liegt nicht auf main. Nur Stände von main deployen."
+            exit 1
+          fi
+
+      - name: Speicherbudget
+        id: speicher
+        run: |
+          : > deploy/infomaniak/.env
+          docker compose -p "$APP" -f deploy/infomaniak/compose.yml config --format json \
+            | python3 .github/scripts/pruefe-speicherbudget.py "$BUDGET_MEM_MIB" "$BUDGET_CPUS"
+          rm -f deploy/infomaniak/.env
+
+      - name: CI für diesen Stand grün
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Nachweis ist ein abgeschlossener, erfolgreicher Lauf von ci.yml auf genau diesem Commit
+          gruen=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&status=completed&per_page=20" \
+            --jq '[.workflow_runs[] | select(.conclusion == "success")] | length')
+          if [ "${gruen:-0}" -lt 1 ]; then
+            echo "::error::Kein grüner CI-Lauf für ${GITHUB_SHA::7}. CI auf main abwarten oder mit «gh workflow run ci.yml --ref main» starten, dann neu auslösen."
+            exit 1
+          fi
+          echo "Grüne CI-Läufe für ${GITHUB_SHA::7}: $gruen"
+
+      - name: Geheimnisse und Variablen vorhanden
+        env:
+          SSH_KEY: ${{ secrets.INFOMANIAK_SSH_KEY }}
+          KNOWN_HOSTS: ${{ vars.INFOMANIAK_KNOWN_HOSTS }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SPONSORPLATZ_ADMIN_EMAIL: ${{ vars.SPONSORPLATZ_ADMIN_EMAIL }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+        run: |
+          fehlt=0
+          pruefe() { if [ -z "$2" ]; then echo "::error::$1 fehlt (Secret bzw. Variable im Repo setzen)"; fehlt=1; fi; }
+          pruefe INFOMANIAK_SSH_KEY "$SSH_KEY"
+          pruefe INFOMANIAK_KNOWN_HOSTS "$KNOWN_HOSTS"
+          pruefe DB_PASSWORD "$DB_PASSWORD"
+          # Form prüfen, nicht nur «nicht leer»: Ein falsch geformtes Secret zeigt sich sonst erst als
+          # Absturzschleife auf dem Server. Werte erscheinen nie im Log.
+          form() { if [ -n "$2" ] && ! printf '%s' "$2" | grep -Eq "$3"; then echo "::error::$1 hat nicht die erwartete Form ($4)"; fehlt=1; fi; }
+          form DB_PASSWORD "$DB_PASSWORD" '^[A-Za-z0-9_.-]{24,128}$' '24 bis 128 Zeichen aus A–Z, a–z, 0–9, _ . -; z. B. openssl rand -hex 24'
+          if [ -n "$SPONSORPLATZ_ADMIN_EMAIL" ]; then
+            pruefe ADMIN_PASSWORD "$ADMIN_PASSWORD"
+            form ADMIN_PASSWORD "$ADMIN_PASSWORD" '^[^[:space:]]{16,128}$' 'mindestens 16 Zeichen ohne Leerraum'
+          fi
+          if [ -n "$SMTP_HOST" ]; then pruefe SMTP_PASSWORD "$SMTP_PASSWORD"; fi
+          for wert in "$DB_PASSWORD" "$ADMIN_PASSWORD" "$SMTP_PASSWORD"; do
+            if [ "$(printf '%s' "$wert" | wc -l)" -ne 0 ]; then echo "::error::Ein Secret ist mehrzeilig"; fehlt=1; fi
+          done
+          exit "$fehlt"
+
+      - name: Images bauen
+        id: images
+        run: |
+          kurz=${GITHUB_SHA::7}
+          version() { sed -n 's/^FROM [^:]*:\([^@ ]*\)@sha256:.*/\1/p' "$1" | head -n1; }
+          db_tag="db-$(version deploy/infomaniak/db/Dockerfile)-$kurz"
+          # Tests liefen in der CI für diesen Stand (Schritt oben); das Dockerfile baut ohne Tests
+          docker build -q -f docker/Dockerfile -t "$APP:$kurz" .
+          docker build -q -t "$APP:$db_tag" deploy/infomaniak/db
+          echo "tags=$APP:$kurz $APP:$db_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Bundle schnüren
+        env:
+          TAGS: ${{ steps.images.outputs.tags }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          PREVIEW_PASSWORD: ${{ secrets.PREVIEW_PASSWORD }}
+          PREVIEW_USER: ${{ vars.PREVIEW_USER }}
+          SITE_MODE: ${{ vars.SITE_MODE }}
+          SPONSORPLATZ_PROFILE: ${{ vars.SPONSORPLATZ_PROFILE }}
+          SPONSORPLATZ_ADMIN_EMAIL: ${{ vars.SPONSORPLATZ_ADMIN_EMAIL }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USER: ${{ vars.SMTP_USER }}
+        run: |
+          umask 077
+          mkdir -p bundle/secrets
+          read -r -a tags <<< "$TAGS"
+          docker save "${tags[@]}" -o bundle/image.tar
+          cp deploy/infomaniak/compose.yml bundle/compose.yml
+          # Eine Datei je Secret, nur der Wert; optionale bleiben leer
+          schreibe() { printf '%s' "$2" > "bundle/secrets/$1"; }
+          schreibe db_password "$DB_PASSWORD"
+          schreibe admin_password "$ADMIN_PASSWORD"
+          schreibe smtp_password "$SMTP_PASSWORD"
+          # .env für compose.yml: geprüfte Werte, in «vorschau» mit dem Hash des Vorschau-Passworts.
+          # In «oeffentlich» zusammen mit dem Profil «demo» bricht das Skript ab.
+          command -v htpasswd >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq apache2-utils >/dev/null; }
+          python3 .github/scripts/schreibe_env.py bundle/.env
+          # Der Hash erscheint in keinem Log
+          hash=$(sed -n "s/^VORSCHAU_BENUTZER='[^:]*:\(.*\)'$/\1/p" bundle/.env)
+          if [ -n "$hash" ]; then echo "::add-mask::$hash"; fi
+          ls bundle bundle/secrets
+
+      - name: SSH vorbereiten
+        env:
+          SSH_KEY: ${{ secrets.INFOMANIAK_SSH_KEY }}
+          KNOWN_HOSTS: ${{ vars.INFOMANIAK_KNOWN_HOSTS }}
+        run: |
+          umask 077
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Andere Apps der VPS vor dem Deploy
+        id: andere
+        env:
+          ANDERE_APPS: ${{ vars.INFOMANIAK_ANDERE_APPS_HEALTH }}
+        run: |
+          # Adressen stehen in einer Variable des Repos und erscheinen nicht im Log
+          fehler=0; nr=0
+          for url in $ANDERE_APPS; do
+            nr=$((nr + 1))
+            if curl -fsS -o /dev/null --max-time 15 "$url"; then echo "ok: App $nr"; else echo "::error::App $nr ist nicht gesund"; fehler=1; fi
+          done
+          if [ "$fehler" -ne 0 ]; then
+            echo "::error::Eine andere App ist schon vor dem Deploy nicht gesund; kein Deploy, Fabian prüft die VPS."
+          fi
+          exit "$fehler"
+
+      - name: Deployen
+        id: deploy
+        env:
+          HOST: ${{ vars.INFOMANIAK_HOST }}
+        run: |
+          umask 077
+          set -o pipefail
+          # Die Ausgabe des Servers bleibt in einer Datei; ins Log gehen nur Zeilen ohne Betriebsdetails
+          rc=0
+          tar -C bundle -cf - . \
+            | ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "deploy@$HOST" "deploy $APP" > deploy.log 2>&1 || rc=$?
+          grep -E '^(abgelehnt|  ✗|Bundle enthält|deploy:|rollback:| Container )' deploy.log | cut -c1-200 || true
+          # Geheimnisse und Images verlassen den Runner nicht weiter
+          rm -rf bundle
+          exit "$rc"
+
+      - name: Prüfpfad von aussen
+        run: |
+          # Beim ersten Deploy holt der Reverse-Proxy das Zertifikat erst mit der ersten Anfrage
+          for _ in $(seq 1 40); do
+            if [ "$(curl -s -o /dev/null --max-time 15 -w '%{http_code}' "https://$HOST_APP/livez")" = 200 ]; then
+              echo "ok: /livez → 200"; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::/livez liefert nach 400 Sekunden nicht 200"
+          exit 1
+
+      - name: Container gesund
+        env:
+          HOST: ${{ vars.INFOMANIAK_HOST }}
+        run: |
+          umask 077
+          # «status» liefert die Liste der Container und Logzeilen; ausgewertet werden nur Zählungen
+          for _ in $(seq 1 20); do
+            ssh -i ~/.ssh/deploy -o BatchMode=yes "deploy@$HOST" "status $APP" > status.txt 2>/dev/null || true
+            gesund=$(grep -cE "^$APP-(app|db)-[0-9]+ .*\(healthy\)" status.txt || true)
+            if [ "$gesund" -eq 2 ]; then break; fi
+            sleep 15
+          done
+          abbruch=$(grep -cE 'OutOfMemoryError|terminated by signal 9|oom-kill' status.txt || true)
+          rm -f status.txt
+          echo "Gesunde Container: $gesund von 2; Abbruchmeldungen im Log: $abbruch"
+          if [ "$gesund" -ne 2 ] || [ "$abbruch" -ne 0 ]; then
+            echo "::error::Container nicht gesund oder Speicherabbruch. Limits und Messung prüfen (tech.md «Speicherbudget»)."
+            exit 1
+          fi
+
+      - name: Schutz von aussen
+        env:
+          SITE_MODE: ${{ vars.SITE_MODE }}
+          PREVIEW_USER: ${{ vars.PREVIEW_USER }}
+          PREVIEW_PASSWORD: ${{ secrets.PREVIEW_PASSWORD }}
+        run: |
+          fehler=0
+          code() { curl -s -o /dev/null --max-time 15 -w '%{http_code}' "$@"; }
+          erwarte() { ist=$(code "${@:3}"); if [ "$ist" = "$1" ]; then echo "ok: $2 → $ist"; else echo "::error::$2 → $ist, erwartet $1"; fehler=1; fi; }
+          if [ "${SITE_MODE:-vorschau}" = vorschau ]; then
+            zugang=$(mktemp); printf 'user = "%s:%s"\n' "$PREVIEW_USER" "$PREVIEW_PASSWORD" > "$zugang"
+            erwarte 401 "/ ohne Zugang" "https://$HOST_APP/"
+            erwarte 401 "/login ohne Zugang" "https://$HOST_APP/login"
+            erwarte 200 "/ mit Zugang" -K "$zugang" "https://$HOST_APP/"
+            # Actuator liegt nicht auf dem Anwendungs-Port: ohne Anmeldung an der Anwendung folgt die Weiterleitung zum Login
+            erwarte 302 "Actuator mit Zugang" -K "$zugang" "https://$HOST_APP/actuator/prometheus"
+            if curl -s -o /dev/null --max-time 15 -D - -K "$zugang" "https://$HOST_APP/" | grep -qi '^x-robots-tag:.*noindex'; then
+              echo "ok: noindex gesetzt"
+            else
+              echo "::error::X-Robots-Tag: noindex fehlt in der Vorschau"; fehler=1
+            fi
+            rm -f "$zugang"
+          else
+            erwarte 200 "/" "https://$HOST_APP/"
+            erwarte 302 "Actuator" "https://$HOST_APP/actuator/prometheus"
+          fi
+          exit "$fehler"
+
+      - name: Andere Apps der VPS nach dem Deploy
+        env:
+          ANDERE_APPS: ${{ vars.INFOMANIAK_ANDERE_APPS_HEALTH }}
+        run: |
+          fehler=0; nr=0
+          for url in $ANDERE_APPS; do
+            nr=$((nr + 1))
+            if curl -fsS -o /dev/null --max-time 15 "$url"; then echo "ok: App $nr"; else echo "::error::App $nr ist nach dem Deploy nicht gesund"; fehler=1; fi
+          done
+          exit "$fehler"
+
+      - name: Rollback
+        # Nur wenn der Server den neuen Stand übernommen hat. Ein abgelehnter Deploy hat nichts geändert.
+        if: >-
+          failure() && steps.deploy.outcome != 'skipped'
+          && steps.speicher.outcome != 'failure' && steps.andere.outcome != 'failure'
+        env:
+          HOST: ${{ vars.INFOMANIAK_HOST }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        run: |
+          umask 077
+          if [ "$DEPLOY_OUTCOME" = failure ] && ! grep -q "Container $APP-" deploy.log 2>/dev/null; then
+            echo "Deploy vor dem Umschalten abgebrochen; auf dem Server ist nichts geändert."
+            exit 0
+          fi
+          rc=0
+          ssh -i ~/.ssh/deploy -o BatchMode=yes "deploy@$HOST" "rollback $APP" > rollback.log 2>&1 || rc=$?
+          if grep -q "^kein $APP:previous vorhanden" rollback.log; then
+            echo "::error::Deploy fehlgeschlagen; erster Deploy: kein Rollback möglich (kein Vorgänger). Fabian prüft die Dienste auf der VPS."
+          elif [ "$rc" -ne 0 ]; then
+            echo "::error::Deploy fehlgeschlagen, und der Rollback ist ebenfalls fehlgeschlagen (Exit $rc). Fabian prüft die VPS."
+          else
+            echo "::error::Deploy fehlgeschlagen, Rollback auf den Vorgänger ausgeführt. Ein Rollback setzt die Images zurück, nicht die Datenbank."
+          fi
+          rm -f rollback.log
+
+      - name: Aufräumen
+        if: always()
+        run: rm -rf ~/.ssh/deploy bundle deploy.log rollback.log status.txt deploy/infomaniak/.env
