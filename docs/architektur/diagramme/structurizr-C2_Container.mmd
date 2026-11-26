@@ -4,29 +4,29 @@ graph LR
   subgraph diagram ["Sponsorplatz - Containers"]
     style diagram fill:#ffffff,stroke:#ffffff
 
-    7("<div style='font-weight: bold'>Microsoft Entra ID</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>OIDC Identity Provider (Phase<br />1.4)</div>")
+    7["<div style='font-weight: bold'>Microsoft Entra ID</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>OIDC Identity Provider (Phase<br />1.4)</div>"]
     style 7 fill:#999999,stroke:#6b6b6b,color:#ffffff
-    8("<div style='font-weight: bold'>Datatrans</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Online-Payment-Provider<br />(Phase 9.2)</div>")
+    8["<div style='font-weight: bold'>Datatrans</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Online-Payment-Provider<br />(Phase 9.2)</div>"]
     style 8 fill:#999999,stroke:#6b6b6b,color:#ffffff
-    9("<div style='font-weight: bold'>SMTP-Server</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Mail-Versand (MailHog dev,<br />prod-SMTP)</div>")
+    9["<div style='font-weight: bold'>SMTP-Server</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Mail-Versand (MailHog dev,<br />prod-SMTP)</div>"]
     style 9 fill:#999999,stroke:#6b6b6b,color:#ffffff
-    10("<div style='font-weight: bold'>Zefix</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Schweizer Handelsregister<br />(Stub)</div>")
+    10["<div style='font-weight: bold'>Zefix</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Schweizer Handelsregister<br />(Stub)</div>"]
     style 10 fill:#999999,stroke:#6b6b6b,color:#ffffff
-    11("<div style='font-weight: bold'>OCI Object Storage</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Backup-Ziel + Medien-Storage<br />(cloud-free)</div>")
+    11["<div style='font-weight: bold'>OCI Object Storage</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Backup-Ziel + Medien-Storage<br />(cloud-free)</div>"]
     style 11 fill:#999999,stroke:#6b6b6b,color:#ffffff
-    12("<div style='font-weight: bold'>Azure Blob Storage</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Backup-Ziel + Medien-Storage<br />(cloud-azure, Phase 15.3<br />Warm-DR)</div>")
+    12["<div style='font-weight: bold'>Azure Blob Storage</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Backup-Ziel + Medien-Storage<br />(cloud-azure, Phase 15.3<br />Warm-DR)</div>"]
     style 12 fill:#999999,stroke:#6b6b6b,color:#ffffff
-    13("<div style='font-weight: bold'>Sentry / GlitchTip</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Error-Tracking mit<br />Umgebungs-Tag (DSG-konform)</div>")
+    13["<div style='font-weight: bold'>Sentry / GlitchTip</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Error-Tracking mit<br />Umgebungs-Tag (DSG-konform)</div>"]
     style 13 fill:#999999,stroke:#6b6b6b,color:#ffffff
 
     subgraph 14 ["Sponsorplatz"]
       style 14 fill:#ffffff,stroke:#0b4884,color:#0b4884
 
-      15("<div style='font-weight: bold'>Web-Anwendung (cloud-free / OCI)</div><div style='font-size: 70%; margin-top: 0px'>[Container: Java 25]</div><div style='font-size: 80%; margin-top:10px'>Spring Boot 3.5 + Thymeleaf,<br />server-rendered HTML —<br />primary Zone</div>")
+      15["<div style='font-weight: bold'>Web-Anwendung (cloud-free / OCI)</div><div style='font-size: 70%; margin-top: 0px'>[Container: Java 25]</div><div style='font-size: 80%; margin-top:10px'>Spring Boot 3.5 + Thymeleaf,<br />server-rendered HTML —<br />primary Zone</div>"]
       style 15 fill:#438dd5,stroke:#2e6295,color:#ffffff
       32[("<div style='font-weight: bold'>PostgreSQL 17 (Docker, OCI-VM)</div><div style='font-size: 70%; margin-top: 0px'>[Container: Database]</div><div style='font-size: 80%; margin-top:10px'>Persistenz aller<br />Sponsorplatz-Daten — primary<br />Zone</div>")]
       style 32 fill:#2b3674,stroke:#1e2551,color:#ffffff
-      33("<div style='font-weight: bold'>Web-Anwendung (cloud-azure / DR)</div><div style='font-size: 70%; margin-top: 0px'>[Container: Java 25]</div><div style='font-size: 80%; margin-top:10px'>Identisches Image, eigene VM<br />in Azure Sweden Central —<br />Warm-DR-Zone</div>")
+      33["<div style='font-weight: bold'>Web-Anwendung (cloud-azure / DR)</div><div style='font-size: 70%; margin-top: 0px'>[Container: Java 25]</div><div style='font-size: 80%; margin-top:10px'>Identisches Image, eigene VM<br />in Azure Sweden Central —<br />Warm-DR-Zone</div>"]
       style 33 fill:#438dd5,stroke:#2e6295,color:#ffffff
       34[("<div style='font-weight: bold'>PostgreSQL 17 (Azure Flex)</div><div style='font-size: 70%; margin-top: 0px'>[Container: Database]</div><div style='font-size: 80%; margin-top:10px'>Azure Database for PostgreSQL<br />Flexible Server, VNet-privat<br />— DR-Zone</div>")]
       style 34 fill:#2b3674,stroke:#1e2551,color:#ffffff
