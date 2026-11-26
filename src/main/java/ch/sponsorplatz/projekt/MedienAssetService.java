@@ -110,12 +110,14 @@ public class MedienAssetService {
     @Transactional(readOnly = true)
     public AuslieferungsSnapshot findeAuslieferungsSnapshot(UUID id) {
         return repository.findById(id)
-                .map(a -> new AuslieferungsSnapshot(a.getStoragePfad(), a.getContentType(), a.getDateiname()))
+                .map(a -> new AuslieferungsSnapshot(
+                        a.getStoragePfad(), a.getContentType(), a.getDateiname(), a.getEntityTyp(), a.getEntityId()))
                 .orElseThrow(() -> new ch.sponsorplatz.shared.exception.NotFoundException(
                         "Medien-Asset nicht gefunden: " + id));
     }
 
-    public record AuslieferungsSnapshot(String storagePfad, String contentType, String dateiname) {}
+    public record AuslieferungsSnapshot(
+            String storagePfad, String contentType, String dateiname, EntityTyp entityTyp, UUID entityId) {}
 
     /** Berechtigungs-Snapshot für den Lösch-Endpoint (ARCH-02). */
     @Transactional(readOnly = true)

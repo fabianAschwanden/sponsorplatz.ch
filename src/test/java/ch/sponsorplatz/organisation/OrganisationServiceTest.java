@@ -232,12 +232,16 @@ class OrganisationServiceTest {
         org.setId(id);
         org.setStatus(OrgStatus.PENDING);
         when(repository.findById(id)).thenReturn(Optional.of(org));
+        when(mitgliedschaftRepository.findeEigentuemerNachOrg(id, Rolle.ORG_OWNER))
+                .thenReturn(List.of(eigentuemer("kontakt@example.ch")));
         when(repository.save(any(Organisation.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Organisation verifiziert = service.verifiziere(id);
+        Organisation verifiziert = service.verifiziere(id, new Pruefpunkte(true, true, true));
 
         assertThat(verifiziert.getStatus()).isEqualTo(OrgStatus.VERIFIED);
         assertThat(verifiziert.getVerifiziertAm()).isNotNull();
+        verify(eventPublisher).publishEvent(new OrganisationPruefentscheidEvent(
+                id, null, "kontakt@example.ch", true, null));
     }
 
     /** ADM-06: verifiziere bei nicht-PENDING → IllegalStateException. */
@@ -249,9 +253,33 @@ class OrganisationServiceTest {
         org.setStatus(OrgStatus.VERIFIED);
         when(repository.findById(id)).thenReturn(Optional.of(org));
 
-        assertThatThrownBy(() -> service.verifiziere(id))
+        assertThatThrownBy(() -> service.verifiziere(id, new Pruefpunkte(true, true, true)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("PENDING");
+    }
+
+    @Test
+    void ablehnungErfordertGrundUndInformiertEigentuemer() {
+        UUID id = UUID.randomUUID();
+        Organisation org = new Organisation();
+        org.setId(id);
+        org.setName("Beispielverein");
+        org.setStatus(OrgStatus.PENDING);
+        when(repository.findById(id)).thenReturn(Optional.of(org));
+        when(mitgliedschaftRepository.findeEigentuemerNachOrg(id, Rolle.ORG_OWNER))
+                .thenReturn(List.of(eigentuemer("kontakt@example.ch")));
+        when(repository.save(any(Organisation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThatThrownBy(() -> service.lehnePruefungAb(id, " ", new Pruefpunkte(true, false, true)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Grund");
+
+        Organisation abgelehnt = service.lehnePruefungAb(id, "Angaben nicht plausibel",
+                new Pruefpunkte(true, false, true));
+
+        assertThat(abgelehnt.getStatus()).isEqualTo(OrgStatus.SUSPENDED);
+        verify(eventPublisher).publishEvent(new OrganisationPruefentscheidEvent(
+                id, "Beispielverein", "kontakt@example.ch", false, "Angaben nicht plausibel"));
     }
 
     /** ADM-07: suspendiere setzt Status SUSPENDED. */
@@ -281,6 +309,15 @@ class OrganisationServiceTest {
 
         assertThat(ergebnis).hasSize(1);
         assertThat(ergebnis.get(0).getStatus()).isEqualTo(OrgStatus.PENDING);
+    }
+
+    private Mitgliedschaft eigentuemer(String email) {
+        AppUser user = new AppUser();
+        user.setEmail(email);
+        Mitgliedschaft mitgliedschaft = new Mitgliedschaft();
+        mitgliedschaft.setUser(user);
+        mitgliedschaft.setRolle(Rolle.ORG_OWNER);
+        return mitgliedschaft;
     }
 
     /** ORG-30: erstelleMitEigentuemer legt Org + ORG_OWNER-Mitgliedschaft an. */

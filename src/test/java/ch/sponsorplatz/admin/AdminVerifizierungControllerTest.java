@@ -23,6 +23,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import ch.sponsorplatz.benutzer.SponsorplatzUserDetailsService;
+import ch.sponsorplatz.benutzer.AppUserService;
+import ch.sponsorplatz.audit.AuditService;
 import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.organisation.OrgTyp;
 import ch.sponsorplatz.organisation.Organisation;
@@ -42,6 +44,12 @@ class AdminVerifizierungControllerTest {
 
     @MockitoBean
     private OrganisationService organisationService;
+
+    @MockitoBean
+    private AuditService auditService;
+
+    @MockitoBean
+    private AppUserService appUserService;
 
     /** ADM-01: GET /admin/verifizierungen ohne PLATFORM_ADMIN-Rolle → 403. */
     @Test
@@ -74,12 +82,24 @@ class AdminVerifizierungControllerTest {
     @WithMockUser(username = "admin@sponsorplatz.ch", roles = "PLATFORM_ADMIN")
     void verifizierenDelegiertAnService() throws Exception {
         UUID orgId = UUID.randomUUID();
+        UUID benutzerId = UUID.randomUUID();
+        when(appUserService.findeOptionalIdNachEmail("admin@sponsorplatz.ch"))
+                .thenReturn(java.util.Optional.of(benutzerId));
 
-        mockMvc.perform(post("/admin/verifizierungen/{id}/verifizieren", orgId).with(csrf()))
+        mockMvc.perform(post("/admin/verifizierungen/{id}/entscheid", orgId)
+                        .param("entscheidung", "VERIFIZIEREN")
+                        .param("sportOderGesundheit", "true")
+                        .param("bezugZurSchweiz", "true")
+                        .param("angabenPlausibel", "false")
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/verifizierungen"));
 
-        verify(organisationService).verifiziere(orgId);
+        verify(organisationService).verifiziere(
+                orgId, new ch.sponsorplatz.organisation.Pruefpunkte(true, true, false));
+        verify(auditService).protokolliereMitBenutzer(
+                ch.sponsorplatz.audit.AuditAktion.VERIFIZIERT, "ORGANISATION", benutzerId, null,
+                orgId, "Organisation", "Sport/Gesundheit: Ja; Bezug zur Schweiz: Ja; Angaben plausibel: Nein");
     }
 
     /** ADM-04: POST ablehnen als Admin → delegiert an Service. */
@@ -87,12 +107,22 @@ class AdminVerifizierungControllerTest {
     @WithMockUser(username = "admin@sponsorplatz.ch", roles = "PLATFORM_ADMIN")
     void ablehnenDelegiertAnService() throws Exception {
         UUID orgId = UUID.randomUUID();
+        when(appUserService.findeOptionalIdNachEmail("admin@sponsorplatz.ch"))
+                .thenReturn(java.util.Optional.of(UUID.randomUUID()));
 
-        mockMvc.perform(post("/admin/verifizierungen/{id}/ablehnen", orgId).with(csrf()))
+        mockMvc.perform(post("/admin/verifizierungen/{id}/entscheid", orgId)
+                        .param("entscheidung", "ABLEHNEN")
+                        .param("sportOderGesundheit", "false")
+                        .param("bezugZurSchweiz", "true")
+                        .param("angabenPlausibel", "false")
+                        .param("grund", "Angaben nicht plausibel")
+                        .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/verifizierungen"));
 
-        verify(organisationService).suspendiere(orgId);
+        verify(organisationService).lehnePruefungAb(
+                orgId, "Angaben nicht plausibel",
+                new ch.sponsorplatz.organisation.Pruefpunkte(false, true, false));
     }
 
     /** ADM-09: POST verifizieren ohne PLATFORM_ADMIN-Rolle → 403. */
@@ -101,7 +131,12 @@ class AdminVerifizierungControllerTest {
     void verifizierenOhneAdminGibt403() throws Exception {
         UUID orgId = UUID.randomUUID();
 
-        mockMvc.perform(post("/admin/verifizierungen/{id}/verifizieren", orgId).with(csrf()))
+        mockMvc.perform(post("/admin/verifizierungen/{id}/entscheid", orgId)
+                        .param("entscheidung", "VERIFIZIEREN")
+                        .param("sportOderGesundheit", "true")
+                        .param("bezugZurSchweiz", "true")
+                        .param("angabenPlausibel", "true")
+                        .with(csrf()))
                 .andExpect(status().isForbidden());
     }
 }

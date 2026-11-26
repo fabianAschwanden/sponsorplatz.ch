@@ -4,6 +4,7 @@ import ch.sponsorplatz.organisation.Branche;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.MitgliedschaftRepository;
 import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.organisation.OrgStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,7 +66,8 @@ public class MatchingService {
         }
 
         List<Projekt> passende = projektRepository.findePassende(
-                eigeneBranchen, eigeneOrgIds, Sichtbarkeit.OEFFENTLICH);
+                eigeneBranchen, eigeneOrgIds, Sichtbarkeit.OEFFENTLICH,
+                Set.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
 
         // Limitieren auf MAX
         return passende.stream().limit(MAX_EMPFEHLUNGEN).toList();

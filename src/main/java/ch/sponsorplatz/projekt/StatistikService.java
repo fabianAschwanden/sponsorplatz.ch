@@ -53,7 +53,8 @@ public class StatistikService {
      */
     @Cacheable(CacheConfig.STATISTIK_ANZAHL_PROJEKTE)
     public long anzahlAktiveProjekte() {
-        return projektRepository.countBySichtbarkeit(Sichtbarkeit.OEFFENTLICH);
+        return projektRepository.countOeffentlicheNachSichtbarkeit(
+                Sichtbarkeit.OEFFENTLICH, List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
     }
 }
 

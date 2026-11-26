@@ -27,6 +27,14 @@ public interface MitgliedschaftRepository extends JpaRepository<Mitgliedschaft, 
     @Query("SELECT m FROM Mitgliedschaft m JOIN FETCH m.user WHERE m.org.id = :orgId")
     List<Mitgliedschaft> findByOrgId(@Param("orgId") UUID orgId);
 
+    @Query("""
+            SELECT m FROM Mitgliedschaft m JOIN FETCH m.user
+            WHERE m.org.id = :orgId AND m.rolle = :rolle
+            ORDER BY m.beigetretenAm ASC, m.user.email ASC
+            """)
+    List<Mitgliedschaft> findeEigentuemerNachOrg(
+            @Param("orgId") UUID orgId, @Param("rolle") Rolle rolle);
+
     List<Mitgliedschaft> findByUserId(UUID userId);
 
     /**

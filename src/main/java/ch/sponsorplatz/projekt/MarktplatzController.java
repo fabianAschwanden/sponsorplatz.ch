@@ -101,7 +101,7 @@ public class MarktplatzController {
 
     @GetMapping("/{slug}")
     public String detail(@PathVariable String slug, Model model) {
-        ProjektView projekt = projektService.findeViewNachSlugOderWirf(slug);
+        ProjektView projekt = projektService.findeOeffentlicheViewNachSlugOderWirf(slug);
         List<SponsoringPaketView> pakete = paketService.findeAktiveViewsNachProjekt(projekt.id());
         List<MedienAssetView> anhaenge = medienAssetService.findeAnhaengeViews(EntityTyp.PROJEKT, projekt.id());
         List<MedienAssetView> galerie = medienAssetService.findeGalerieViews(EntityTyp.PROJEKT, projekt.id());

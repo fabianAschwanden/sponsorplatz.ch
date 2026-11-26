@@ -36,15 +36,6 @@
                     <span class="app-chip" th:text="${org.typ}">VEREIN</span>
                     <span class="app-muted" th:if="${org.rechtsform}" th:text="' · ' + ${org.rechtsform}"></span>
                 </div>
-                <div style="display:flex; gap:0.5rem;">
-                    <form th:action="@{/admin/verifizierungen/{id}/verifizieren(id=${org.id})}" method="post" style="margin:0;">
-                        <button type="submit" class="app-btn">✓ Verifizieren</button>
-                    </form>
-                    <form th:action="@{/admin/verifizierungen/{id}/ablehnen(id=${org.id})}" method="post" style="margin:0;"
-                          onsubmit="return confirm('Diese Organisation wirklich ablehnen?');">
-                        <button type="submit" class="app-btn app-btn-danger">Ablehnen</button>
-                    </form>
-                </div>
             </header>
 
             <dl class="app-datenliste">
@@ -61,9 +52,6 @@
                     <dt>Branche</dt>
                     <dd>
                         <span class="app-chip app-chip-health" th:text="${org.branche.anzeige}">Sport</span>
-                        <span class="app-muted" style="display:block; margin-top:0.25rem; font-size:0.85rem;">
-                            ⚖️ Health-Fokus prüfen — passt der Verein zur Sport- und Gesundheits-Positionierung?
-                        </span>
                     </dd>
                 </th:block>
 
@@ -82,6 +70,45 @@
                 <dt>Registriert</dt>
                 <dd th:text="${#temporals.format(org.registriertAm, 'dd.MM.yyyy HH:mm')}">01.01.2026</dd>
             </dl>
+
+            <form th:action="@{/admin/verifizierungen/{id}/entscheid(id=${org.id})}" method="post">
+                <fieldset>
+                    <legend th:text="#{admin.verifizierungen.pruefpunkt.sport}">Bezug zu Sport oder Gesundheit</legend>
+                    <label><input type="radio" name="sportOderGesundheit" value="true" required>
+                        <span th:text="#{admin.verifizierungen.ja}">Ja</span></label>
+                    <label><input type="radio" name="sportOderGesundheit" value="false" required>
+                        <span th:text="#{admin.verifizierungen.nein}">Nein</span></label>
+                </fieldset>
+                <fieldset>
+                    <legend th:text="#{admin.verifizierungen.pruefpunkt.schweiz}">Bezug zur Schweiz</legend>
+                    <label><input type="radio" name="bezugZurSchweiz" value="true" required>
+                        <span th:text="#{admin.verifizierungen.ja}">Ja</span></label>
+                    <label><input type="radio" name="bezugZurSchweiz" value="false" required>
+                        <span th:text="#{admin.verifizierungen.nein}">Nein</span></label>
+                </fieldset>
+                <fieldset>
+                    <legend th:text="#{admin.verifizierungen.pruefpunkt.plausibel}">Angaben sind plausibel</legend>
+                    <label><input type="radio" name="angabenPlausibel" value="true" required>
+                        <span th:text="#{admin.verifizierungen.ja}">Ja</span></label>
+                    <label><input type="radio" name="angabenPlausibel" value="false" required>
+                        <span th:text="#{admin.verifizierungen.nein}">Nein</span></label>
+                </fieldset>
+                <label for="ablehnungsgrund" th:text="#{admin.verifizierungen.ablehnungsgrund}">
+                    Grund bei Ablehnung
+                </label>
+                <textarea id="ablehnungsgrund" name="grund" rows="3"
+                          th:placeholder="#{admin.verifizierungen.ablehnungsgrund.placeholder}"></textarea>
+                <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                    <button type="submit" name="entscheidung" value="VERIFIZIEREN"
+                            class="app-btn" th:text="#{admin.verifizierungen.freigeben}">
+                        Prüfen und freigeben
+                    </button>
+                    <button type="submit" name="entscheidung" value="ABLEHNEN"
+                            class="app-btn app-btn-danger" th:text="#{admin.verifizierungen.ablehnen}">
+                        Ablehnen
+                    </button>
+                </div>
+            </form>
         </section>
     </main>
 </div>

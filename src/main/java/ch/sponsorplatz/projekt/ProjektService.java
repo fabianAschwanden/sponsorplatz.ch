@@ -3,6 +3,7 @@ import ch.sponsorplatz.shared.util.SlugGenerator;
 
 import ch.sponsorplatz.shared.exception.NotFoundException;
 import ch.sponsorplatz.organisation.Organisation;
+import ch.sponsorplatz.organisation.OrgStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,10 +53,9 @@ public class ProjektService {
     /** Nur öffentliche Projekte einer Org als View — für /vereine/{slug} (ARCH-02). */
     @Transactional(readOnly = true)
     public List<ProjektView> findeOeffentlicheViewsNachOrg(UUID orgId) {
-        return findeNachOrg(orgId).stream()
-                .filter(p -> p.getSichtbarkeit() == Sichtbarkeit.OEFFENTLICH)
-                .map(ProjektView::von)
-                .toList();
+        return repository.findeOeffentlicheNachOrgId(
+                orgId, Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati())
+                .stream().map(ProjektView::von).toList();
     }
 
     @Transactional(readOnly = true)
@@ -108,13 +108,15 @@ public class ProjektService {
 
     @Transactional(readOnly = true)
     public List<Projekt> findeOeffentliche() {
-        return repository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(Sichtbarkeit.OEFFENTLICH);
+        return repository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(
+                Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati());
     }
 
     /** Die neuesten N öffentlichen Projekte — für die Marktplatz-Preview-Sektion. */
     @Transactional(readOnly = true)
     public List<Projekt> findeNeuesteOeffentliche(int limit) {
-        return repository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(Sichtbarkeit.OEFFENTLICH)
+        return repository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(
+                        Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati())
                 .stream()
                 .limit(limit)
                 .toList();
@@ -195,6 +197,18 @@ public class ProjektService {
                         "Projekt nicht gefunden: " + slug));
     }
 
+    @Transactional(readOnly = true)
+    public ProjektView findeOeffentlicheViewNachSlugOderWirf(String slug) {
+        return repository.findeOeffentlichNachSlug(slug, Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati())
+                .map(ProjektView::von)
+                .orElseThrow(() -> new NotFoundException("Projekt nicht gefunden: " + slug));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean istOeffentlichNachId(UUID projektId) {
+        return repository.existsOeffentlichNachId(projektId, Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati());
+    }
+
     /** Alle Projekte einer Org als View (Org-interne Liste). */
     @Transactional(readOnly = true)
     public List<ProjektView> findeViewsNachOrg(UUID orgId) {
@@ -234,6 +248,10 @@ public class ProjektService {
         if (projekt.getSichtbarkeit() == Sichtbarkeit.OEFFENTLICH) {
             throw new IllegalStateException("Projekt ist bereits öffentlich");
         }
+        if (projekt.getOrg().getStatus() != OrgStatus.VERIFIED
+                && projekt.getOrg().getStatus() != OrgStatus.ACTIVE) {
+            throw new IllegalStateException("Eine ungeprüfte Organisation kann keine Projekte veröffentlichen.");
+        }
 
         projekt.setSichtbarkeit(Sichtbarkeit.OEFFENTLICH);
         projekt.setVeroeffentlichtAm(Instant.now(clock));
@@ -245,6 +263,10 @@ public class ProjektService {
                 .orElseThrow(() -> new NotFoundException("Projekt nicht gefunden: " + projektId));
         projekt.setSichtbarkeit(Sichtbarkeit.ARCHIVIERT);
         repository.save(projekt);
+    }
+
+    private List<OrgStatus> oeffentlicheOrgStati() {
+        return List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
     }
 }
 

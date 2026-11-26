@@ -18,6 +18,7 @@ import ch.sponsorplatz.benutzer.AppUserRepository;
 import ch.sponsorplatz.organisation.MitgliedschaftRepository;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.projekt.SponsoringPaket;
 import ch.sponsorplatz.projekt.SponsoringPaketRepository;
 import ch.sponsorplatz.shared.exception.NotFoundException;
@@ -234,6 +235,7 @@ public class SponsoringAnfrageService {
         if (nachricht == null || nachricht.isBlank()) {
             throw new IllegalArgumentException("Nachricht darf nicht leer sein");
         }
+        pruefeOrganisationenSichtbar(anfragenderOrg, empfaengerOrg);
 
         SponsoringAnfrage anfrage = new SponsoringAnfrage();
         anfrage.setPaket(paket);
@@ -284,6 +286,7 @@ public class SponsoringAnfrageService {
             // Defense-in-depth — DB-CHECK gibt's auch, aber hier mit klarer Fehlermeldung
             throw new IllegalArgumentException("Wunsch-Betrag darf nicht negativ sein");
         }
+        pruefeOrganisationenSichtbar(anfragenderOrg, empfaengerOrg);
 
         SponsoringAnfrage anfrage = new SponsoringAnfrage();
         anfrage.setAnfragenderOrg(anfragenderOrg);
@@ -393,5 +396,15 @@ public class SponsoringAnfrageService {
         if (BEANTWORTET.contains(anfrage.getStatus())) {
             throw new IllegalStateException("Anfrage wurde bereits beantwortet (Status: " + anfrage.getStatus() + ")");
         }
+    }
+
+    private void pruefeOrganisationenSichtbar(Organisation anfragenderOrg, Organisation empfaengerOrg) {
+        if (!istGeprueft(anfragenderOrg) || !istGeprueft(empfaengerOrg)) {
+            throw new NotFoundException("Organisation nicht gefunden");
+        }
+    }
+
+    private boolean istGeprueft(Organisation organisation) {
+        return organisation.getStatus() == OrgStatus.VERIFIED || organisation.getStatus() == OrgStatus.ACTIVE;
     }
 }

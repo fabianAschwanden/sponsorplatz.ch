@@ -3,6 +3,7 @@ package ch.sponsorplatz.projekt;
 import ch.sponsorplatz.organisation.Branche;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.shared.config.CacheConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,13 +61,15 @@ class OgImageRendererCacheTest {
         org.setName("FC Test");
         org.setSlug("fc-test");
         org.setBranche(Branche.SPORT);
-        when(organisationRepository.findBySlug("fc-test")).thenReturn(Optional.of(org));
+        when(organisationRepository.findeOeffentlicheNachSlug(
+                "fc-test", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))).thenReturn(Optional.of(org));
 
         byte[] erst = renderer.rendereVerein("fc-test");
         byte[] zweit = renderer.rendereVerein("fc-test");
 
         assertThat(erst).isEqualTo(zweit);
-        verify(organisationRepository, times(1)).findBySlug("fc-test");
+        verify(organisationRepository, times(1)).findeOeffentlicheNachSlug(
+                "fc-test", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
     }
 
     @Test
@@ -75,21 +79,27 @@ class OgImageRendererCacheTest {
         org.setName("Doppelter Slug — Verein");
         org.setSlug("doppelter-slug");
         org.setBranche(Branche.REHA);
-        when(organisationRepository.findBySlug("doppelter-slug")).thenReturn(Optional.of(org));
+        when(organisationRepository.findeOeffentlicheNachSlug(
+                "doppelter-slug", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))).thenReturn(Optional.of(org));
 
         Projekt projekt = new Projekt();
         projekt.setName("Doppelter Slug — Projekt");
         projekt.setSlug("doppelter-slug");
         projekt.setKategorie("Sport");
-        when(projektRepository.findBySlug("doppelter-slug")).thenReturn(Optional.of(projekt));
+        when(projektRepository.findeOeffentlichNachSlug(
+                "doppelter-slug", Sichtbarkeit.OEFFENTLICH,
+                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))).thenReturn(Optional.of(projekt));
 
         renderer.rendereVerein("doppelter-slug");
         renderer.rendereProjekt("doppelter-slug");
 
         // Beide haben denselben Slug, aber unterschiedliche Cache-Keys (verein:* vs projekt:*)
         // → BEIDE Repos werden je 1x getroffen, KEIN unbeabsichtigter Cache-Hit
-        verify(organisationRepository, times(1)).findBySlug("doppelter-slug");
-        verify(projektRepository, times(1)).findBySlug("doppelter-slug");
+        verify(organisationRepository, times(1)).findeOeffentlicheNachSlug(
+                "doppelter-slug", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+        verify(projektRepository, times(1)).findeOeffentlichNachSlug(
+                "doppelter-slug", Sichtbarkeit.OEFFENTLICH,
+                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
     }
 
     @Test

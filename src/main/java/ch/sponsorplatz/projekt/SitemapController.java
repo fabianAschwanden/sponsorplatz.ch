@@ -43,7 +43,7 @@ public class SitemapController {
         }
 
         // Vereinsprofile (Slugs)
-        for (String slug : organisationService.alleSlugs()) {
+        for (String slug : organisationService.alleOeffentlicheSlugs()) {
             fuegeUrlHinzu(xml, "/vereine/" + slug, "0.7", "weekly");
         }
 

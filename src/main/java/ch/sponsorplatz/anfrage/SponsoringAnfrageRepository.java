@@ -1,5 +1,6 @@
 package ch.sponsorplatz.anfrage;
 
+import ch.sponsorplatz.organisation.OrgStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -49,11 +50,14 @@ public interface SponsoringAnfrageRepository extends JpaRepository<SponsoringAnf
               left join fetch a.empfaengerOrg
              where a.anfragenderOrg.id = :anfragenderOrgId
                and a.status = :status
+               and a.anfragenderOrg.status in :stati
+               and a.empfaengerOrg.status in :stati
              order by a.createdAt desc
             """)
     List<SponsoringAnfrage> findByAnfragenderOrgIdAndStatusOrderByCreatedAtDesc(
             @Param("anfragenderOrgId") UUID anfragenderOrgId,
-            @Param("status") AnfrageStatus status);
+            @Param("status") AnfrageStatus status,
+            @Param("stati") Collection<OrgStatus> stati);
 
     @Query("""
             select a from SponsoringAnfrage a
@@ -81,9 +85,14 @@ public interface SponsoringAnfrageRepository extends JpaRepository<SponsoringAnf
               left join fetch a.anfragenderOrg
               left join fetch a.empfaengerOrg
              where a.status = :status
+                and a.anfragenderOrg.status in :stati
+                and a.empfaengerOrg.status in :stati
              order by a.createdAt desc
             """)
-    List<SponsoringAnfrage> findNeuesteNachStatus(@Param("status") AnfrageStatus status, Pageable pageable);
+    List<SponsoringAnfrage> findNeuesteNachStatus(
+            @Param("status") AnfrageStatus status,
+            @Param("stati") Collection<OrgStatus> stati,
+            Pageable pageable);
 
     long countByEmpfaengerOrgIdAndStatus(UUID empfaengerOrgId, AnfrageStatus status);
 

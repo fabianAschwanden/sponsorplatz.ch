@@ -1,5 +1,6 @@
 package ch.sponsorplatz.projekt;
 
+import ch.sponsorplatz.organisation.OrgStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,13 +47,15 @@ public class VolltextSucheService {
     @Transactional(readOnly = true)
     public List<Projekt> suchen(String suchbegriff) {
         if (suchbegriff == null || suchbegriff.isBlank()) {
-            return projektRepository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(Sichtbarkeit.OEFFENTLICH);
+            return projektRepository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(
+                    Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati());
         }
         String trimmed = suchbegriff.trim();
         if (istPostgres()) {
             return suchePostgresVolltext(trimmed);
         }
-        return projektRepository.sucheOeffentliche(trimmed, Sichtbarkeit.OEFFENTLICH);
+        return projektRepository.sucheOeffentliche(
+                trimmed, Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati());
     }
 
     private List<Projekt> suchePostgresVolltext(String suchbegriff) {
@@ -65,6 +68,7 @@ public class VolltextSucheService {
                 WHERE p.sichtbarkeit = ?
                   AND (p.tsvektor @@ plainto_tsquery('german', ?)
                        OR LOWER(o.name) LIKE LOWER('%' || ? || '%'))
+                  AND o.status IN ('VERIFIED', 'ACTIVE')
                 ORDER BY ts_rank_cd(p.tsvektor, plainto_tsquery('german', ?)) DESC,
                          p.veroeffentlicht_am DESC NULLS LAST
                 LIMIT 200
@@ -85,11 +89,16 @@ public class VolltextSucheService {
                     .collect(Collectors.toList());
         } catch (RuntimeException e) {
             log.warn("Postgres-Volltextsuche fehlgeschlagen — Fallback auf LIKE: {}", e.getMessage());
-            return projektRepository.sucheOeffentliche(suchbegriff, Sichtbarkeit.OEFFENTLICH);
+            return projektRepository.sucheOeffentliche(
+                    suchbegriff, Sichtbarkeit.OEFFENTLICH, oeffentlicheOrgStati());
         }
     }
 
     private boolean istPostgres() {
         return datasourceUrl != null && datasourceUrl.toLowerCase().contains("postgresql");
+    }
+
+    private List<OrgStatus> oeffentlicheOrgStati() {
+        return List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
     }
 }

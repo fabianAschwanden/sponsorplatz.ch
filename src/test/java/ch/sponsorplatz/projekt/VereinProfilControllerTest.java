@@ -1,6 +1,7 @@
 package ch.sponsorplatz.projekt;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.when;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -24,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import ch.sponsorplatz.benutzer.SponsorplatzUserDetailsService;
 import ch.sponsorplatz.organisation.Branche;
+import ch.sponsorplatz.organisation.AccessControl;
 import ch.sponsorplatz.organisation.OrgTyp;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationService;
@@ -48,7 +51,15 @@ class VereinProfilControllerTest {
     private ProjektService projektService;
 
     @MockitoBean
+    private AccessControl accessControl;
+
+    @MockitoBean
     private SponsorplatzUserDetailsService userDetailsService;
+
+    @BeforeEach
+    void setUp() {
+        when(accessControl.kannOrgSehenNachSlug(any(), any())).thenReturn(true);
+    }
 
     /** VP-01: Vereinsprofil ist öffentlich erreichbar. */
     @Test
@@ -60,7 +71,7 @@ class VereinProfilControllerTest {
         org.setTyp(OrgTyp.VEREIN);
 
         when(orgService.findeViewNachSlug("fc-muster")).thenReturn(Optional.of(OrganisationView.von(org)));
-        when(projektService.findeNachOrg(org.getId())).thenReturn(List.of());
+        when(projektService.findeOeffentlicheViewsNachOrg(org.getId())).thenReturn(List.of());
 
         mockMvc.perform(get("/vereine/fc-muster"))
                 .andExpect(status().isOk())
@@ -90,7 +101,7 @@ class VereinProfilControllerTest {
         org.setBranche(Branche.SPORT);
 
         when(orgService.findeViewNachSlug("fc-sportverein")).thenReturn(Optional.of(OrganisationView.von(org)));
-        when(projektService.findeNachOrg(org.getId())).thenReturn(List.of());
+        when(projektService.findeOeffentlicheViewsNachOrg(org.getId())).thenReturn(List.of());
 
         mockMvc.perform(get("/vereine/fc-sportverein"))
                 .andExpect(status().isOk())
@@ -116,7 +127,7 @@ class VereinProfilControllerTest {
         org.setBranche(Branche.REHA);
 
         when(orgService.findeViewNachSlug("reha-zentrum")).thenReturn(Optional.of(OrganisationView.von(org)));
-        when(projektService.findeNachOrg(org.getId())).thenReturn(List.of());
+        when(projektService.findeOeffentlicheViewsNachOrg(org.getId())).thenReturn(List.of());
 
         mockMvc.perform(get("/vereine/reha-zentrum"))
                 .andExpect(status().isOk())
@@ -146,7 +157,7 @@ class VereinProfilControllerTest {
         org.setBranche(Branche.SPORT);
 
         when(orgService.findeViewNachSlug("fc-sportverein")).thenReturn(Optional.of(OrganisationView.von(org)));
-        when(projektService.findeNachOrg(org.getId())).thenReturn(List.of());
+        when(projektService.findeOeffentlicheViewsNachOrg(org.getId())).thenReturn(List.of());
 
         mockMvc.perform(get("/vereine/fc-sportverein"))
                 .andExpect(status().isOk())
@@ -173,7 +184,7 @@ class VereinProfilControllerTest {
         org.setBranche(Branche.SPORT);
 
         when(orgService.findeViewNachSlug("fc-sportverein")).thenReturn(Optional.of(OrganisationView.von(org)));
-        when(projektService.findeNachOrg(org.getId())).thenReturn(List.of());
+        when(projektService.findeOeffentlicheViewsNachOrg(org.getId())).thenReturn(List.of());
 
         mockMvc.perform(get("/vereine/fc-sportverein"))
                 .andExpect(status().isOk())

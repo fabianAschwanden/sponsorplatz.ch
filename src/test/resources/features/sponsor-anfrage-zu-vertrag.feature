@@ -17,6 +17,7 @@ Funktionalität: Vom Verein zur Sponsoring-Vereinbarung mit einem Sponsor
     Und meine E-Mail-Adresse bestätigt wird
     Und ich mich einlogge
     Und ich im Onboarding den Verein "FC E2E" in der Branche "SPORT" anlege
+    Und der Verein geprüft ist
     Und ich eine Kontakt-Anfrage an "Muster Versicherung" mit Betreff "Sommerfest-Sponsoring 2026" stelle
 
     Und sich der Sponsor "Muster Versicherung" einloggt

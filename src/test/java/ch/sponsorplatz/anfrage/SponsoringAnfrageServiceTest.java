@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,9 +22,11 @@ import ch.sponsorplatz.benutzer.AppUser;
 import ch.sponsorplatz.benutzer.AppUserRepository;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.projekt.SponsoringPaket;
 import ch.sponsorplatz.projekt.SponsoringPaketRepository;
 import ch.sponsorplatz.organisation.MitgliedschaftRepository;
+import ch.sponsorplatz.shared.exception.NotFoundException;
 
 class SponsoringAnfrageServiceTest {
 
@@ -66,8 +69,10 @@ class SponsoringAnfrageServiceTest {
         paket.setId(UUID.randomUUID());
         Organisation anfragender = new Organisation();
         anfragender.setId(UUID.randomUUID());
+        anfragender.setStatus(OrgStatus.ACTIVE);
         Organisation empfaenger = new Organisation();
         empfaenger.setId(UUID.randomUUID());
+        empfaenger.setStatus(OrgStatus.ACTIVE);
 
         when(repository.save(any(SponsoringAnfrage.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -151,14 +156,42 @@ class SponsoringAnfrageServiceTest {
         paket.setId(UUID.randomUUID());
         Organisation anfragender = new Organisation();
         anfragender.setId(UUID.randomUUID());
+        anfragender.setStatus(OrgStatus.ACTIVE);
         Organisation empfaenger = new Organisation();
         empfaenger.setId(UUID.randomUUID());
+        empfaenger.setStatus(OrgStatus.ACTIVE);
 
         when(repository.save(any(SponsoringAnfrage.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.erstelle(paket, anfragender, empfaenger, "Test-Nachricht", "Max", "max@test.ch", erstellerUserId);
 
         verify(benachrichtigungsService).benachrichtigeUeberNeueAnfrage(any(SponsoringAnfrage.class), any());
+    }
+
+    @Test
+    void ungepruefteOrganisationKannKeineAnfrageStellen() {
+        SponsoringPaket paket = new SponsoringPaket();
+        paket.setId(UUID.randomUUID());
+        Organisation anfragender = new Organisation();
+        anfragender.setId(UUID.randomUUID());
+        anfragender.setStatus(OrgStatus.PENDING);
+        Organisation empfaenger = new Organisation();
+        empfaenger.setId(UUID.randomUUID());
+        empfaenger.setStatus(OrgStatus.ACTIVE);
+
+        assertThatThrownBy(() -> service.erstelle(
+                paket, anfragender, empfaenger, "Interesse", "Beispiel", "kontakt@example.ch", erstellerUserId))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Organisation nicht gefunden");
+
+        anfragender.setStatus(OrgStatus.ACTIVE);
+        empfaenger.setStatus(OrgStatus.PENDING);
+        assertThatThrownBy(() -> service.erstelleKontaktAnfrage(
+                anfragender, empfaenger, "Betreff", "Nachricht",
+                "Beispiel", "kontakt@example.ch", null, erstellerUserId))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Organisation nicht gefunden");
+        verify(repository, never()).save(any(SponsoringAnfrage.class));
     }
 
     /** ANF-07: Annehmen ruft Antwort-Benachrichtigung auf. */

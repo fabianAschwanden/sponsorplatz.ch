@@ -1,6 +1,7 @@
 package ch.sponsorplatz.crm;
 
 import ch.sponsorplatz.organisation.AccessControl;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
 import ch.sponsorplatz.shared.exception.NotFoundException;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -22,6 +24,9 @@ import java.util.UUID;
 @Service
 @Transactional
 public class SponsorAccountService {
+
+    private static final Collection<OrgStatus> OEFFENTLICHE_ORG_STATI =
+            List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
 
     private final SponsorAccountRepository repository;
     private final OrganisationRepository organisationRepository;
@@ -40,7 +45,7 @@ public class SponsorAccountService {
     public List<SponsorAccountView> findePortfolio(UUID sponsorOrgId, Authentication auth) {
         pruefeZugriff(sponsorOrgId, auth);
         return SponsorAccountView.von(
-                repository.findByBesitzerSponsorOrgIdOrderByErstelltAmDesc(sponsorOrgId));
+                repository.findeOeffentlicheFuerSponsor(sponsorOrgId, OEFFENTLICHE_ORG_STATI));
     }
 
     /** Einzel-Account für die Detail-Seite — Zugriff über den Mandanten-Key des Accounts. */
@@ -49,6 +54,7 @@ public class SponsorAccountService {
         SponsorAccount account = repository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account nicht gefunden: " + accountId));
         pruefeZugriff(account.getBesitzerSponsorOrgId(), auth);
+        pruefeVereinSichtbar(account.getVerein());
         return SponsorAccountView.von(account);
     }
 
@@ -83,6 +89,7 @@ public class SponsorAccountService {
         SponsorAccount account = repository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException("Account nicht gefunden: " + accountId));
         pruefeZugriff(account.getBesitzerSponsorOrgId(), auth);
+        pruefeVereinSichtbar(account.getVerein());
         account.setStatus(status);
         account.setTier(tier);
         if (pipelineStage != null) account.setPipelineStage(pipelineStage);
@@ -145,7 +152,8 @@ public class SponsorAccountService {
         }
         List<SponsorAccount> accounts = repository.findAllById(accountIds);
         boolean alleEigen = accounts.size() == accountIds.stream().distinct().count()
-                && accounts.stream().allMatch(a -> sponsorOrgId.equals(a.getBesitzerSponsorOrgId()));
+                && accounts.stream().allMatch(a -> sponsorOrgId.equals(a.getBesitzerSponsorOrgId())
+                        && istOeffentlich(a.getVerein()));
         if (!alleEigen) {
             throw new AccessDeniedException("Auswahl enthält Accounts ausserhalb dieser Sponsor-Organisation");
         }
@@ -157,5 +165,15 @@ public class SponsorAccountService {
             throw new AccessDeniedException(
                     "Kein Zugriff auf die CRM-Daten dieser Sponsor-Organisation");
         }
+    }
+
+    private void pruefeVereinSichtbar(Organisation verein) {
+        if (!istOeffentlich(verein)) {
+            throw new NotFoundException("Verein nicht gefunden.");
+        }
+    }
+
+    private boolean istOeffentlich(Organisation verein) {
+        return verein != null && OEFFENTLICHE_ORG_STATI.contains(verein.getStatus());
     }
 }

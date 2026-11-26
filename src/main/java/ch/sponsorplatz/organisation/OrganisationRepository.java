@@ -21,6 +21,12 @@ public interface OrganisationRepository extends JpaRepository<Organisation, UUID
      */
     @Query("SELECT o FROM Organisation o LEFT JOIN FETCH o.uebergeordneteOrg WHERE o.slug = :slug")
     Optional<Organisation> findBySlug(@Param("slug") String slug);
+    @Query("""
+            SELECT o FROM Organisation o
+            WHERE o.slug = :slug AND o.status IN :stati
+            """)
+    Optional<Organisation> findeOeffentlicheNachSlug(
+            @Param("slug") String slug, @Param("stati") Collection<OrgStatus> stati);
 
     boolean existsBySlug(String slug);
 
@@ -32,6 +38,9 @@ public interface OrganisationRepository extends JpaRepository<Organisation, UUID
     List<Organisation> findAllByOrderByNameAsc();
 
     List<Organisation> findByStatusOrderByCreatedAtAsc(OrgStatus status);
+    List<Organisation> findByStatusInOrderByNameAsc(Collection<OrgStatus> stati);
+    List<Organisation> findByUebergeordneteOrgIdAndStatusInOrderByNameAsc(
+            UUID uebergeordneteOrgId, Collection<OrgStatus> stati);
 
     /**
      * Aktive Orgs eines bestimmten Typs (z.B. UNTERNEHMEN für Sponsor-Picker).

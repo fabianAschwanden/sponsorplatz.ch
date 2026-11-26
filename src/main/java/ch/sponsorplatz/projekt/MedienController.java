@@ -51,8 +51,11 @@ public class MedienController {
 
     /** Öffentliche Auslieferung eines Medien-Assets. Bilder inline, Dokumente als Download. */
     @GetMapping("/medien/{id}")
-    public ResponseEntity<Resource> ausliefern(@PathVariable UUID id) {
+    public ResponseEntity<Resource> ausliefern(@PathVariable UUID id, Authentication auth) {
         MedienAssetService.AuslieferungsSnapshot snap = medienAssetService.findeAuslieferungsSnapshot(id);
+        if (!darfAssetSehen(snap, auth)) {
+            return ResponseEntity.notFound().build();
+        }
 
         // Orphaned MedienAsset (DB-Record vorhanden, Storage-Objekt fehlt) →
         // 404 statt 500. Vermeidet Sentry-Flood durch broken-image-Loads.
@@ -91,6 +94,19 @@ public class MedienController {
                 // verhindert dass ein als image/png getarntes HTML als HTML läuft.
                 .header("X-Content-Type-Options", "nosniff")
                 .body(resource);
+    }
+
+    private boolean darfAssetSehen(MedienAssetService.AuslieferungsSnapshot snapshot, Authentication auth) {
+        return switch (snapshot.entityTyp()) {
+            case USER -> true;
+            case ORGANISATION -> organisationService.findeSlugNachId(snapshot.entityId())
+                    .map(slug -> accessControl.kannOrgSehenNachSlug(slug, auth))
+                    .orElse(false);
+            case PROJEKT -> projektService.istOeffentlichNachId(snapshot.entityId())
+                    || projektService.findeOrgIdNachProjektId(snapshot.entityId())
+                            .map(orgId -> accessControl.kannSponsorDatenSehen(orgId, auth))
+                            .orElse(false);
+        };
     }
 
     /** Upload eines Cover-Bildes für ein Projekt. */

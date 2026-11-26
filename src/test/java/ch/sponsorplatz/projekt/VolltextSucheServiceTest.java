@@ -44,7 +44,8 @@ class VolltextSucheServiceTest {
     @Test
     @DisplayName("VTS-PG-01: leerer Suchbegriff liefert alle öffentlichen Projekte")
     void leererSuchbegriff() {
-        when(projektRepository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(Sichtbarkeit.OEFFENTLICH))
+        when(projektRepository.findBySichtbarkeitOrderByVeroeffentlichtAmDesc(
+                eq(Sichtbarkeit.OEFFENTLICH), any()))
                 .thenReturn(List.of(new Projekt(), new Projekt()));
 
         assertThat(service.suchen(null)).hasSize(2);
@@ -58,13 +59,13 @@ class VolltextSucheServiceTest {
     @DisplayName("VTS-PG-02: H2 (kein Postgres) → repository.sucheOeffentliche (LIKE-Fallback)")
     void h2FallbackAufLike() {
         ReflectionTestUtils.setField(service, "datasourceUrl", "jdbc:h2:file:./data/test");
-        when(projektRepository.sucheOeffentliche("yoga", Sichtbarkeit.OEFFENTLICH))
+        when(projektRepository.sucheOeffentliche(eq("yoga"), eq(Sichtbarkeit.OEFFENTLICH), any()))
                 .thenReturn(List.of(new Projekt()));
 
         var result = service.suchen("yoga");
 
         assertThat(result).hasSize(1);
-        verify(projektRepository).sucheOeffentliche("yoga", Sichtbarkeit.OEFFENTLICH);
+        verify(projektRepository).sucheOeffentliche(eq("yoga"), eq(Sichtbarkeit.OEFFENTLICH), any());
         verify(jdbc, never()).queryForList(any(String.class), eq(java.util.UUID.class), any());
     }
 
@@ -90,12 +91,12 @@ class VolltextSucheServiceTest {
         when(jdbc.queryForList(any(String.class), eq(java.util.UUID.class),
                 any(), any(), any(), any()))
                 .thenThrow(new RuntimeException("syntax error at or near \"tsvektor\""));
-        when(projektRepository.sucheOeffentliche("kaputt", Sichtbarkeit.OEFFENTLICH))
+        when(projektRepository.sucheOeffentliche(eq("kaputt"), eq(Sichtbarkeit.OEFFENTLICH), any()))
                 .thenReturn(List.of(new Projekt()));
 
         var result = service.suchen("kaputt");
 
         assertThat(result).hasSize(1);
-        verify(projektRepository).sucheOeffentliche("kaputt", Sichtbarkeit.OEFFENTLICH);
+        verify(projektRepository).sucheOeffentliche(eq("kaputt"), eq(Sichtbarkeit.OEFFENTLICH), any());
     }
 }

@@ -56,7 +56,7 @@ class SponsorAccountServiceTest {
 
         assertThatThrownBy(() -> service.findePortfolio(sponsorOrgId, auth))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(repository, never()).findByBesitzerSponsorOrgIdOrderByErstelltAmDesc(any());
+        verify(repository, never()).findeOeffentlicheFuerSponsor(any(), any());
     }
 
     /** CRM-SVC-02: findePortfolio mit Zugriff → nur Accounts des Sponsors. */
@@ -64,7 +64,9 @@ class SponsorAccountServiceTest {
     @DisplayName("CRM-SVC-02: findePortfolio liefert Portfolio des Sponsors")
     void portfolioMitZugriff() {
         when(accessControl.kannSponsorDatenSehen(sponsorOrgId, auth)).thenReturn(true);
-        when(repository.findByBesitzerSponsorOrgIdOrderByErstelltAmDesc(sponsorOrgId))
+        when(repository.findeOeffentlicheFuerSponsor(sponsorOrgId,
+                List.of(ch.sponsorplatz.organisation.OrgStatus.VERIFIED,
+                        ch.sponsorplatz.organisation.OrgStatus.ACTIVE)))
                 .thenReturn(List.of(account("FC A", "fc-a"), account("FC B", "fc-b")));
 
         List<SponsorAccountView> portfolio = service.findePortfolio(sponsorOrgId, auth);
@@ -93,6 +95,7 @@ class SponsorAccountServiceTest {
         verein.setId(vereinOrgId);
         verein.setName("FC Neu");
         verein.setSlug("fc-neu");
+        verein.setStatus(ch.sponsorplatz.organisation.OrgStatus.ACTIVE);
         when(accessControl.kannSponsorDatenSehen(sponsorOrgId, auth)).thenReturn(true);
         when(repository.existsByBesitzerSponsorOrgIdAndVereinId(sponsorOrgId, vereinOrgId)).thenReturn(false);
         when(organisationRepository.findById(vereinOrgId)).thenReturn(Optional.of(verein));
@@ -118,6 +121,20 @@ class SponsorAccountServiceTest {
         assertThatThrownBy(() -> service.erstelle(sponsorOrgId, vereinOrgId, auth))
                 .isInstanceOf(IllegalArgumentException.class);
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ungeprüfter Verein ist im Sponsor-CRM nicht sichtbar")
+    void ungepruefterVereinIstNichtImCrmSichtbar() {
+        UUID accountId = UUID.randomUUID();
+        SponsorAccount account = account("Pending Verein", "pending-verein");
+        account.getVerein().setStatus(ch.sponsorplatz.organisation.OrgStatus.PENDING);
+        account.setId(accountId);
+        when(repository.findById(accountId)).thenReturn(Optional.of(account));
+        when(accessControl.kannSponsorDatenSehen(sponsorOrgId, auth)).thenReturn(true);
+
+        assertThatThrownBy(() -> service.findeAccount(accountId, auth))
+                .isInstanceOf(ch.sponsorplatz.shared.exception.NotFoundException.class);
     }
 
     /** CRM-SVC-06: aktualisiere ohne Zugriff (fremder Account) → AccessDenied, kein save. */
@@ -163,6 +180,7 @@ class SponsorAccountServiceTest {
         verein.setId(UUID.randomUUID());
         verein.setName(vereinName);
         verein.setSlug(slug);
+        verein.setStatus(ch.sponsorplatz.organisation.OrgStatus.ACTIVE);
         SponsorAccount a = new SponsorAccount();
         a.setId(UUID.randomUUID());
         a.setBesitzerSponsorOrgId(sponsorOrgId);

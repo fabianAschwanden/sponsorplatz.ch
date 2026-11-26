@@ -10,6 +10,7 @@ public final class AuditAktion {
     public static final String GELOESCHT = "GELOESCHT";
     public static final String VERIFIZIERT = "VERIFIZIERT";
     public static final String SUSPENDIERT = "SUSPENDIERT";
+    public static final String PRUEFUNG_ABGELEHNT = "PRUEFUNG_ABGELEHNT";
     public static final String GESPERRT = "GESPERRT";
     public static final String ENTSPERRT = "ENTSPERRT";
     public static final String ROLLE_GEAENDERT = "ROLLE_GEAENDERT";

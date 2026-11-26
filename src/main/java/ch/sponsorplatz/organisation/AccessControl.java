@@ -87,6 +87,27 @@ public class AccessControl {
     }
 
     /**
+     * Prüft, ob Organisationsdaten öffentlich oder aufgrund einer Mitgliedschaft
+     * sichtbar sind. Plattform-Admins und Mitglieder sehen auch ungeprüfte Orgs.
+     */
+    private boolean kannOrgInternSehen(UUID orgId, Authentication auth) {
+        if (!istAuthentifiziert(auth)) return false;
+        if (istPlattformAdmin(auth)) return true;
+
+        return findeUserId(auth)
+                .map(userId -> hatBerechtigungMitVererbung(
+                        userId, orgId, Set.of(Rolle.ORG_OWNER, Rolle.ORG_EDITOR, Rolle.ORG_VIEWER)))
+                .orElse(false);
+    }
+
+    public boolean kannOrgSehenNachSlug(String slug, Authentication auth) {
+        return organisationRepository.findBySlug(slug)
+                .map(org -> istOeffentlichGeprueft(org.getStatus())
+                        || kannOrgInternSehen(org.getId(), auth))
+                .orElse(false);
+    }
+
+    /**
      * Slug-Variante von {@link #kannOrgEditieren}. Für unbekannte Slugs → false
      * (kein Throw — der Auth-Layer leakt keine Existenz-Information).
      */
@@ -113,6 +134,10 @@ public class AccessControl {
         return auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(ROLE_PLATFORM_ADMIN::equals);
+    }
+
+    private boolean istOeffentlichGeprueft(OrgStatus status) {
+        return status == OrgStatus.VERIFIED || status == OrgStatus.ACTIVE;
     }
 
     private Optional<UUID> findeUserId(Authentication auth) {
