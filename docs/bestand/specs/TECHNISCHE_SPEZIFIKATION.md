@@ -3,7 +3,7 @@
 ## Architektur-Prinzipien (verbindlich)
 
 - **Layering**: `Controller → Service → Repository`. Controller halten keine Business-Logik; Services sind `@Transactional`.
-- **DTO-Pflicht am Web-Layer**: Templates erhalten ausschliesslich Records aus `ch.sponsorplatz.dto.*View` oder `*FormDto` — niemals JPA-Entities (verhindert LazyInitializationException + Persistenz/Präsentations-Kopplung). Konvention + Beispiele: siehe [`CLAUDE.md`](../CLAUDE.md#view-dto-pflicht-entities-verlassen-service-layer-nicht).
+- **DTO-Pflicht am Web-Layer**: Templates erhalten ausschliesslich Records aus `ch.sponsorplatz.dto.*View` oder `*FormDto` — niemals JPA-Entities (verhindert LazyInitializationException + Persistenz/Präsentations-Kopplung). Konvention + Beispiele: siehe [`CLAUDE.md`](../../../CLAUDE.md#view-dto-pflicht-entities-verlassen-service-layer-nicht).
 - **Exception-Mapping zentral** in `GlobalExceptionHandler` → gerendertes `error.html` mit korrektem HTTP-Status (`NotFoundException`→404, `IllegalArgumentException`→400, `IllegalStateException`→409, `AccessDeniedException`→403).
 - **Mass-Assignment-Defense**: Update-Pfade identifizieren Ressourcen über URL-Path-Variable, niemals über Body-`id` (siehe Org-Update-Pattern: `POST /organisationen/{slug}` mit AccessControl-Check, `OrganisationFormDto` ohne `id`-Feld).
 - **AccessControl** ist die einzige Stelle für Org-Rollen-Checks. Controller rufen `accessControl.kannOrg…NachSlug(slug, auth)` programmatisch auf, werfen `AccessDeniedException` bei `false`.
@@ -59,13 +59,13 @@
 
 ## Infrastruktur
 
-Vollständige IaC-Doku: [`infra/README.md`](../infra/README.md). Zwei Cloud-Zonen, drei Pfade:
+Vollständige IaC-Doku: [`infra/README.md`](../../../infra/README.md). Zwei Cloud-Zonen, drei Pfade:
 
 | Pfad | Wann | Doku |
 |---|---|---|
-| Manuell (OCI) | Erst-Setup, Debugging | [`infra/staging-free/README.md`](../infra/staging-free/README.md) — OCI-VM mit der Hand bootstrappen |
-| Terraform (OCI) | Reproduzierbar | [`infra/envs/staging-free/README.md`](../infra/envs/staging-free/README.md) — VCN + VM + Buckets + IAM |
-| Terraform (Azure) | Zweite Zone — Warm-DR | [`infra/envs/azure-staging/README.md`](../infra/envs/azure-staging/README.md) — VNet + VM + Flex-Postgres + ACR + Blob + MSI |
+| Manuell (OCI) | Erst-Setup, Debugging | [`infra/staging-free/README.md`](../../../infra/staging-free/README.md) — OCI-VM mit der Hand bootstrappen |
+| Terraform (OCI) | Reproduzierbar | [`infra/envs/staging-free/README.md`](../../../infra/envs/staging-free/README.md) — VCN + VM + Buckets + IAM |
+| Terraform (Azure) | Zweite Zone — Warm-DR | [`infra/envs/azure-staging/README.md`](../../../infra/envs/azure-staging/README.md) — VNet + VM + Flex-Postgres + ACR + Blob + MSI |
 
 Beim Terraform-Pfad bootstrappt `cloud-init.yaml.tftpl` Docker, schreibt `docker-compose.yml` + `Caddyfile` ins `/opt/sponsorplatz/`-Verzeichnis und startet den Stack via systemd. Spätere App-Updates kommen über die CD-Pipeline (`docker compose pull && up -d`), nicht über Terraform.
 
@@ -353,7 +353,7 @@ src/main/resources/
 ├── static/                               # CSS, Bilder
 └── messages_{de_CH,fr_CH,it_CH,en}.properties   # i18n-Bundles, ~600 Keys
 
-specs/                                    # technische Specs (aktiv gehalten)
+docs/bestand/specs/                                    # technische Specs (aktiv gehalten)
 ```
 
 ## Build & Run
@@ -388,7 +388,7 @@ docker compose --profile app up --build
 ## Cloud-Deployment
 
 **Zwei Zonen parallel** seit Phase 15.3 — Architektur-Entscheidung in
-[`docs/adr/0009-multi-cloud-azure-als-dr-zone.md`](../docs/adr/0009-multi-cloud-azure-als-dr-zone.md):
+[`docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md`](../adr/0009-multi-cloud-azure-als-dr-zone.md):
 
 | Zone | Rolle | Hostname | Profil |
 |---|---|---|---|
@@ -400,4 +400,4 @@ Beide Stacks:
 - Eigene DB + eigener Object/Blob-Storage. DB-Sync OCI→Azure heute via manuellen `pg_dump`-Restore über `/admin/backups`, Files via ZIP-Restore über `/admin/datei-backups`.
 - Audit-Einträge tragen `umgebung`-Marker (`oci-staging-free` / `azure-staging`), Sentry-Events tragen Tag `sponsorplatz.umgebung` — Cross-Cloud-Provenienz ist im UI + Dashboard sichtbar.
 
-Status der Multi-Cloud-Slices: siehe [`specs/ROADMAP.md`](ROADMAP.md) §15.3 — App-Schicht + Terraform + CD ✓, DNS-Failover via Cloudflare + automatische Cross-Replication + beidseitiger Smoke noch offen (Slices 5–7).
+Status der Multi-Cloud-Slices: siehe [`docs/bestand/specs/ROADMAP.md`](ROADMAP.md) §15.3 — App-Schicht + Terraform + CD ✓, DNS-Failover via Cloudflare + automatische Cross-Replication + beidseitiger Smoke noch offen (Slices 5–7).

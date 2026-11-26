@@ -689,7 +689,7 @@ Bootet eine echte Spring-Instanz auf RandomPort + HTTP-GETs gegen die Schlüssel
 Failsafe-Suite, läuft mit `mvn verify -P e2e -Dit.test=A11ySmokeIT`. Bootet Spring,
 fährt Playwright/Chromium hoch und injiziert axe-core inline (CSP-konform). Schlägt
 fehl bei neuen `serious`/`critical`-Befunden — bekannte Baseline-Findings in
-[`docs/a11y-bekannt.md`](../docs/a11y-bekannt.md).
+[`docs/a11y-bekannt.md`](../../a11y-bekannt.md).
 
 | ID | Test-Klasse | Beschreibung |
 |---|---|---|
@@ -819,7 +819,7 @@ fehl bei neuen `serious`/`critical`-Befunden — bekannte Baseline-Findings in
 
 ### 2-Faktor-Authentifizierung TOTP (AUTH-2FA) — Phase 13.2 Slice A
 
-> Spec [`specs/AUTH_2FA_TOTP.md`](AUTH_2FA_TOTP.md). Slice A deckt
+> Spec [`docs/bestand/specs/AUTH_2FA_TOTP.md`](AUTH_2FA_TOTP.md). Slice A deckt
 > TOTP-Setup, Backup-Codes + Audit-Eventing ab. Slice B (Login-Flow) +
 > Slice C (Admin-Pflicht + Reset) folgen separat.
 

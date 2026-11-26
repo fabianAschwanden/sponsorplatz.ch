@@ -76,9 +76,9 @@ unzip -q /tmp/structurizr-cli.zip -d ~/.structurizr/cli
 
 ## Bezug zu anderen Specs
 
-- [`docs/adr/0001-feature-folder-statt-schichten.md`](../adr/0001-feature-folder-statt-schichten.md) — warum Feature-Folder
-- [`docs/adr/0008-structurizr-fuer-c4-diagramme.md`](../adr/0008-structurizr-fuer-c4-diagramme.md) — Tool-Wahl
-- [`specs/TESTSTRATEGIE.md`](../../specs/TESTSTRATEGIE.md) §ARCH-06 — Feature-Folder-Zyklus-Freiheit
+- [`docs/bestand/adr/0001-feature-folder-statt-schichten.md`](../bestand/adr/0001-feature-folder-statt-schichten.md) — warum Feature-Folder
+- [`docs/bestand/adr/0008-structurizr-fuer-c4-diagramme.md`](../bestand/adr/0008-structurizr-fuer-c4-diagramme.md) — Tool-Wahl
+- [`docs/bestand/specs/TESTSTRATEGIE.md`](../bestand/specs/TESTSTRATEGIE.md) §ARCH-06 — Feature-Folder-Zyklus-Freiheit
   (statisch geprüft, das Diagramm visualisiert es)
 - [`CLAUDE.md`](../../CLAUDE.md) — Verzeichnisstruktur, die hier visuell abgebildet wird
 

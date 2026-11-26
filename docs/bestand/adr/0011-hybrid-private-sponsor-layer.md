@@ -14,7 +14,7 @@ eingeloggten Benutzer sehen alle Daten", Edit-Rechte über `Mitgliedschaft`. Fü
 die **Discovery-Seite** (Marktplatz, öffentliche Vereinsprofile, geteilte
 Sponsor-Stammdaten als Datenqualitäts-Vorteil) ist das richtig und bleibt es.
 
-Die CRM-Lücken-Analyse ([`specs/CRM-LUECKEN.md`](../../specs/CRM-LUECKEN.md))
+Die CRM-Lücken-Analyse ([`docs/bestand/specs/CRM-LUECKEN.md`](../specs/CRM-LUECKEN.md))
 zeigt aber: Sobald ein Unternehmen sein Portfolio gesponsorter Vereine
 **professionell verwalten** will (Pipeline, Account-Notizen, Forecast-Beträge,
 Win/Loss-Gründe, Kontakt-Historie), kollidiert das frontal mit dem
@@ -84,4 +84,4 @@ Zwei Wege standen zur Wahl:
    der die Isolation beweist (Folge-Schritt).
 4. ArchUnit-Regel „CRM-Repos nur mit Sponsor-Scope" sobald das Package existiert.
 
-Siehe [`specs/CRM-LUECKEN.md`](../../specs/CRM-LUECKEN.md) §Vorgehens-Vorschlag.
+Siehe [`docs/bestand/specs/CRM-LUECKEN.md`](../specs/CRM-LUECKEN.md) §Vorgehens-Vorschlag.

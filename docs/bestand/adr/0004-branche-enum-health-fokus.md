@@ -74,8 +74,8 @@ Technische Umsetzung:
 
 ## Referenzen
 
-- [`specs/PROJEKT_INFO.md`](../../specs/PROJEKT_INFO.md) §Positionierung
-- [`specs/DATENMODELL.md`](../../specs/DATENMODELL.md) — `organisation.branche` mit V12-CHECK
+- [`docs/bestand/specs/PROJEKT_INFO.md`](../specs/PROJEKT_INFO.md) §Positionierung
+- [`docs/bestand/specs/DATENMODELL.md`](../specs/DATENMODELL.md) — `organisation.branche` mit V12-CHECK
 - `00_Konzept_v3_Kollaborative-Plattform.md` Schlüssel-Entscheidung 2
 - `07_Marketing_Konzept.md` v1.1 — Marketing-Konsequenzen der Schärfung
 - Test-IDs ORG-22/23 — Branche-Pflicht + alle elf akzeptiert

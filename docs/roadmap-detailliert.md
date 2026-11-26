@@ -36,7 +36,7 @@ Pre-Flight ──→ Phase 0 ──→ Phase 1 ──→ Phase 2 ──→ Phase
 Jede Iteration liefert lauffähigen, getesteten Code. Master/Main bleibt jederzeit deploybar. Feature-Branches ≤ 5 Tage Lebensdauer. Pull-Requests werden gegen die `.instructions.md`-Standards geprüft (Clean Code, TDD, Spec-Update).
 
 **Definition of Done (pro Iteration):**
-- [ ] Spec in `specs/` aktualisiert
+- [ ] Spec in `docs/bestand/specs/` aktualisiert
 - [ ] Tests geschrieben **und** vorher rot gewesen
 - [ ] `mvn test` grün (alle Tests, nicht nur neue)
 - [ ] Code-Review durchgeführt
@@ -91,7 +91,7 @@ Jede Iteration liefert lauffähigen, getesteten Code. Master/Main bleibt jederze
 
 ### Iteration 0.1 — `Organisation`-Entity einführen (2 Tage)
 
-**Spec-Update:** Neue Datei `specs/PLATTFORM_DATENMODELL.md` anlegen. Erweitert `DATENMODELL.md` um Organisation-Konzept. Dokumentiert `Organisation`-Entity, Felder, Status-Werte.
+**Spec-Update:** Neue Datei `docs/bestand/specs/PLATTFORM_DATENMODELL.md` anlegen. Erweitert `DATENMODELL.md` um Organisation-Konzept. Dokumentiert `Organisation`-Entity, Felder, Status-Werte.
 
 **Tests (red):**
 - `OrganisationRepositoryTest` — `@DataJpaTest`, prüft Persistierung, Slug-Uniqueness, Default-Status `PENDING`
@@ -134,7 +134,7 @@ Jede Iteration liefert lauffähigen, getesteten Code. Master/Main bleibt jederze
 
 ### Iteration 0.2 — `Mitgliedschaft`-Entity & `AccessControl`-Bean (2 Tage)
 
-**Spec-Update:** `specs/ROLLENKONZEPT.md` anlegen — übernimmt die Permission-Matrix aus `05_Rollenkonzept.md` (kompaktere Spec-Variante).
+**Spec-Update:** `docs/bestand/specs/ROLLENKONZEPT.md` anlegen — übernimmt die Permission-Matrix aus `05_Rollenkonzept.md` (kompaktere Spec-Variante).
 
 **Tests (red):**
 - `MitgliedschaftRepositoryTest` — Basis-CRUD, Unique-Constraint
@@ -168,7 +168,7 @@ Jede Iteration liefert lauffähigen, getesteten Code. Master/Main bleibt jederze
 
 ### Iteration 0.3 — Bestehende Entities mit `besitzer_organisation_id` ergänzen (2 Tage)
 
-**Spec-Update:** `specs/PLATTFORM_DATENMODELL.md` erweitern — Migrationsstrategie dokumentieren.
+**Spec-Update:** `docs/bestand/specs/PLATTFORM_DATENMODELL.md` erweitern — Migrationsstrategie dokumentieren.
 
 **Tests (red):**
 - `SponsorTest`, `ProjektTest`, `SaisonTest`, `EmailVorlageTest`, `KommunikationTest` — neues Feld `besitzerOrganisationId` ist nullable, Default beim Anlegen
@@ -223,7 +223,7 @@ Jede Iteration liefert lauffähigen, getesteten Code. Master/Main bleibt jederze
 
 ### Iteration 0.5 — Org-Auswahl in der UI (für Multi-Org-User) (2 Tage)
 
-**Spec-Update:** UI-Konzept in `specs/PLATTFORM_UI.md` — Header mit Org-Switcher.
+**Spec-Update:** UI-Konzept in `docs/bestand/specs/PLATTFORM_UI.md` — Header mit Org-Switcher.
 
 **Tests (red):**
 - `OrgSwitcherControllerTest` — Wechsel der aktiven Org speichert Session-Attribut
@@ -263,7 +263,7 @@ Jede Iteration liefert lauffähigen, getesteten Code. Master/Main bleibt jederze
 
 **Hintergrund:** OCI IAM Domains unterstützen Self-Reg nur eingeschränkt. Wir bauen ein lokales User-Schema **zusätzlich** zu OIDC. SCA-Mitarbeiter behalten OIDC-Login.
 
-**Spec-Update:** `specs/AUTHENTIFIZIERUNG.md` — Beide Auth-Pfade dokumentieren.
+**Spec-Update:** `docs/bestand/specs/AUTHENTIFIZIERUNG.md` — Beide Auth-Pfade dokumentieren.
 
 **Tests (red):**
 - `LocalUserRepositoryTest`
@@ -282,7 +282,7 @@ Jede Iteration liefert lauffähigen, getesteten Code. Master/Main bleibt jederze
 
 ### Iteration 1.2 — Verein-Self-Registration-Flow (2 Tage)
 
-**Spec-Update:** `specs/ONBOARDING.md` — Schritt-für-Schritt-Flow.
+**Spec-Update:** `docs/bestand/specs/ONBOARDING.md` — Schritt-für-Schritt-Flow.
 
 **Tests (red):**
 - `VereinRegistrierungsTest` — kompletter Flow: Form → User + Org + Mitgliedschaft anlegen
@@ -305,7 +305,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 1.4 — Org-Profil-Edit-Page (1 Tag)
 
-**Spec-Update:** `specs/PLATTFORM_UI.md` erweitern.
+**Spec-Update:** `docs/bestand/specs/PLATTFORM_UI.md` erweitern.
 
 **Tests (red):**
 - Permission: nur ORG_OWNER kann editieren
@@ -318,7 +318,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 1.5 — Plattform-Admin-Verifizierungs-Queue (2 Tage)
 
-**Spec-Update:** `specs/VERIFIZIERUNG.md` neu.
+**Spec-Update:** `docs/bestand/specs/VERIFIZIERUNG.md` neu.
 
 **Tests (red):**
 - `PlattformAdminControllerTest` — Liste sortiert nach `registriert_am DESC`, nur PLATFORM_ADMIN sieht es
@@ -336,7 +336,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 **Hintergrund:** Bestehender `ZefixClient` aus `service/cleanup/` wird für Verein-Verifizierung genutzt.
 
-**Spec-Update:** `specs/VERIFIZIERUNG.md` ergänzen — Zefix-Pfad.
+**Spec-Update:** `docs/bestand/specs/VERIFIZIERUNG.md` ergänzen — Zefix-Pfad.
 
 **Tests (red):**
 - `AutoVerifizierungServiceTest` — bei UID-Match → Status VERIFIED + zefix_uid gesetzt
@@ -351,7 +351,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 1.7 — Mitglieder-Einladungs-Flow (2 Tage)
 
-**Spec-Update:** `specs/MITGLIEDER.md` neu.
+**Spec-Update:** `docs/bestand/specs/MITGLIEDER.md` neu.
 
 **Tests (red):**
 - `EinladungsServiceTest` — Token, Verfall, Annahme
@@ -380,7 +380,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 2.1 — Projekt-Sichtbarkeit & Slug (2 Tage)
 
-**Spec-Update:** `specs/PROJEKTE.md` erweitern — neue Felder.
+**Spec-Update:** `docs/bestand/specs/PROJEKTE.md` erweitern — neue Felder.
 
 **Tests (red):**
 - `ProjektTest` — Sichtbarkeit-Default, Slug-Generierung, Slug-Eindeutigkeit
@@ -396,7 +396,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 2.2 — `SponsoringPaket`-Entity & CRUD (3 Tage)
 
-**Spec-Update:** `specs/SPONSORING_PAKETE.md` neu.
+**Spec-Update:** `docs/bestand/specs/SPONSORING_PAKETE.md` neu.
 
 **Tests (red):**
 - `SponsoringPaketRepositoryTest`, `SponsoringPaketServiceTest`
@@ -426,7 +426,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 2.4 — `MedienAsset`-Entity & FileStorage-Anbindung (3 Tage)
 
-**Spec-Update:** `specs/MEDIEN.md` neu.
+**Spec-Update:** `docs/bestand/specs/MEDIEN.md` neu.
 
 **Tests (red):**
 - `MedienAssetRepositoryTest`
@@ -443,7 +443,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 2.5 — Cover-Bild & Galerie & Pitch-Deck im Projekt-Wizard (3 Tage)
 
-**Spec-Update:** `specs/PROJEKTE.md` ergänzen.
+**Spec-Update:** `docs/bestand/specs/PROJEKTE.md` ergänzen.
 
 **Tests (red):**
 - `ProjektWizardTest` — Multi-Step-Form mit Medien-Upload
@@ -485,7 +485,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 3.1 — Public-Routes-Skeleton (2 Tage)
 
-**Spec-Update:** `specs/MARKTPLATZ.md` neu.
+**Spec-Update:** `docs/bestand/specs/MARKTPLATZ.md` neu.
 
 **Tests (red):**
 - `MarktplatzControllerTest` — anonymer Zugriff funktioniert (HTTP 200), nur OEFFENTLICH-Projekte erscheinen
@@ -526,7 +526,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 3.4 — SEO: Sitemap, Schema.org, Open Graph (2 Tage)
 
-**Spec-Update:** `specs/SEO.md` neu.
+**Spec-Update:** `docs/bestand/specs/SEO.md` neu.
 
 **Tests (red):**
 - `SitemapControllerTest` — XML-Format korrekt, alle OEFFENTLICH-Projekte enthalten
@@ -552,7 +552,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 3.6 — Performance & Caching (2 Tage)
 
-**Spec-Update:** `specs/PERFORMANCE.md` ergänzen.
+**Spec-Update:** `docs/bestand/specs/PERFORMANCE.md` ergänzen.
 
 **Tests (red):**
 - Lasttest mit JMeter / k6: Marktplatz-Liste mit 1000 Projekten < 300 ms
@@ -577,7 +577,7 @@ Analog zu 1.2, aber für `typ=UNTERNEHMEN` (oder STIFTUNG/ANDERE).
 
 ### Iteration 4.1 — `SponsoringAnfrage` & `Nachricht` (3 Tage)
 
-**Spec-Update:** `specs/ANFRAGEN.md` neu.
+**Spec-Update:** `docs/bestand/specs/ANFRAGEN.md` neu.
 
 **Tests (red):**
 - `SponsoringAnfrageRepositoryTest`, `SponsoringAnfrageServiceTest`
@@ -742,7 +742,7 @@ Diese Themen laufen kontinuierlich, nicht in einer einzelnen Iteration:
 ### 10.1 Dokumentation
 
 Nach jeder Iteration:
-- `specs/`-Dokument aktualisieren
+- `docs/bestand/specs/`-Dokument aktualisieren
 - `README.md` Routen-/Feature-Tabellen aktualisieren
 - `.instructions.md` Test-Anzahl aktualisieren
 
@@ -820,7 +820,7 @@ Nach jeder Iteration:
 | 2 | Tag 1 | Java 21 in `pom.xml` aktivieren, lokal `mvn clean test` |
 | 3 | Tag 2 | GitHub Issues mit Labels `phase-0`, `iteration-0.1` … `0.6` anlegen |
 | 4 | Tag 2 | Branch `feature/plattform-phase-0-org-entity` erstellen |
-| 5 | Tag 2 | `specs/PLATTFORM_DATENMODELL.md` mit Organisation-Section schreiben |
+| 5 | Tag 2 | `docs/bestand/specs/PLATTFORM_DATENMODELL.md` mit Organisation-Section schreiben |
 | 6 | Tag 3 | `OrganisationRepositoryTest` (red) schreiben |
 | 7 | Tag 3 | `Organisation`-Entity + Repository implementieren (green) |
 | 8 | Tag 3 | Flyway `V8__create_organisation.sql` schreiben + lokal testen |
@@ -839,7 +839,7 @@ Am Ende von Phase 4 ist die Plattform MVP-fertig, wenn:
 3. ✅ Mind. 5 Sponsoren-Orgs haben sich registriert.
 4. ✅ Mind. 10 Anfragen wurden erfolgreich gestellt — davon 3+ angenommen.
 5. ✅ Test-Suite hat 80+ Test-Klassen, 95%+ Coverage in Service-Schicht.
-6. ✅ Alle Specs unter `specs/` sind aktuell.
+6. ✅ Alle Specs unter `docs/bestand/specs/` sind aktuell.
 7. ✅ Staging und Production sind synchronisiert mit Phase-4-Stand.
 8. ✅ DSG-Datenexport und Lösch-Workflow funktionieren.
 9. ✅ Marktplatz lädt < 300 ms p95.

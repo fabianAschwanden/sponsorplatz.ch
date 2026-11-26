@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests für {@link OpsAlertJob} — Schwellen-Check + Throttling.
  *
- * Test-IDs: OPS-04..07 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: OPS-04..07 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

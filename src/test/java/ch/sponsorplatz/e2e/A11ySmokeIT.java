@@ -64,7 +64,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Liegt im {@code e2e}-Paket, läuft via {@code mvn verify -P e2e -Dit.test=A11ySmokeIT}.
  *
- * <p>Test-IDs: A11Y-01..06 (public) + A11Y-07..10 (auth) in {@code specs/TESTSTRATEGIE.md}.
+ * <p>Test-IDs: A11Y-01..06 (public) + A11Y-07..10 (auth) in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = "server.port=18086")

@@ -1,7 +1,7 @@
 # Konzept-Dokumente (Hintergrund)
 
 Dieser Ordner enthält die ausgearbeiteten Konzept-Dokumente aus der Planungsphase.
-Die `specs/`-Dateien sind die **aktiven** Implementierungs-Spezifikationen — diese hier sind der erweiterte Kontext.
+Die `docs/bestand/specs/`-Dateien sind die **aktiven** Implementierungs-Spezifikationen — diese hier sind der erweiterte Kontext.
 
 | Datei | Inhalt |
 |---|---|
@@ -12,8 +12,8 @@ Die `specs/`-Dateien sind die **aktiven** Implementierungs-Spezifikationen — d
 | [`naming.md`](naming.md) | Namens-Findung, warum Sponsorplatz, Trademark-Validierung |
 | [`Pitch_Sponsorplatz.pptx`](Pitch_Sponsorplatz.pptx) | 8-Slide-Elevator-Pitch |
 
-## Verhältnis zu `specs/`
+## Verhältnis zu `docs/bestand/specs/`
 
-- `specs/` enthält **kompakte Implementierungs-Specs** — was *jetzt* zählt für den Code
+- `docs/bestand/specs/` enthält **kompakte Implementierungs-Specs** — was *jetzt* zählt für den Code
 - `docs/` enthält **erweiterten Kontext** — Vision, Strategie, „Warum"
-- Bei Konflikt: `specs/` gewinnt (das ist die Quelle der Wahrheit für die Codebase)
+- Bei Konflikt: `docs/bestand/specs/` gewinnt (das ist die Quelle der Wahrheit für die Codebase)

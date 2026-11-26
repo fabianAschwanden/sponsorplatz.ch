@@ -87,7 +87,7 @@ amortisiert sich.
 
 ## Referenzen
 
-- [`specs/SPONSORING_ZAHLUNGSFLUSS.md`](../../specs/SPONSORING_ZAHLUNGSFLUSS.md) §4 Swiss-QR-Bill Compliance
+- [`docs/bestand/specs/SPONSORING_ZAHLUNGSFLUSS.md`](../specs/SPONSORING_ZAHLUNGSFLUSS.md) §4 Swiss-QR-Bill Compliance
 - [Six Group Implementation Guidelines QR-Bill v2.2](https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/ig-qr-bill-de.pdf)
 - [Six Group Style Guide QR-Bill](https://www.six-group.com/dam/download/banking-services/standardization/qr-bill/style-guide-de.pdf)
 - [OpenHTMLtoPDF](https://github.com/danfickle/openhtmltopdf)

@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
 /**
  * Unit-Tests für {@link DateiBackupService}.
  *
- * Test-IDs: DATEI-BACKUP-01..05 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: DATEI-BACKUP-01..05 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @ExtendWith(MockitoExtension.class)
 class DateiBackupServiceTest {

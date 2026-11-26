@@ -165,9 +165,9 @@ Wir bauen **Azure als zweite Zone** auf, initial im Modus **Warm-DR**:
 
 ## Referenzen
 
-- [`specs/ROADMAP.md`](../../specs/ROADMAP.md) — Phase 15.3
-- [`infra/staging-free/README.md`](../../infra/staging-free/README.md) — bestehender OCI-Stack
-- [`infra/envs/staging-free/`](../../infra/envs/staging-free/) — TF-Modul-Vorlage
+- [`docs/bestand/specs/ROADMAP.md`](../specs/ROADMAP.md) — Phase 15.3
+- [`infra/staging-free/README.md`](../../../infra/staging-free/README.md) — bestehender OCI-Stack
+- [`infra/envs/staging-free/`](../../../infra/envs/staging-free/) — TF-Modul-Vorlage
 - ADR-0001 (Feature-Folder) — begründet, warum die Storage-Abstraktion
   bereits sauber kapselbar ist
 - Tests: CLOUD-STO-AZ-01..06, CLOUD-BKP-AZ-01..04, BKP-X-01..03, SMOKE-MC-01..02

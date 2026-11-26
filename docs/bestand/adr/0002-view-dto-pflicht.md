@@ -42,7 +42,7 @@ Pro Entity gibt es einen `<Name>View`-Record mit:
 
 1. Java-`record` in `src/main/java/ch/sponsorplatz/<feature>/<Name>View.java`
 2. Statische Factory `von(entity)` und `von(List<entity>)`
-3. **Mapping-Test** `<Entity>ViewTest` mit Test-ID `VIEW-NN` in `specs/TESTSTRATEGIE.md`
+3. **Mapping-Test** `<Entity>ViewTest` mit Test-ID `VIEW-NN` in `docs/bestand/specs/TESTSTRATEGIE.md`
 4. Nur Felder, die tatsächlich gerendert werden (Defense in depth — kein
    `passwortHash`, kein `verifikationsToken`)
 
@@ -77,8 +77,8 @@ Update-Pfad identifiziert die Org via Slug aus URL, niemals via Body-`id`
 
 ## Referenzen
 
-- [`CLAUDE.md`](../../CLAUDE.md) §View-DTO-Pflicht
+- [`CLAUDE.md`](../../../CLAUDE.md) §View-DTO-Pflicht
 - ArchUnit-Regel ARCH-02 — Controller dürfen keine `@Entity`-Klassen referenzieren
 - ArchUnit-Regel ARCH-03 — `*View`-Klassen sind Records
-- VIEW-NN-Test-IDs in [`specs/TESTSTRATEGIE.md`](../../specs/TESTSTRATEGIE.md)
+- VIEW-NN-Test-IDs in [`docs/bestand/specs/TESTSTRATEGIE.md`](../specs/TESTSTRATEGIE.md)
 - K3-Fix: Mass-Assignment-Defense

@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Controller-Tests für {@link TwoFaLoginController}.
- * Test-IDs AUTH-2FA-10..11 in {@code specs/AUTH_2FA_TOTP.md}.
+ * Test-IDs AUTH-2FA-10..11 in {@code docs/bestand/specs/AUTH_2FA_TOTP.md}.
  */
 @WebMvcTest(controllers = TwoFaLoginController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})

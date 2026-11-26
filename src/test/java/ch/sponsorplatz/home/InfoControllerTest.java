@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Tests für statische Public-Pages (Impressum, Datenschutz, AGB).
  *
- * Test-IDs: INFO-01, INFO-02, PUB-03, PUB-04 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: INFO-01, INFO-02, PUB-03, PUB-04 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @WebMvcTest(InfoController.class)
 @Import({SecurityConfig.class, InfoControllerTest.MockBeans.class})

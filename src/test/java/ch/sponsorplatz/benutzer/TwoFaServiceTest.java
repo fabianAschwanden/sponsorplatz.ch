@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests für {@link TwoFaService} — Service-Schicht der 2-Faktor-
  * Authentifizierung. Test-IDs AUTH-2FA-S-01..06 in
- * {@code specs/AUTH_2FA_TOTP.md}.
+ * {@code docs/bestand/specs/AUTH_2FA_TOTP.md}.
  */
 class TwoFaServiceTest {
 

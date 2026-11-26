@@ -3,7 +3,7 @@
 > **Phase 15.3 — Multi-Cloud-DR.** Zweite Zone neben OCI Always-Free.
 > Initialer Modus: **Warm-DR** (Azure-Stack läuft, empfängt aber keinen
 > Produktiv-Traffic). Architektur-Entscheidung:
-> [`docs/adr/0009-multi-cloud-azure-als-dr-zone.md`](../../../docs/adr/0009-multi-cloud-azure-als-dr-zone.md).
+> [`docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md`](../../../docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md).
 
 ## Architektur
 
@@ -212,5 +212,5 @@ Löschung: erst Blobs purgen, dann destroy.
 
 - [`infra/staging-free/README.md`](../../staging-free/README.md) — bestehender OCI-Stack
 - [`infra/envs/staging-free/`](../staging-free/) — analoges Terraform-Modul für OCI
-- [`docs/adr/0009-multi-cloud-azure-als-dr-zone.md`](../../../docs/adr/0009-multi-cloud-azure-als-dr-zone.md)
-- [`specs/ROADMAP.md`](../../../specs/ROADMAP.md) — Phase 15.3 Slice-Plan
+- [`docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md`](../../../docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md)
+- [`docs/bestand/specs/ROADMAP.md`](../../../docs/bestand/specs/ROADMAP.md) — Phase 15.3 Slice-Plan
