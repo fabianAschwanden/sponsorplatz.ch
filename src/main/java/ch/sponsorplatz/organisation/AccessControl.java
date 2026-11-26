@@ -137,7 +137,7 @@ public class AccessControl {
     }
 
     private boolean istOeffentlichGeprueft(OrgStatus status) {
-        return status == OrgStatus.VERIFIED || status == OrgStatus.ACTIVE;
+        return status != null && status.istSichtbar();
     }
 
     private Optional<UUID> findeUserId(Authentication auth) {

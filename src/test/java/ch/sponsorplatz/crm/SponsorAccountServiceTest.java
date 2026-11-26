@@ -65,8 +65,7 @@ class SponsorAccountServiceTest {
     void portfolioMitZugriff() {
         when(accessControl.kannSponsorDatenSehen(sponsorOrgId, auth)).thenReturn(true);
         when(repository.findeOeffentlicheFuerSponsor(sponsorOrgId,
-                List.of(ch.sponsorplatz.organisation.OrgStatus.VERIFIED,
-                        ch.sponsorplatz.organisation.OrgStatus.ACTIVE)))
+                ch.sponsorplatz.organisation.OrgStatus.SICHTBAR))
                 .thenReturn(List.of(account("FC A", "fc-a"), account("FC B", "fc-b")));
 
         List<SponsorAccountView> portfolio = service.findePortfolio(sponsorOrgId, auth);
@@ -95,6 +94,7 @@ class SponsorAccountServiceTest {
         verein.setId(vereinOrgId);
         verein.setName("FC Neu");
         verein.setSlug("fc-neu");
+        verein.setTyp(ch.sponsorplatz.organisation.OrgTyp.VEREIN);
         verein.setStatus(ch.sponsorplatz.organisation.OrgStatus.ACTIVE);
         when(accessControl.kannSponsorDatenSehen(sponsorOrgId, auth)).thenReturn(true);
         when(repository.existsByBesitzerSponsorOrgIdAndVereinId(sponsorOrgId, vereinOrgId)).thenReturn(false);
@@ -120,6 +120,22 @@ class SponsorAccountServiceTest {
 
         assertThatThrownBy(() -> service.erstelle(sponsorOrgId, vereinOrgId, auth))
                 .isInstanceOf(IllegalArgumentException.class);
+        verify(repository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("erstelle nimmt keinen ungeprüften Verein ins CRM auf")
+    void erstelleLehntUngeprueftenVereinAb() {
+        Organisation verein = new Organisation();
+        verein.setId(vereinOrgId);
+        verein.setTyp(ch.sponsorplatz.organisation.OrgTyp.VEREIN);
+        verein.setStatus(ch.sponsorplatz.organisation.OrgStatus.PENDING);
+        when(accessControl.kannSponsorDatenSehen(sponsorOrgId, auth)).thenReturn(true);
+        when(repository.existsByBesitzerSponsorOrgIdAndVereinId(sponsorOrgId, vereinOrgId)).thenReturn(false);
+        when(organisationRepository.findById(vereinOrgId)).thenReturn(Optional.of(verein));
+
+        assertThatThrownBy(() -> service.erstelle(sponsorOrgId, vereinOrgId, auth))
+                .isInstanceOf(ch.sponsorplatz.shared.exception.NotFoundException.class);
         verify(repository, never()).save(any());
     }
 

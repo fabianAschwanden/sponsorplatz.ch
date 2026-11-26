@@ -22,6 +22,7 @@
             </div>
         </header>
 
+        <div th:if="${fehlermeldung != null}" class="app-meldung fehler" th:text="${fehlermeldung}"></div>
         <div th:if="${erfolgsMeldung != null}" class="app-meldung erfolg" th:text="${erfolgsMeldung}"></div>
 
         <div th:if="${#lists.isEmpty(pendingOrgs)}" class="app-empty">

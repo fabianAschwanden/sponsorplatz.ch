@@ -2,7 +2,6 @@ package ch.sponsorplatz.projekt;
 
 import ch.sponsorplatz.organisation.OrganisationService;
 import ch.sponsorplatz.organisation.AccessControl;
-import ch.sponsorplatz.organisation.OrgTyp;
 import ch.sponsorplatz.organisation.OrganisationView;
 import ch.sponsorplatz.shared.config.ModelAttributeNames;
 import ch.sponsorplatz.shared.exception.NotFoundException;
@@ -38,10 +37,6 @@ public class VereinProfilController {
         }
         OrganisationView org = orgService.findeViewNachSlug(slug)
                 .orElseThrow(() -> new NotFoundException("Verein nicht gefunden: " + slug));
-        if (org.typ() != OrgTyp.VEREIN) {
-            throw new NotFoundException("Verein nicht gefunden: " + slug);
-        }
-
         model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "vereine");
         model.addAttribute("org", org);
         model.addAttribute("projekte", projektService.findeOeffentlicheViewsNachOrg(org.id()));

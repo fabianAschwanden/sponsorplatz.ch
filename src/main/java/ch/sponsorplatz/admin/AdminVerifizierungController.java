@@ -1,10 +1,12 @@
 package ch.sponsorplatz.admin;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,9 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.context.i18n.LocaleContextHolder;
 
-import ch.sponsorplatz.audit.AuditAktion;
-import ch.sponsorplatz.audit.AuditService;
 import ch.sponsorplatz.benutzer.AppUserService;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationService;
@@ -36,15 +38,15 @@ import ch.sponsorplatz.shared.config.ModelAttributeNames;
 public class AdminVerifizierungController {
 
     private final OrganisationService organisationService;
-    private final AuditService auditService;
     private final AppUserService appUserService;
+    private final MessageSource messageSource;
 
     public AdminVerifizierungController(OrganisationService organisationService,
-                                        AuditService auditService,
-                                        AppUserService appUserService) {
+                                        AppUserService appUserService,
+                                        MessageSource messageSource) {
         this.organisationService = organisationService;
-        this.auditService = auditService;
         this.appUserService = appUserService;
+        this.messageSource = messageSource;
     }
 
     @GetMapping
@@ -62,24 +64,40 @@ public class AdminVerifizierungController {
                              @RequestParam Boolean bezugZurSchweiz,
                              @RequestParam Boolean angabenPlausibel,
                              @RequestParam(required = false) String grund,
-                             Authentication auth) {
+                             Authentication auth,
+                             RedirectAttributes redirect) {
+        if (!"VERIFIZIEREN".equals(entscheidung) && !"ABLEHNEN".equals(entscheidung)) {
+            throw new IllegalArgumentException("Ungültiger Prüfentscheid.");
+        }
         UUID benutzerId = appUserService.findeOptionalIdNachEmail(auth.getName())
                 .orElseThrow(() -> new IllegalStateException("Angemeldete Person nicht gefunden."));
         Pruefpunkte pruefpunkte = new Pruefpunkte(
                 sportOderGesundheit, bezugZurSchweiz, angabenPlausibel);
-        Organisation org;
-        String aktion;
         if ("VERIFIZIEREN".equals(entscheidung)) {
-            org = organisationService.verifiziere(id, pruefpunkte);
-            aktion = AuditAktion.VERIFIZIERT;
-        } else if ("ABLEHNEN".equals(entscheidung)) {
-            org = organisationService.lehnePruefungAb(id, grund, pruefpunkte);
-            aktion = AuditAktion.PRUEFUNG_ABGELEHNT;
-        } else {
-            throw new IllegalArgumentException("Ungültiger Prüfentscheid.");
+            if (!pruefpunkte.sindAlleBestaetigt()) {
+                redirect.addFlashAttribute(ModelAttributeNames.FEHLERMELDUNG,
+                        meldung("admin.verifizierungen.fehler.freigabe"));
+                return "redirect:/admin/verifizierungen";
+            }
         }
-        auditService.protokolliereMitBenutzer(aktion, "ORGANISATION", benutzerId, null,
-                id, "Organisation", pruefpunkte.protokollText());
+        try {
+            if ("VERIFIZIEREN".equals(entscheidung)) {
+                organisationService.verifiziere(id, pruefpunkte, benutzerId);
+            } else {
+                organisationService.lehnePruefungAb(id, grund, pruefpunkte, benutzerId);
+            }
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute(ModelAttributeNames.FEHLERMELDUNG,
+                    meldung("admin.verifizierungen.fehler.ablehnungsgrund"));
+        } catch (IllegalStateException ex) {
+            redirect.addFlashAttribute(ModelAttributeNames.FEHLERMELDUNG,
+                    meldung("admin.verifizierungen.fehler.entscheid"));
+        }
         return "redirect:/admin/verifizierungen";
+    }
+
+    private String meldung(String schluessel) {
+        Locale locale = LocaleContextHolder.getLocale();
+        return messageSource.getMessage(schluessel, null, locale);
     }
 }

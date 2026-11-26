@@ -67,7 +67,7 @@ public class MatchingService {
 
         List<Projekt> passende = projektRepository.findePassende(
                 eigeneBranchen, eigeneOrgIds, Sichtbarkeit.OEFFENTLICH,
-                Set.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+                OrgStatus.SICHTBAR);
 
         // Limitieren auf MAX
         return passende.stream().limit(MAX_EMPFEHLUNGEN).toList();

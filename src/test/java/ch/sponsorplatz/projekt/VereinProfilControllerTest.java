@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import ch.sponsorplatz.benutzer.SponsorplatzUserDetailsService;
 import ch.sponsorplatz.organisation.Branche;
 import ch.sponsorplatz.organisation.AccessControl;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.organisation.OrgTyp;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationService;
@@ -86,6 +87,22 @@ class VereinProfilControllerTest {
 
         mockMvc.perform(get("/vereine/gibts-nicht"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void gepruefteOrganisationAnderenTypsBleibtUeberVereinsprofilErreichbar() throws Exception {
+        Organisation organisation = new Organisation();
+        organisation.setId(UUID.randomUUID());
+        organisation.setName("Beispielorganisation");
+        organisation.setSlug("beispielorganisation");
+        organisation.setTyp(OrgTyp.UNTERNEHMEN);
+        organisation.setStatus(OrgStatus.VERIFIED);
+        when(orgService.findeViewNachSlug("beispielorganisation"))
+                .thenReturn(Optional.of(OrganisationView.von(organisation)));
+
+        mockMvc.perform(get("/vereine/beispielorganisation"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("projekt/verein-profil"));
     }
 
     /**

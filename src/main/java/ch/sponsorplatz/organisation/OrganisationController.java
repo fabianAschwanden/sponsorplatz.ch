@@ -250,7 +250,7 @@ public class OrganisationController {
         org = org.mitLogoUrl(logoLookup.findeLogoUrl(org.id()).orElse(null));
         model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "organisationen");
         model.addAttribute("org", org);
-        model.addAttribute("statusOk", org.status() == OrgStatus.ACTIVE || org.status() == OrgStatus.VERIFIED);
+        model.addAttribute("statusOk", org.status() != null && org.status().istSichtbar());
         model.addAttribute("kannEditieren", accessControl.kannOrgEditierenNachSlug(slug, auth));
         // CRM-Einstieg nur für Sponsor-Orgs (UNTERNEHMEN) und nur für Team-Mitglieder.
         model.addAttribute("kannCrmSehen",

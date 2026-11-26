@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.time.Instant;
 import java.util.List;
@@ -44,6 +45,9 @@ class AdminBenutzerControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private RequestMappingHandlerMapping handlerMapping;
 
     @MockitoBean
     private AppUserService appUserService;
@@ -149,6 +153,14 @@ class AdminBenutzerControllerTest {
         // konformer), schlägt der Test laut fehl statt still grün zu bleiben
         // (Mockito default = null für nicht-gemockte Methoden).
         verify(organisationService).alle();
+    }
+
+    @Test
+    @DisplayName("POST /admin/organisationen/{id}/verifizieren ist entfernt")
+    void verifizierenEndpunktIstEntfernt() {
+        org.assertj.core.api.Assertions.assertThat(handlerMapping.getHandlerMethods().keySet())
+                .noneMatch(mapping -> mapping.getPatternValues()
+                        .contains("/admin/organisationen/{id}/verifizieren"));
     }
 
     @Test

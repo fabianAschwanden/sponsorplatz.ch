@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
 import java.time.Duration;
 import java.util.List;
@@ -91,9 +92,33 @@ public class PruefungSteps {
         ausstehendeOrganisationErstellen();
     }
 
+    @Angenommen("eine ausstehende Organisation mit UID")
+    @Transactional
+    public void ausstehendeOrganisationMitUidErstellen() {
+        ausstehendeOrganisationErstellen();
+        Organisation org = organisationRepository.findById(ctx.daten("pruefOrgId")).orElseThrow();
+        org.setZefixUid("CHE-999.999.999");
+        organisationRepository.saveAndFlush(org);
+    }
+
     @Wenn("die Verwaltung alle drei Prüfpunkte bestätigt")
     public void pruefentscheidErteilen() {
         entscheide("VERIFIZIEREN", null);
+    }
+
+    @Wenn("die Verwaltung bei einem Prüfpunkt Nein auswählt und freigeben will")
+    public void freigabeMitNeinVersuchen() {
+        mailVersand.leere();
+        TestingAuthenticationToken auth = new TestingAuthenticationToken(
+                E2EFixtures.SPONSOR_EMAIL, "test", "ROLE_PLATFORM_ADMIN");
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        try {
+            adminVerifizierungController.entscheide(
+                    ctx.daten("pruefOrgId"), "VERIFIZIEREN", true, false, true, null, auth,
+                    new RedirectAttributesModelMap());
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @Wenn("die Verwaltung sie mit einem Ablehnungsgrund ablehnt")
@@ -156,6 +181,22 @@ public class PruefungSteps {
                 .get().extracting(Organisation::getZefixUid).isNull();
     }
 
+    @Dann("ist die UID der Organisation gespeichert")
+    public void uidIstGespeichert() {
+        assertThat(organisationRepository.findById(ctx.daten("pruefOrgId")))
+                .get().extracting(Organisation::getZefixUid).isEqualTo("CHE-999.999.999");
+    }
+
+    @Dann("bleibt die Organisation ungeprüft und ohne Prüfprotokoll")
+    public void organisationBleibtUngeprueft() {
+        UUID orgId = ctx.daten("pruefOrgId");
+        assertThat(organisationRepository.findById(orgId))
+                .get().extracting(Organisation::getStatus).isEqualTo(OrgStatus.PENDING);
+        assertThat(auditLogRepository.findByBereichOrderByZeitpunktDesc("ORGANISATION"))
+                .noneMatch(log -> orgId.equals(log.getZielId()));
+        assertThat(mailVersand.nachrichten()).isEmpty();
+    }
+
     @Dann("enthält das Protokoll die entscheidende Person und den Zeitpunkt")
     public void protokollEnthaeltPersonUndZeitpunkt() {
         AuditLog log = warteAufPruefprotokoll();
@@ -189,7 +230,8 @@ public class PruefungSteps {
         SecurityContextHolder.getContext().setAuthentication(auth);
         try {
             adminVerifizierungController.entscheide(
-                    ctx.daten("pruefOrgId"), entscheid, true, true, true, grund, auth);
+                    ctx.daten("pruefOrgId"), entscheid, true, true, true, grund, auth,
+                    new RedirectAttributesModelMap());
         } finally {
             SecurityContextHolder.clearContext();
         }

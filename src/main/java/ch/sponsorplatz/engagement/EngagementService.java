@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -102,7 +103,7 @@ public class EngagementService {
     public SchaufensterAnsicht findeSchaufenster(String slug, String kantonCode, Branche branche) {
         Organisation org = orgRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + slug));
-        if (!oeffentlicheOrgStati().contains(org.getStatus())) {
+        if (!org.getStatus().istSichtbar()) {
             throw new NotFoundException("Organisation nicht gefunden: " + slug);
         }
         List<EngagementView> alle = mitLogos(
@@ -112,7 +113,7 @@ public class EngagementService {
         return SchaufensterAnsicht.erstelle(org.getName(), slug, logoUrl, alle, kantonCode, branche);
     }
 
-    private List<OrgStatus> oeffentlicheOrgStati() {
-        return List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
+    private Set<OrgStatus> oeffentlicheOrgStati() {
+        return OrgStatus.SICHTBAR;
     }
 }

@@ -9,6 +9,12 @@ Funktionalität: Prüfung von Organisationen
     Wenn die Verwaltung alle drei Prüfpunkte bestätigt
     Dann enthält das Protokoll alle drei Prüfpunkte
 
+  @req-2.1
+  Szenario: Freigabe mit einem Nein bleibt aus
+    Angenommen eine ausstehende Organisation für die Prüfung
+    Wenn die Verwaltung bei einem Prüfpunkt Nein auswählt und freigeben will
+    Dann bleibt die Organisation ungeprüft und ohne Prüfprotokoll
+
   @req-2.2
   Szenario: Eine ungeprüfte Organisation und ihr Projekt bleiben verborgen
     Angenommen eine ausstehende Organisation mit einem öffentlichen Projekt
@@ -25,6 +31,11 @@ Funktionalität: Prüfung von Organisationen
   Szenario: Eine Organisation kann ohne UID gespeichert werden
     Angenommen eine ausstehende Organisation ohne UID
     Dann ist die Organisation ohne UID gespeichert
+
+  @req-2.4
+  Szenario: Eine Organisation mit UID wird gespeichert
+    Angenommen eine ausstehende Organisation mit UID
+    Dann ist die UID der Organisation gespeichert
 
   @req-2.5
   Szenario: Das Prüfprotokoll nennt entscheidende Person und Zeitpunkt

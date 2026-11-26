@@ -405,6 +405,7 @@ public class SponsoringAnfrageService {
     }
 
     private boolean istGeprueft(Organisation organisation) {
-        return organisation.getStatus() == OrgStatus.VERIFIED || organisation.getStatus() == OrgStatus.ACTIVE;
+        return organisation != null && organisation.getStatus() != null
+                && organisation.getStatus().istSichtbar();
     }
 }

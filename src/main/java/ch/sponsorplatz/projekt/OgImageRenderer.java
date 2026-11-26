@@ -53,7 +53,7 @@ public class OgImageRenderer {
     @Cacheable(value = CacheConfig.OG_IMAGES, key = "'verein:' + #slug")
     public byte[] rendereVerein(String slug) {
         Organisation org = orgRepository.findeOeffentlicheNachSlug(
-                        slug, List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))
+                        slug, OrgStatus.SICHTBAR)
                 .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + slug));
         // Menschen-lesbares Label statt Enum-Name (z.B. „Mentale Gesundheit"
         // statt „MENTAL_HEALTH"). Aktivieren via Branche.anzeige.
@@ -64,7 +64,7 @@ public class OgImageRenderer {
     @Cacheable(value = CacheConfig.OG_IMAGES, key = "'projekt:' + #slug")
     public byte[] rendereProjekt(String slug) {
         Projekt projekt = projektRepository.findeOeffentlichNachSlug(
-                        slug, Sichtbarkeit.OEFFENTLICH, List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))
+                        slug, Sichtbarkeit.OEFFENTLICH, OrgStatus.SICHTBAR)
                 .orElseThrow(() -> new NotFoundException("Projekt nicht gefunden: " + slug));
         // Branche aus der Org (visueller Tag oben rechts) + projekt-spezifische
         // Kategorie als Untertitel. Das ist der „Branche-Tag im OG-Image", der

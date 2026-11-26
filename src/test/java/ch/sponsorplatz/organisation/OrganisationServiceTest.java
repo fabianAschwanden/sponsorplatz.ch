@@ -16,7 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class OrganisationServiceTest {
@@ -235,13 +237,18 @@ class OrganisationServiceTest {
         when(mitgliedschaftRepository.findeEigentuemerNachOrg(id, Rolle.ORG_OWNER))
                 .thenReturn(List.of(eigentuemer("kontakt@example.ch")));
         when(repository.save(any(Organisation.class))).thenAnswer(inv -> inv.getArgument(0));
+        UUID benutzerId = UUID.randomUUID();
 
-        Organisation verifiziert = service.verifiziere(id, new Pruefpunkte(true, true, true));
+        Organisation verifiziert = service.verifiziere(
+                id, new Pruefpunkte(true, true, true), benutzerId);
 
         assertThat(verifiziert.getStatus()).isEqualTo(OrgStatus.VERIFIED);
         assertThat(verifiziert.getVerifiziertAm()).isNotNull();
         verify(eventPublisher).publishEvent(new OrganisationPruefentscheidEvent(
                 id, null, "kontakt@example.ch", true, null));
+        verify(eventPublisher).publishEvent(new OrganisationPruefprotokollEvent(
+                benutzerId, id, true,
+                "Sport/Gesundheit: Ja; Bezug zur Schweiz: Ja; Angaben plausibel: Ja"));
     }
 
     /** ADM-06: verifiziere bei nicht-PENDING → IllegalStateException. */
@@ -253,9 +260,31 @@ class OrganisationServiceTest {
         org.setStatus(OrgStatus.VERIFIED);
         when(repository.findById(id)).thenReturn(Optional.of(org));
 
-        assertThatThrownBy(() -> service.verifiziere(id, new Pruefpunkte(true, true, true)))
+        assertThatThrownBy(() -> service.verifiziere(id, new Pruefpunkte(true, true, true), UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("PENDING");
+    }
+
+    @Test
+    void verifiziereLehntJedenNeinPruefpunktOhneSeiteneffekteAb() {
+        UUID id = UUID.randomUUID();
+        Organisation org = new Organisation();
+        org.setId(id);
+        org.setStatus(OrgStatus.PENDING);
+        when(repository.findById(id)).thenReturn(Optional.of(org));
+
+        for (Pruefpunkte pruefpunkte : List.of(
+                new Pruefpunkte(false, true, true),
+                new Pruefpunkte(true, false, true),
+                new Pruefpunkte(true, true, false))) {
+            assertThatThrownBy(() -> service.verifiziere(id, pruefpunkte, UUID.randomUUID()))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("alle drei Prüfpunkte");
+            assertThat(org.getStatus()).isEqualTo(OrgStatus.PENDING);
+        }
+
+        verify(repository, never()).save(any(Organisation.class));
+        verifyNoInteractions(eventPublisher);
     }
 
     @Test
@@ -270,16 +299,21 @@ class OrganisationServiceTest {
                 .thenReturn(List.of(eigentuemer("kontakt@example.ch")));
         when(repository.save(any(Organisation.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThatThrownBy(() -> service.lehnePruefungAb(id, " ", new Pruefpunkte(true, false, true)))
+        UUID benutzerId = UUID.randomUUID();
+        assertThatThrownBy(() -> service.lehnePruefungAb(
+                id, " ", new Pruefpunkte(true, false, true), benutzerId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Grund");
 
         Organisation abgelehnt = service.lehnePruefungAb(id, "Angaben nicht plausibel",
-                new Pruefpunkte(true, false, true));
+                new Pruefpunkte(true, false, true), benutzerId);
 
         assertThat(abgelehnt.getStatus()).isEqualTo(OrgStatus.SUSPENDED);
         verify(eventPublisher).publishEvent(new OrganisationPruefentscheidEvent(
                 id, "Beispielverein", "kontakt@example.ch", false, "Angaben nicht plausibel"));
+        verify(eventPublisher).publishEvent(new OrganisationPruefprotokollEvent(
+                benutzerId, id, false,
+                "Sport/Gesundheit: Ja; Bezug zur Schweiz: Nein; Angaben plausibel: Ja; Ablehnungsgrund: Angaben nicht plausibel"));
     }
 
     /** ADM-07: suspendiere setzt Status SUSPENDED. */

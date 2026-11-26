@@ -17,6 +17,7 @@ import java.util.UUID;
 /**
  * Service für Audit-Logging. Schreibt alle relevanten Plattform-Aktionen
  * in die audit_log-Tabelle. Läuft asynchron, um die Business-Logik nicht zu blockieren.
+ * Prüfentscheide werden dagegen synchron in derselben Transaktion protokolliert.
  */
 @Service
 public class AuditService {
@@ -49,8 +50,7 @@ public class AuditService {
     /**
      * Protokolliert mit explizitem Benutzer (für Fälle wo SecurityContext nicht verfügbar ist).
      */
-    @Async
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void protokolliereMitBenutzer(String aktion, String bereich, UUID benutzerId,
                                           String benutzerEmail, UUID zielId, String zielTyp, String details) {
         AuditLog eintrag = new AuditLog();

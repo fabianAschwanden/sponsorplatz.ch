@@ -2,6 +2,7 @@ package ch.sponsorplatz.crm;
 
 import ch.sponsorplatz.organisation.AccessControl;
 import ch.sponsorplatz.organisation.OrgStatus;
+import ch.sponsorplatz.organisation.OrgTyp;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
 import ch.sponsorplatz.shared.exception.NotFoundException;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -24,9 +24,6 @@ import java.util.UUID;
 @Service
 @Transactional
 public class SponsorAccountService {
-
-    private static final Collection<OrgStatus> OEFFENTLICHE_ORG_STATI =
-            List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
 
     private final SponsorAccountRepository repository;
     private final OrganisationRepository organisationRepository;
@@ -45,7 +42,7 @@ public class SponsorAccountService {
     public List<SponsorAccountView> findePortfolio(UUID sponsorOrgId, Authentication auth) {
         pruefeZugriff(sponsorOrgId, auth);
         return SponsorAccountView.von(
-                repository.findeOeffentlicheFuerSponsor(sponsorOrgId, OEFFENTLICHE_ORG_STATI));
+                repository.findeOeffentlicheFuerSponsor(sponsorOrgId, OrgStatus.SICHTBAR));
     }
 
     /** Einzel-Account für die Detail-Seite — Zugriff über den Mandanten-Key des Accounts. */
@@ -69,6 +66,10 @@ public class SponsorAccountService {
         }
         Organisation verein = organisationRepository.findById(vereinOrgId)
                 .orElseThrow(() -> new NotFoundException("Verein nicht gefunden: " + vereinOrgId));
+        if (verein.getTyp() != OrgTyp.VEREIN) {
+            throw new NotFoundException("Verein nicht gefunden.");
+        }
+        pruefeVereinSichtbar(verein);
 
         SponsorAccount account = new SponsorAccount();
         account.setBesitzerSponsorOrgId(sponsorOrgId);
@@ -174,6 +175,6 @@ public class SponsorAccountService {
     }
 
     private boolean istOeffentlich(Organisation verein) {
-        return verein != null && OEFFENTLICHE_ORG_STATI.contains(verein.getStatus());
+        return verein != null && verein.getStatus() != null && verein.getStatus().istSichtbar();
     }
 }

@@ -32,9 +32,6 @@ public class CrmImportExportService {
 
     static final String HEADER = "verein_slug;verein_name;status;tier;pipeline_stage;forecast_chf;notiz";
     private static final String BOM = "﻿";
-    private static final List<OrgStatus> OEFFENTLICHE_ORG_STATI =
-            List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
-
     /** Ergebnis eines Imports — Anzahl erstellt/aktualisiert + Fehlermeldungen je Zeile. */
     public record ImportErgebnis(int erstellt, int aktualisiert, List<String> fehler) {
         public int total() {
@@ -63,7 +60,7 @@ public class CrmImportExportService {
         pruefeZugriff(sponsorOrgId, auth);
         StringBuilder sb = new StringBuilder(BOM).append(HEADER).append("\r\n");
         for (SponsorAccount a : accountRepository.findeOeffentlicheFuerSponsor(
-                sponsorOrgId, OEFFENTLICHE_ORG_STATI)) {
+                sponsorOrgId, OrgStatus.SICHTBAR)) {
             sb.append(Csv.zeile(List.of(
                     a.getVerein().getSlug(),
                     a.getVerein().getName(),
@@ -125,7 +122,7 @@ public class CrmImportExportService {
         if (verein.getTyp() != OrgTyp.VEREIN) {
             throw new ImportZeilenFehler("Organisation ist kein Verein: " + slug);
         }
-        if (!OEFFENTLICHE_ORG_STATI.contains(verein.getStatus())) {
+        if (verein.getStatus() == null || !verein.getStatus().istSichtbar()) {
             throw new ImportZeilenFehler("Verein nicht gefunden: " + slug);
         }
 

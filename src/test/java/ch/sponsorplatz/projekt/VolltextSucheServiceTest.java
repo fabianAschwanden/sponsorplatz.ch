@@ -4,12 +4,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -81,6 +86,26 @@ class VolltextSucheServiceTest {
 
         verify(jdbc).queryForList(any(String.class), eq(java.util.UUID.class),
                 eq("OEFFENTLICH"), eq("fussball"), eq("fussball"), eq("fussball"));
+    }
+
+    @Test
+    @DisplayName("VTS-PG-05: SQL-Sichtbarkeitsstatus stimmen mit OrgStatus.SICHTBAR überein")
+    void postgresStatusLiteralEntsprichtSichtbarerMenge() {
+        ReflectionTestUtils.setField(service, "datasourceUrl",
+                "jdbc:postgresql://db:5432/sponsorplatz");
+        ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
+        when(jdbc.queryForList(sqlCaptor.capture(), eq(java.util.UUID.class),
+                any(), any(), any(), any())).thenReturn(List.of());
+
+        service.suchen("verein");
+
+        Matcher matcher = Pattern.compile("o\\.status IN \\(([^)]+)\\)").matcher(sqlCaptor.getValue());
+        assertThat(matcher.find()).isTrue();
+        Set<String> sqlStati = Pattern.compile("'([^']+)'").matcher(matcher.group(1))
+                .results().map(result -> result.group(1)).collect(Collectors.toSet());
+        Set<String> sichtbareStati = ch.sponsorplatz.organisation.OrgStatus.SICHTBAR.stream()
+                .map(Enum::name).collect(Collectors.toSet());
+        assertThat(sqlStati).isEqualTo(sichtbareStati);
     }
 
     @Test

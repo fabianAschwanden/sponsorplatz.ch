@@ -62,14 +62,14 @@ class OgImageRendererCacheTest {
         org.setSlug("fc-test");
         org.setBranche(Branche.SPORT);
         when(organisationRepository.findeOeffentlicheNachSlug(
-                "fc-test", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))).thenReturn(Optional.of(org));
+                "fc-test", OrgStatus.SICHTBAR)).thenReturn(Optional.of(org));
 
         byte[] erst = renderer.rendereVerein("fc-test");
         byte[] zweit = renderer.rendereVerein("fc-test");
 
         assertThat(erst).isEqualTo(zweit);
         verify(organisationRepository, times(1)).findeOeffentlicheNachSlug(
-                "fc-test", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+                "fc-test", OrgStatus.SICHTBAR);
     }
 
     @Test
@@ -80,7 +80,7 @@ class OgImageRendererCacheTest {
         org.setSlug("doppelter-slug");
         org.setBranche(Branche.REHA);
         when(organisationRepository.findeOeffentlicheNachSlug(
-                "doppelter-slug", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))).thenReturn(Optional.of(org));
+                "doppelter-slug", OrgStatus.SICHTBAR)).thenReturn(Optional.of(org));
 
         Projekt projekt = new Projekt();
         projekt.setName("Doppelter Slug — Projekt");
@@ -88,7 +88,7 @@ class OgImageRendererCacheTest {
         projekt.setKategorie("Sport");
         when(projektRepository.findeOeffentlichNachSlug(
                 "doppelter-slug", Sichtbarkeit.OEFFENTLICH,
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE))).thenReturn(Optional.of(projekt));
+                OrgStatus.SICHTBAR)).thenReturn(Optional.of(projekt));
 
         renderer.rendereVerein("doppelter-slug");
         renderer.rendereProjekt("doppelter-slug");
@@ -96,10 +96,10 @@ class OgImageRendererCacheTest {
         // Beide haben denselben Slug, aber unterschiedliche Cache-Keys (verein:* vs projekt:*)
         // → BEIDE Repos werden je 1x getroffen, KEIN unbeabsichtigter Cache-Hit
         verify(organisationRepository, times(1)).findeOeffentlicheNachSlug(
-                "doppelter-slug", List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+                "doppelter-slug", OrgStatus.SICHTBAR);
         verify(projektRepository, times(1)).findeOeffentlichNachSlug(
                 "doppelter-slug", Sichtbarkeit.OEFFENTLICH,
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+                OrgStatus.SICHTBAR);
     }
 
     @Test

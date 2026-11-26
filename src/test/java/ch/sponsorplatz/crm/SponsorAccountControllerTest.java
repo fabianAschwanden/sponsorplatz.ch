@@ -12,6 +12,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -38,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SponsorAccountControllerTest {
 
     @Autowired private MockMvc mockMvc;
+    @Autowired private RequestMappingHandlerMapping handlerMapping;
 
     @MockitoBean private SponsorAccountService accountService;
     @MockitoBean private KontaktPersonService kontaktService;
@@ -132,7 +135,10 @@ class SponsorAccountControllerTest {
         when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
 
         mockMvc.perform(get("/crm/muster/neu"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("vereinOrgId")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("verein-anlegen"))));
     }
 
     /** CRM-CTRL-07: Export liefert CSV-Download mit Content-Disposition. */
@@ -170,76 +176,13 @@ class SponsorAccountControllerTest {
                 .andExpect(status().isOk());
     }
 
-    /**
-     * CRM-CTRL-12: Verein inline neu anlegen (Name + Branche Pflicht) → Org wird
-     * als VEREIN erstellt und sofort als Account ins Portfolio aufgenommen.
-     */
+    /** CRM-CTRL: Das CRM bietet keinen Endpunkt zur Inline-Anlage von Vereinen mehr. */
     @Test
     @WithMockUser
-    void vereinAnlegenErstelltOrgUndAccount() throws Exception {
-        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
-        UUID neueVereinId = UUID.randomUUID();
-        when(organisationService.erstelleAlsView(any())).thenReturn(
-                new ch.sponsorplatz.organisation.OrganisationView(
-                        neueVereinId, "FC Neu", "fc-neu", ch.sponsorplatz.organisation.OrgTyp.VEREIN,
-                        null, null, null, null, null, null, null, null, null, null, null, null));
-
-        mockMvc.perform(post("/crm/muster/verein-anlegen").with(csrf())
-                        .param("typ", "VEREIN")
-                        .param("name", "FC Neu")
-                        .param("branche", "SPORT"))
-                .andExpect(status().is3xxRedirection());
-
-        // Org als VEREIN erstellt …
-        org.mockito.ArgumentCaptor<ch.sponsorplatz.organisation.OrganisationFormDto> dto =
-                org.mockito.ArgumentCaptor.forClass(ch.sponsorplatz.organisation.OrganisationFormDto.class);
-        org.mockito.Mockito.verify(organisationService).erstelleAlsView(dto.capture());
-        org.assertj.core.api.Assertions.assertThat(dto.getValue().getTyp())
-                .isEqualTo(ch.sponsorplatz.organisation.OrgTyp.VEREIN);
-        org.assertj.core.api.Assertions.assertThat(dto.getValue().getName()).isEqualTo("FC Neu");
-        // … und sofort als Account verknüpft.
-        org.mockito.Mockito.verify(accountService).erstelle(eq(sponsorOrgId), eq(neueVereinId), any());
-    }
-
-    /**
-     * CRM-CTRL-13: Fehlt die Pflicht-Branche, schlägt der Service mit
-     * IllegalArgumentException fehl → Controller zeigt das Formular erneut (kein 500),
-     * KEIN Account wird angelegt.
-     */
-    @Test
-    @WithMockUser
-    void vereinAnlegenOhneBrancheZeigtFormularErneut() throws Exception {
-        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
-        when(organisationService.erstelleAlsView(any()))
-                .thenThrow(new IllegalArgumentException("Branche ist Pflicht für Vereine"));
-
-        mockMvc.perform(post("/crm/muster/verein-anlegen").with(csrf())
-                        .param("typ", "VEREIN")
-                        .param("name", "FC Ohne Branche"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Branche ist Pflicht")));
-
-        org.mockito.Mockito.verify(accountService, org.mockito.Mockito.never())
-                .erstelle(any(), any(), any());
-    }
-
-    /**
-     * CRM-CTRL-14: Das /neu-Formular muss das versteckte Typ-Feld mit value="VEREIN"
-     * rendern — sonst sendet der Browser typ leer und @Valid scheitert an @NotNull,
-     * das Formular lädt kommentarlos neu ("hat nicht geklappt"). Regressionsschutz.
-     */
-    @Test
-    @WithMockUser
-    void neuFormularRendertTypVerein() throws Exception {
-        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
-
-        var html = mockMvc.perform(get("/crm/muster/neu"))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        // Das gebundene Hidden-Feld muss den Typ tragen (Reihenfolge der Attribute
-        // ist Thymeleaf-abhängig, daher beide Teilstrings prüfen).
-        org.assertj.core.api.Assertions.assertThat(html).contains("name=\"typ\"");
-        org.assertj.core.api.Assertions.assertThat(html).contains("value=\"VEREIN\"");
+    void inlineAnlageEndpunktExistiertNicht() {
+        assertThat(handlerMapping.getHandlerMethods().keySet())
+                .noneMatch(mapping -> mapping.getPatternValues()
+                        .contains("/crm/{sponsorSlug}/verein-anlegen"));
     }
 
     /** CRM-CTRL-11: Bulk-Status (kodiert status:AKTIV) → an Service delegiert + Redirect. */

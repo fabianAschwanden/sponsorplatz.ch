@@ -248,8 +248,7 @@ public class ProjektService {
         if (projekt.getSichtbarkeit() == Sichtbarkeit.OEFFENTLICH) {
             throw new IllegalStateException("Projekt ist bereits öffentlich");
         }
-        if (projekt.getOrg().getStatus() != OrgStatus.VERIFIED
-                && projekt.getOrg().getStatus() != OrgStatus.ACTIVE) {
+        if (!projekt.getOrg().getStatus().istSichtbar()) {
             throw new IllegalStateException("Eine ungeprüfte Organisation kann keine Projekte veröffentlichen.");
         }
 
@@ -265,8 +264,8 @@ public class ProjektService {
         repository.save(projekt);
     }
 
-    private List<OrgStatus> oeffentlicheOrgStati() {
-        return List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
+    private Collection<OrgStatus> oeffentlicheOrgStati() {
+        return OrgStatus.SICHTBAR;
     }
 }
 

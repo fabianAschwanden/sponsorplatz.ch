@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Collection;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -68,6 +69,7 @@ public class VolltextSucheService {
                 WHERE p.sichtbarkeit = ?
                   AND (p.tsvektor @@ plainto_tsquery('german', ?)
                        OR LOWER(o.name) LIKE LOWER('%' || ? || '%'))
+                  -- Keep in sync with OrgStatus.SICHTBAR.
                   AND o.status IN ('VERIFIED', 'ACTIVE')
                 ORDER BY ts_rank_cd(p.tsvektor, plainto_tsquery('german', ?)) DESC,
                          p.veroeffentlicht_am DESC NULLS LAST
@@ -98,7 +100,7 @@ public class VolltextSucheService {
         return datasourceUrl != null && datasourceUrl.toLowerCase().contains("postgresql");
     }
 
-    private List<OrgStatus> oeffentlicheOrgStati() {
-        return List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
+    private Collection<OrgStatus> oeffentlicheOrgStati() {
+        return OrgStatus.SICHTBAR;
     }
 }

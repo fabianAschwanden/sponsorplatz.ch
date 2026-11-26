@@ -120,11 +120,6 @@ public class AdminBenutzerController {
         return "admin/organisationen";
     }
 
-    @PostMapping("/organisationen/{id}/verifizieren")
-    public String orgVerifizieren(@PathVariable UUID id) {
-        return "redirect:/admin/verifizierungen";
-    }
-
     @PostMapping("/organisationen/{id}/suspendieren")
     public String orgSuspendieren(@PathVariable UUID id, RedirectAttributes redirect) {
         if (organisationService.istPending(id)) {

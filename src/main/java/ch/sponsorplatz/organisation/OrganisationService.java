@@ -61,7 +61,7 @@ public class OrganisationService {
     @Transactional(readOnly = true)
     public List<OrganisationView> alleOeffentlicheViews() {
         return OrganisationView.von(repository.findByStatusInOrderByNameAsc(
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE)));
+                OrgStatus.SICHTBAR));
     }
 
     /** Slugs aller Orgs — für Sitemap, ohne Entity-Touch (ARCH-02). */
@@ -73,7 +73,7 @@ public class OrganisationService {
     @Transactional(readOnly = true)
     public List<String> alleOeffentlicheSlugs() {
         return repository.findByStatusInOrderByNameAsc(
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE)).stream()
+                OrgStatus.SICHTBAR).stream()
                 .map(Organisation::getSlug)
                 .toList();
     }
@@ -87,7 +87,7 @@ public class OrganisationService {
     @Transactional(readOnly = true)
     public List<OrganisationView> findeOeffentlicheUntergeordneteViews(UUID elternId) {
         return OrganisationView.von(repository.findByUebergeordneteOrgIdAndStatusInOrderByNameAsc(
-                elternId, List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE)));
+                elternId, OrgStatus.SICHTBAR));
     }
 
     /** View-Variante des Lookup-Mitgliedschaft-Pfads (Controller-Sortierung). */
@@ -114,7 +114,7 @@ public class OrganisationService {
     public List<Organisation> findeAktiveSponsoren() {
         return repository.findByTypAndStatusInOrderByNameAsc(
                 OrgTyp.UNTERNEHMEN,
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+                OrgStatus.SICHTBAR);
     }
 
     /** View-Variante — Controller braucht keine Entity-Liste (ARCH-02). */
@@ -130,7 +130,7 @@ public class OrganisationService {
     public List<OrganisationView> findeAktiveVereineAlsViews() {
         return OrganisationView.von(repository.findByTypAndStatusInOrderByNameAsc(
                 OrgTyp.VEREIN,
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE)));
+                OrgStatus.SICHTBAR));
     }
 
     @Transactional(readOnly = true)
@@ -484,9 +484,12 @@ public class OrganisationService {
      * @throws NotFoundException     wenn ID nicht existiert
      * @throws IllegalStateException wenn Status nicht PENDING
      */
-    public Organisation verifiziere(UUID id, Pruefpunkte pruefpunkte) {
+    public Organisation verifiziere(UUID id, Pruefpunkte pruefpunkte, UUID benutzerId) {
         if (pruefpunkte == null) {
             throw new IllegalArgumentException("Bitte alle drei Prüfpunkte festhalten.");
+        }
+        if (!pruefpunkte.sindAlleBestaetigt()) {
+            throw new IllegalArgumentException("Für eine Freigabe müssen alle drei Prüfpunkte bestätigt sein.");
         }
         Organisation org = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + id));
@@ -498,13 +501,15 @@ public class OrganisationService {
         org.setStatus(OrgStatus.VERIFIED);
         org.setVerifiziertAm(Instant.now(clock));
         Organisation gespeichert = repository.save(org);
+        eventPublisher.publishEvent(new OrganisationPruefprotokollEvent(
+                benutzerId, id, true, pruefpunkte.protokollText()));
         eventPublisher.publishEvent(new OrgStatusGewechseltEvent(gespeichert));
         eventPublisher.publishEvent(new OrganisationPruefentscheidEvent(
                 gespeichert.getId(), gespeichert.getName(), empfaengerEmail, true, null));
         return gespeichert;
     }
 
-    public Organisation lehnePruefungAb(UUID id, String grund, Pruefpunkte pruefpunkte) {
+    public Organisation lehnePruefungAb(UUID id, String grund, Pruefpunkte pruefpunkte, UUID benutzerId) {
         if (pruefpunkte == null) {
             throw new IllegalArgumentException("Bitte alle drei Prüfpunkte festhalten.");
         }
@@ -519,6 +524,9 @@ public class OrganisationService {
         String empfaengerEmail = findeKontaktEmail(org);
         org.setStatus(OrgStatus.SUSPENDED);
         Organisation gespeichert = repository.save(org);
+        eventPublisher.publishEvent(new OrganisationPruefprotokollEvent(
+                benutzerId, id, false,
+                pruefpunkte.protokollText() + "; Ablehnungsgrund: " + grund.trim()));
         eventPublisher.publishEvent(new OrgStatusGewechseltEvent(gespeichert));
         eventPublisher.publishEvent(new OrganisationPruefentscheidEvent(
                 gespeichert.getId(), gespeichert.getName(), empfaengerEmail, false, grund.trim()));
