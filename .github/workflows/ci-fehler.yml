@@ -6,7 +6,7 @@ name: CI-Fehler
 
 on:
   workflow_run:
-    workflows: [Secret-Scan, CI, Architektur-Diagramme]
+    workflows: [Secret-Scan, CI, Architektur-Diagramme, Infomaniak Deploy]
     types: [completed]
     branches: [main]
   workflow_dispatch:

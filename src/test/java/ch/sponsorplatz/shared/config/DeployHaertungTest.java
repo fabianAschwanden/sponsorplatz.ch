@@ -156,6 +156,9 @@ class DeployHaertungTest {
                 .as("Passwort-Hash kommt aus dem Bundle, nicht aus dem Repo")
                 .isEqualTo("${VORSCHAU_BENUTZER:-}");
         assertThat(labels.keySet()).noneMatch(k -> k.contains("usersfile"));
+        assertThat(labels.get("traefik.http.middlewares.sponsorplatz-vorschau.basicauth.removeheader"))
+                .as("Der Vorschau-Zugang erreicht die Anwendung nicht")
+                .isEqualTo("true");
     }
 
     @Test
