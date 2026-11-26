@@ -7,7 +7,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +26,16 @@ class AuditServiceTest {
     @Mock private AuditLogRepository repository;
 
     private AuditService service;
+
+    @Test
+    void protokolliereMitBenutzerBleibtAsynchronUndInEigenerTransaktion() throws NoSuchMethodException {
+        var methode = AuditService.class.getMethod("protokolliereMitBenutzer",
+                String.class, String.class, UUID.class, String.class, UUID.class, String.class, String.class);
+
+        assertThat(methode.getAnnotation(Async.class)).isNotNull();
+        assertThat(methode.getAnnotation(Transactional.class).propagation())
+                .isEqualTo(Propagation.REQUIRES_NEW);
+    }
 
     @BeforeEach
     void setUp() {

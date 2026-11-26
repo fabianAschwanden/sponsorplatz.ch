@@ -24,8 +24,8 @@ class OrganisationPruefprotokollListenerTest {
         listener.protokolliere(new OrganisationPruefprotokollEvent(
                 userId, organisationId, false, "Prüfpunkte; Ablehnungsgrund: Beispielgrund"));
 
-        verify(auditService).protokolliereMitBenutzer(AuditAktion.PRUEFUNG_ABGELEHNT,
-                "ORGANISATION", userId, null, organisationId, "Organisation",
+        verify(auditService).protokolliereInLaufenderTransaktion(AuditAktion.PRUEFUNG_ABGELEHNT,
+                "ORGANISATION", userId, organisationId, "Organisation",
                 "Prüfpunkte; Ablehnungsgrund: Beispielgrund");
     }
 }

@@ -18,7 +18,7 @@ public class OrganisationPruefprotokollListener {
         String aktion = event.freigegeben()
                 ? AuditAktion.VERIFIZIERT
                 : AuditAktion.PRUEFUNG_ABGELEHNT;
-        auditService.protokolliereMitBenutzer(aktion, "ORGANISATION", event.benutzerId(), null,
+        auditService.protokolliereInLaufenderTransaktion(aktion, "ORGANISATION", event.benutzerId(),
                 event.organisationId(), "Organisation", event.details());
     }
 }
