@@ -1,16 +1,12 @@
-# =============================================================================
-# Architektur-Diagramme automatisch rendern
-# =============================================================================
-# Quelle:     docs/architektur/workspace.dsl
-# Renderer:   Structurizr CLI (Mermaid + PlantUML Export)
-# Output:     docs/architektur/diagramme/*
+# Architektur-Diagramme: prüft docs/architektur/workspace.dsl und dass die Diagramme unter
+# docs/architektur/diagramme/ dazu passen.
 #
-# Trigger:
-#   - Push auf main mit Änderung an workspace.dsl → committe Diagramme zurück
-#   - Pull-Request mit Änderung an workspace.dsl → Validierung + Artifact
-#   - Manuell via GitHub-UI (workflow_dispatch)
-# =============================================================================
-
+# Der Workflow schreibt nichts ins Repo. Früher committete er die Diagramme nach dem Merge selbst auf main; das
+# umgeht die Regel «main nur über PR» und scheitert am Branch-Schutz. Wer workspace.dsl ändert, rendert lokal
+# (docs/architektur/README.md) und committet die Diagramme im selben PR.
+#
+# Structurizr CLI läuft ohne Netz: workspace.dsl lädt kein externes Theme mehr (static.structurizr.com ist nicht mehr
+# erreichbar, daran scheiterte der Workflow am 26.11.2026).
 name: Architektur-Diagramme
 
 on:
@@ -18,93 +14,60 @@ on:
     branches: [main]
     paths:
       - 'docs/architektur/workspace.dsl'
+      - 'docs/architektur/diagramme/**'
       - '.github/workflows/architektur-diagramme.yml'
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'docs/architektur/workspace.dsl'
+      - 'docs/architektur/diagramme/**'
+      - '.github/workflows/architektur-diagramme.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write   # für Auto-Commit auf main
+  contents: read
 
 jobs:
-  render:
-    runs-on: ubuntu-latest
+  pruefen:
+    name: DSL prüfen, Diagramme aktuell
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    env:
+      CLI_VERSION: v2024.12.07
+      CLI_SHA256: 3c22f0820f92496514030e7e99af234cac710ade373f157dd3dc8abe3bc7af37
     steps:
-      - name: Code auschecken
-        uses: actions/checkout@v4
-
-      - name: Java 25 einrichten
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          distribution: 'temurin'
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
           java-version: '25'
-
-      - name: Structurizr CLI herunterladen
+      - name: Structurizr CLI laden und prüfen
         run: |
-          mkdir -p "${RUNNER_TEMP}/structurizr"
-          cd "${RUNNER_TEMP}/structurizr"
-          # Pinning auf eine konkrete Release-Version — Auto-Update via Renovate/Dependabot
-          curl -sL -o structurizr-cli.zip \
-            https://github.com/structurizr/cli/releases/download/v2024.12.07/structurizr-cli.zip
-          unzip -q structurizr-cli.zip
-          ls -la
-
-      - name: Workspace validieren
+          mkdir -p "$RUNNER_TEMP/structurizr" && cd "$RUNNER_TEMP/structurizr"
+          curl -sSfL -o cli.zip "https://github.com/structurizr/cli/releases/download/${CLI_VERSION}/structurizr-cli.zip"
+          echo "${CLI_SHA256}  cli.zip" | sha256sum -c -
+          unzip -q cli.zip
+      - name: workspace.dsl prüfen
         run: |
-          "${RUNNER_TEMP}/structurizr/structurizr.sh" validate \
-            -workspace docs/architektur/workspace.dsl
-
-      - name: Diagramme rendern (Mermaid)
+          "$RUNNER_TEMP/structurizr/structurizr.sh" validate -workspace docs/architektur/workspace.dsl
+      - name: Diagramme rendern (Mermaid und PlantUML)
         run: |
-          mkdir -p docs/architektur/diagramme
-          "${RUNNER_TEMP}/structurizr/structurizr.sh" export \
-            -workspace docs/architektur/workspace.dsl \
-            -format mermaid \
-            -output docs/architektur/diagramme/
-
-      - name: Diagramme rendern (PlantUML — als Backup-Format)
+          mkdir -p "$RUNNER_TEMP/diagramme"
+          for format in mermaid plantuml/structurizr; do
+            "$RUNNER_TEMP/structurizr/structurizr.sh" export -workspace docs/architektur/workspace.dsl \
+              -format "$format" -output "$RUNNER_TEMP/diagramme"
+          done
+      - name: Diagramme im Repo sind aktuell
         run: |
-          "${RUNNER_TEMP}/structurizr/structurizr.sh" export \
-            -workspace docs/architektur/workspace.dsl \
-            -format plantuml/structurizr \
-            -output docs/architektur/diagramme/
-
-      - name: Übersichts-Index als Markdown generieren
-        run: |
-          cat > docs/architektur/diagramme/README.md <<'EOF'
-          # Generierte Architektur-Diagramme
-
-          **Diese Dateien werden von der CI automatisch generiert** —
-          Quelle ist `docs/architektur/workspace.dsl`. Nicht von Hand editieren.
-
-          ## C4-Views
-
-          | Datei | Inhalt |
-          |---|---|
-          | `C1_SystemContext.mmd` | Personen + externe Systeme + Sponsorplatz im Überblick |
-          | `C2_Container.mmd` | Web-Anwendung + PostgreSQL + externe Anbindungen |
-          | `C3_Komponenten_Web.mmd` | Feature-Folder als Komponenten innerhalb der Web-Anwendung |
-
-          ## Ansicht
-
-          GitHub rendert die `*.mmd`-Dateien als Mermaid-Diagramme inline,
-          wenn sie aus einer Markdown-Datei eingebunden werden.
-
-          Lokale Vorschau / Editier-Workflow siehe [`../README.md`](../README.md).
-          EOF
-
-      - name: Diagramme als Artifact hochladen
-        uses: actions/upload-artifact@v4
+          if ! diff -r -x README.md "$RUNNER_TEMP/diagramme" docs/architektur/diagramme; then
+            echo "::error::Diagramme passen nicht zu workspace.dsl: lokal neu rendern (docs/architektur/README.md) und committen. Die gerenderten Dateien hängen als Artefakt an diesem Lauf."
+            exit 1
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
         with:
-          name: architektur-diagramme
-          path: docs/architektur/diagramme/
-
-      - name: Aktualisierte Diagramme committen
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'docs(architektur): rerender Diagramme aus workspace.dsl'
-          file_pattern: 'docs/architektur/diagramme/*'
-          commit_user_name: 'Sponsorplatz CI'
-          commit_user_email: 'ci@sponsorplatz.ch'
+          name: architektur-diagramme-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/diagramme/
+          retention-days: 3

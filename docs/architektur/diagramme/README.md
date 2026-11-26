@@ -1,7 +1,8 @@
 # Generierte Architektur-Diagramme
 
-**Diese Dateien werden von der CI automatisch generiert** —
-Quelle ist `docs/architektur/workspace.dsl`. Nicht von Hand editieren.
+**Diese Dateien sind aus `docs/architektur/workspace.dsl` erzeugt.** Nicht von Hand editieren:
+DSL ändern, lokal neu rendern (siehe [`../README.md`](../README.md)) und mit committen. Die CI prüft,
+dass sie zur DSL passen.
 
 ## C4-Views
 
