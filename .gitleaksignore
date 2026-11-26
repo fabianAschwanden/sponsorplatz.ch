@@ -1,0 +1,11 @@
+# Bekannte Fehlalarme von gitleaks im Ausgangs-Commit, einzeln geprüft (26.11.2026).
+# Format: Fingerprint aus dem gitleaks-Bericht, eine Zeile pro Fund. Neue Einträge nur mit Begründung.
+
+# Testkonstante: HMAC-Schlüssel für die Signaturprüfung im Unit-Test, kein echter Zugang
+483638c9ed490c059df047091b1886c054db4394:src/test/java/ch/sponsorplatz/anfrage/payment/datatrans/DatatransProviderTest.java:generic-api-key:28
+# Hilfetext der Oberfläche (Italienisch) mit dem Wort «password», kein Geheimnis
+483638c9ed490c059df047091b1886c054db4394:src/main/resources/messages_it_CH.properties:generic-api-key:1173
+
+# Dieselben zwei Funde beim Scan des Arbeitsbaums (ohne Commit im Fingerprint)
+src/test/java/ch/sponsorplatz/anfrage/payment/datatrans/DatatransProviderTest.java:generic-api-key:28
+src/main/resources/messages_it_CH.properties:generic-api-key:1173

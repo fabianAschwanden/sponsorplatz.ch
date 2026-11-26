@@ -1,0 +1,31 @@
+# Leitplanken dieses Repos. Gehört dem Repo: harness.sh legt die Datei einmal an
+# und überschreibt sie danach nie. Einfaches Format (kein volles YAML): Schlüssel
+# ohne Einzug, Listeneinträge mit «  - "glob"»; ** und * passen auch über «/».
+# implement: /autoship verweigert, ein Mensch startet und mergt.
+# autoship:  /autoship darf laufen, stoppt aber ab Risikoklasse hoch vor dem Merge.
+max-autonomie: implement
+
+# Zusätzlich zu den festen Pfaden in geschuetzte-pfade.sh: Änderungen fragen nach.
+# Migrationen: bestehende Dateien werden nie geändert, neue kommen nur mit einer Aufgabe dazu.
+geschuetzte-pfade:
+  - "src/main/resources/db/**"
+  - ".github/scripts/**"
+  - ".github/CODEOWNERS"
+
+# Die höchste Klasse im Diff bestimmt den Ablauf (_shared/risikoklassen.md).
+# Was nirgends passt, ist mittel.
+risiko-hoch:
+  - ".github/workflows/**"
+  - ".github/scripts/**"
+  - ".claude/**"
+  - ".githooks/**"
+  - "*.enc.yaml"
+  - "deploy/**"
+  - "docker/**"
+  - "src/main/resources/db/**"
+  - "src/main/resources/application-prod.properties"
+  - "src/main/java/ch/sponsorplatz/shared/config/SecurityConfig.java"
+  - "src/main/java/ch/sponsorplatz/organisation/AccessControl.java"
+risiko-niedrig:
+  - "*.md"
+  - "docs/**"

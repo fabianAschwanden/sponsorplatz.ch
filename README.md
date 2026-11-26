@@ -114,8 +114,8 @@ Stand 26.05.2026. Detaillierte Plan-/Slice-Sicht in [`specs/ROADMAP.md`](specs/R
 
 | Datei | Inhalt |
 |---|---|
-| [`CLAUDE.md`](CLAUDE.md) | Stack, Phase-Status, TDD-Pflicht, ARCH-Regeln — Einstieg für neue Devs + KI-Assistenten |
-| [`.instructions.md`](.instructions.md) | Clean Code, TDD-Workflow, Naming-Conventions |
+| [`CLAUDE.md`](CLAUDE.md) | Arbeitsweise (Specs, Bestandsschutz, zwei Agenten, wer merged), Stack, Code-Regeln — Einstieg für Entwickler und Agenten |
+| [`AGENTS.md`](AGENTS.md) | Verweis auf `CLAUDE.md` für GitHub Copilot und andere Agenten |
 | [`docs/konzept.md`](docs/konzept.md) | High-Level-Konzept v3 mit Rollen, Datenmodell, Vision |
 | [`specs/`](specs/) | Specs (Datenmodell, Rollenkonzept, Teststrategie, ROADMAP, AUTH_*) |
 | [`docs/adr/`](docs/adr/) | Architecture Decision Records |
@@ -125,8 +125,8 @@ Stand 26.05.2026. Detaillierte Plan-/Slice-Sicht in [`specs/ROADMAP.md`](specs/R
 
 ## Mitmachen
 
-Strikter Workflow: **Spec → Test → Implementation**. Details in [`.instructions.md`](.instructions.md).
-Jede Code-Änderung braucht einen Spec-Eintrag + Test (rot zuerst), bevor die Implementation kommt.
+Zuerst das Kriterium in der Spec, dann der Test, dann der Code. Eine Aufgabe ist ein Branch und ein PR.
+Details in [`CLAUDE.md`](CLAUDE.md) und [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md).
 
 ## Lizenz
 
