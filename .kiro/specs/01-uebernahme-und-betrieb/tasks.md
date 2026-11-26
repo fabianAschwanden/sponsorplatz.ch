@@ -45,8 +45,7 @@ Aufgabe liefert für ihre Anforderungen den Nachweis nach `tech.md` und hakt ihr
   - _Abhängig von: 1.2_
 
 - [x] 1.4 Rückverfolgung und Regeln [Backend]
-  - `ReqAbdeckungTest`, `NurSpecTest`, `RechtematrixSpecTest`, Hexagon-Regeln für neue Pakete. `NurSpecTest` wird
-    übersprungen, bis Aufgabe 1.5 das Skript liefert.
+  - `ReqAbdeckungTest`, `NurSpecTest`, `RechtematrixSpecTest`, Hexagon-Regeln für neue Pakete.
   - _Anforderungen: 1.1, 1.2, 2.1, 2.2, 2.3_
   - _Abhängig von: 1.3_
 
