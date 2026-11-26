@@ -32,7 +32,9 @@ src/main/java/ch/sponsorplatz/anfrage/Payment*.java                    @fabianas
 # --- Architektur-Verifikation ---
 src/test/java/ch/sponsorplatz/architektur/                             @fabianaschwanden
 
-# --- Specs (Architektur-Vertrag) ---
+# --- Specs und Steering (die Freigabe ist der Merge) ---
+.kiro/                                                                  @fabianaschwanden
+docs/bestand/                                                           @fabianaschwanden
 specs/                                                                  @fabianaschwanden
 docs/adr/                                                               @fabianaschwanden
 docs/architektur/                                                       @fabianaschwanden
@@ -41,3 +43,9 @@ docs/architektur/                                                       @fabiana
 pom.xml                                                                 @fabianaschwanden
 docker/                                                                 @fabianaschwanden
 .github/                                                                @fabianaschwanden
+
+# --- Leitplanken und Betrieb ---
+.claude/                                                                @fabianaschwanden
+.githooks/                                                              @fabianaschwanden
+.gitleaks.toml                                                          @fabianaschwanden
+deploy/                                                                 @fabianaschwanden
