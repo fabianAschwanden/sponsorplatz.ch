@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${org.name} + ' — ' + #{nachrichtenThread.titel} + ' — Sponsorplatz'">Nachrichten</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+</head>
+<body class="dashboard-body">
+<div class="dashboard-layout">
+
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('anfragen', null)}"></aside>
+
+    <main class="dash-main">
+    <nav class="breadcrumb">
+        <a th:href="@{'/organisationen/' + ${org.slug} + '/anfragen'}" th:text="#{nachrichtenThread.zurueck}">← Anfragen</a>
+    </nav>
+
+    <h1 th:text="#{nachrichtenThread.titel}">Konversation</h1>
+    <p class="meta">
+        <span th:text="#{nachrichtenThread.paketLabel}">Paket:</span>
+        <strong th:text="${anfrage.paketName}">Gold</strong> ·
+        <span th:text="#{nachrichtenThread.kontaktLabel}">Kontakt:</span>
+        <span th:text="${anfrage.kontaktName ?: #messages.msg('meineAnfragen.unbekannt')}">Name</span>
+    </p>
+
+    <div th:if="${erfolgsMeldung != null}" class="alert success" th:text="${erfolgsMeldung}"></div>
+    <div th:if="${fehlermeldung != null}" class="alert error" th:text="${fehlermeldung}"></div>
+
+    <!-- Initiale Anfrage-Nachricht — wird immer als eingehend dargestellt,
+         da sie aus der Anfragender-Org stammt und konzeptionell „die andere
+         Seite" ist. -->
+    <div class="nachricht-thread">
+        <div class="nachricht-bubble nachricht-eingehend">
+            <div class="nachricht-meta">
+                <strong th:text="${anfrage.kontaktName ?: #messages.msg('nachrichtenThread.absenderAnfragender')}">Name</strong>
+                <time th:text="${#temporals.format(anfrage.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2026 12:00</time>
+            </div>
+            <p th:text="${anfrage.nachricht}">Erste Nachricht</p>
+        </div>
+
+        <!-- Thread-Nachrichten — Eigen-vs-Eingehend via UUID-Vergleich gegen
+             aktuellerUserId (vom Controller gesetzt). Vorher wurde UUID gegen
+             auth.name (E-Mail) verglichen, was nie matchte. -->
+        <div th:each="n : ${nachrichten}" class="nachricht-bubble"
+             th:classappend="${aktuellerUserId != null and n.absenderId == aktuellerUserId} ? 'nachricht-eigene' : 'nachricht-eingehend'">
+            <div class="nachricht-meta">
+                <span th:replace="~{fragments/avatar :: avatar(
+                        name=${n.absenderName},
+                        bildUrl=${n.absenderProfilbildUrl},
+                        cssClass='user-avatar-sm')}"></span>
+                <strong th:text="${n.absenderName}">Name</strong>
+                <time th:text="${#temporals.format(n.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2026 12:00</time>
+            </div>
+            <p th:text="${n.text}">Nachricht</p>
+        </div>
+        <!-- Scroll-Anker, damit nach dem Senden automatisch zum letzten
+             Beitrag gesprungen wird (siehe Script unten). -->
+        <div id="thread-ende"></div>
+    </div>
+
+    <!-- Antwort-Formular (nur bei ANGENOMMEN) -->
+    <div th:if="${anfrage.status.name() == 'ANGENOMMEN'}" class="nachricht-form-wrapper">
+        <form th:action="@{'/organisationen/' + ${org.slug} + '/anfragen/' + ${anfrage.id} + '/nachrichten'}"
+              method="post" class="app-form nachricht-form">
+            <div class="app-form-group">
+                <label for="text" th:text="#{nachrichtenThread.feld.label}">Neue Nachricht</label>
+                <textarea id="text" name="text" rows="3" required
+                          th:placeholder="#{nachrichtenThread.feld.placeholder}"
+                          placeholder="Ihre Nachricht schreiben..."></textarea>
+            </div>
+            <div class="app-form-actions">
+                <button type="submit" class="app-btn" th:text="#{nachrichtenThread.senden}">Senden</button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${anfrage.status.name() != 'ANGENOMMEN'}" class="empty-state">
+        <p th:text="#{nachrichtenThread.nichtAngenommen}">Nachrichten können nur zu angenommenen Anfragen verfasst werden.</p>
+    </div>
+    </main>
+</div>
+
+<script>
+    // Springt nach dem Laden zur untersten Nachricht — gewünschtes Verhalten
+    // bei einer Inbox-Thread-View, sowohl beim ersten Aufruf als auch nach
+    // dem POST-Redirect nach Senden.
+    (function () {
+        var anker = document.getElementById('thread-ende');
+        if (anker) anker.scrollIntoView({ block: 'end' });
+    })();
+</script>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>
+

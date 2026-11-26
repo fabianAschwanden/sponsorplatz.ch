@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{register.titel} + ' — Sponsorplatz'">Registrieren — Sponsorplatz</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="public-body">
+
+<header class="public-topbar">
+    <div class="public-topbar-inner">
+        <a class="public-logo" th:href="@{/}">
+            <img class="dash-logo-icon" th:src="@{/images/logo/icon-ringe.svg}" alt="">
+            <span>Sponsorplatz</span>
+        </a>
+        <nav class="public-nav">
+            <a sec:authorize="isAuthenticated()" th:href="@{/marktplatz}" th:text="#{navigation.marktplatz}">Marktplatz</a>
+            <a sec:authorize="!isAuthenticated()" th:href="@{/kontakt}" th:text="#{navigation.kontakt}">Kontakt</a>
+            <a th:href="@{/login}" th:text="#{navigation.anmelden}">Anmelden</a>
+        </nav>
+    </div>
+</header>
+
+<main class="public-main">
+    <section class="public-auth-card">
+        <h1 th:text="#{register.titel}">Konto erstellen</h1>
+
+        <div th:if="${einladungOffen}" class="app-meldung erfolg"
+             th:text="#{register.einladungOffenHinweis}">
+            Sie wurden zu einer Organisation eingeladen. Nach der Registrierung
+            können Sie die Einladung im Dashboard annehmen.
+        </div>
+
+        <div th:if="${fehlermeldung != null}" class="app-meldung fehler" th:text="${fehlermeldung}"></div>
+
+        <form th:action="@{/registrieren}" th:object="${userForm}" method="post" class="app-form">
+            <div class="app-form-group">
+                <label for="email" th:text="#{register.email}">E-Mail</label>
+                <input type="email" id="email" th:field="*{email}" required autofocus>
+                <p class="app-meldung fehler" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+            </div>
+            <div class="app-form-group">
+                <label for="anzeigename" th:text="#{register.anzeigename}">Anzeigename</label>
+                <input type="text" id="anzeigename" th:field="*{anzeigename}" required>
+                <p class="app-meldung fehler" th:if="${#fields.hasErrors('anzeigename')}" th:errors="*{anzeigename}"></p>
+            </div>
+            <div class="app-form-group">
+                <label for="passwort" th:text="#{register.passwort}">Passwort</label>
+                <span class="hint" th:text="#{register.passwortHinweis}">Mindestens 8 Zeichen</span>
+                <input type="password" id="passwort" th:field="*{passwort}" required>
+                <p class="app-meldung fehler" th:if="${#fields.hasErrors('passwort')}" th:errors="*{passwort}"></p>
+            </div>
+            <div class="app-form-actions">
+                <button type="submit" class="app-btn" style="width: 100%; justify-content: center;"
+                        th:text="#{register.einreichenBtn}">Registrieren</button>
+            </div>
+        </form>
+
+        <p class="public-auth-foot">
+            <span th:text="#{register.bereitsKontoFrage}">Bereits ein Konto?</span>
+            <a th:href="@{/login}" th:text="#{navigation.anmelden}">Anmelden</a><br>
+            <a th:href="@{/sponsor/registrieren}" th:text="#{register.alsSponsor}">Als Sponsor registrieren</a>
+        </p>
+    </section>
+</main>
+
+<footer class="public-footer">
+    <div class="public-footer-inner">
+        <p style="margin:0;">&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> Sponsorplatz</p>
+    </div>
+</footer>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

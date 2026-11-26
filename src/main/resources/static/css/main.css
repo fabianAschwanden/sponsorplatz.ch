@@ -1,0 +1,652 @@
+/* =============================================================================
+   Sponsorplatz — Brand-Stylesheet (Phase 0)
+   Farben:  Teal #1E3A5F · Korall #E07A5F · Cream #F4F1ED
+   ============================================================================= */
+
+:root {
+    --farbe-primaer: #1E3A5F;
+    --farbe-primaer-dunkel: #12253D;
+    --farbe-akzent: #E07A5F;
+    --farbe-akzent-dunkel: #B85C44;
+    --farbe-cream: #F4F1ED;
+    --farbe-text: #1A202C;
+    --farbe-text-muted: #64748B;
+    --farbe-rand: #E2DAD0;
+    --farbe-success: #2C7A7B;
+    --schrift-headline: 'Cambria', 'Georgia', serif;
+    --schrift-body: 'Inter', 'Calibri', system-ui, -apple-system, sans-serif;
+    --container-breite: 64rem;
+    --abstand: 1rem;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    font-family: var(--schrift-body);
+    color: var(--farbe-text);
+    background: var(--farbe-cream);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    max-width: var(--container-breite);
+    margin: 0 auto;
+    padding: 0 var(--abstand);
+}
+
+/* Kopfzeile */
+.kopfzeile {
+    background: var(--farbe-primaer);
+    color: #fff;
+    padding: 1rem 0;
+    border-bottom: 4px solid var(--farbe-akzent);
+}
+
+.kopfzeile .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kopfzeile .logo {
+    font-family: var(--schrift-headline);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+
+.navigation {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.navigation a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.95rem;
+    opacity: 0.85;
+    transition: opacity 0.2s;
+}
+
+.navigation a:hover, .navigation a.aktiv {
+    opacity: 1;
+}
+
+.navigation a.cta {
+    background: var(--farbe-akzent);
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    opacity: 1;
+    font-weight: 600;
+}
+
+.navigation a.cta:hover {
+    background: var(--farbe-akzent-dunkel);
+}
+
+/* Hauptbereich */
+.hauptbereich {
+    flex: 1;
+    padding: 4rem 0;
+}
+
+.hero .rubrik {
+    color: var(--farbe-akzent);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+}
+
+.hero h1 {
+    font-family: var(--schrift-headline);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+    color: var(--farbe-text);
+}
+
+.hero .endlich {
+    font-family: var(--schrift-headline);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    font-style: italic;
+    color: var(--farbe-akzent);
+    margin-bottom: 2.5rem;
+}
+
+.hinweis-box {
+    background: #fff;
+    border: 1px solid var(--farbe-rand);
+    border-left: 4px solid var(--farbe-akzent);
+    padding: 1.5rem;
+    border-radius: 0.25rem;
+    max-width: 40rem;
+}
+
+.hinweis-box p {
+    margin-bottom: 0.75rem;
+}
+
+.hinweis-box p:last-child {
+    margin-bottom: 0;
+}
+
+.hinweis-box a {
+    color: var(--farbe-primaer);
+    font-weight: 600;
+}
+
+/* Fehlerseite */
+.fehlerseite h1 {
+    font-family: var(--schrift-headline);
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.fehlerseite .cta {
+    display: inline-block;
+    margin-top: 2rem;
+    background: var(--farbe-primaer);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+}
+
+/* Seitenkopf mit Aktion rechts */
+.seitenkopf {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.seitenkopf h1 {
+    font-family: var(--schrift-headline);
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.seitenkopf .cta {
+    background: var(--farbe-akzent);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Tabellen */
+.tabelle {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid var(--farbe-rand);
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.tabelle th, .tabelle td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--farbe-rand);
+}
+
+.tabelle th {
+    background: var(--farbe-cream);
+    font-weight: 700;
+    color: var(--farbe-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tabelle tr:last-child td {
+    border-bottom: none;
+}
+
+.tabelle a {
+    color: var(--farbe-primaer);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.tabelle a:hover {
+    text-decoration: underline;
+}
+
+.muted {
+    color: var(--farbe-text-muted);
+    font-size: 0.85rem;
+}
+
+/* Status-Pillen */
+.chip, .status {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.chip {
+    background: var(--farbe-rand);
+    color: var(--farbe-text);
+}
+
+.status-pending   { background: #FCE7C9; color: #7A4F0F; }
+.status-verified  { background: #C9E5D7; color: #1F5C3F; }
+.status-active    { background: #C8DEFB; color: #1B3F77; }
+.status-suspended { background: #F8D5D5; color: #7B2222; }
+
+/* Daten-Liste auf Detail-Seite */
+.datenliste {
+    background: #fff;
+    border: 1px solid var(--farbe-rand);
+    border-radius: 0.25rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.datenliste dt {
+    color: var(--farbe-text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1rem;
+}
+
+.datenliste dt:first-child {
+    margin-top: 0;
+}
+
+.datenliste dd {
+    margin: 0.25rem 0 0;
+    color: var(--farbe-text);
+}
+
+.datenliste code {
+    background: var(--farbe-cream);
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.2rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.9rem;
+}
+
+/* Formular */
+.schmal {
+    max-width: 40rem;
+}
+
+.feldgruppe {
+    margin-bottom: 1.25rem;
+}
+
+.feldgruppe label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: var(--farbe-text);
+}
+
+.pflicht {
+    color: var(--farbe-akzent);
+}
+
+.feldgruppe input,
+.feldgruppe select,
+.feldgruppe textarea {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--farbe-rand);
+    border-radius: 0.25rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #fff;
+}
+
+.feldgruppe input:focus,
+.feldgruppe select:focus,
+.feldgruppe textarea:focus {
+    outline: 2px solid var(--farbe-akzent);
+    outline-offset: -1px;
+    border-color: var(--farbe-akzent);
+}
+
+.feldfehler {
+    color: var(--farbe-akzent-dunkel);
+    font-size: 0.85rem;
+    margin: 0.3rem 0 0;
+}
+
+.aktionen {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 1.5rem;
+}
+
+.aktionen .cta,
+.aktionen button.cta {
+    background: var(--farbe-primaer);
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.aktionen .cta:hover {
+    background: var(--farbe-primaer-dunkel);
+}
+
+.abbrechen {
+    color: var(--farbe-text-muted);
+    text-decoration: none;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.abbrechen.loeschen {
+    color: #7B2222;
+}
+
+.loesch-form {
+    margin-top: 2rem;
+}
+
+/* Meldungen */
+.meldung {
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.meldung.erfolg {
+    background: #C9E5D7;
+    color: #1F5C3F;
+    border: 1px solid #95D2B5;
+}
+
+.meldung.fehler {
+    background: #F8D5D5;
+    color: #7B2222;
+    border: 1px solid #E89A9A;
+}
+
+/* Fußzeile */
+.fusszeile {
+    background: var(--farbe-primaer-dunkel);
+    color: #ECE2D0;
+    padding: 1.5rem 0;
+    font-size: 0.9rem;
+}
+
+.fusszeile .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.fusszeile nav {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.fusszeile a {
+    color: #ECE2D0;
+    text-decoration: none;
+    opacity: 0.7;
+}
+
+.fusszeile a:hover {
+    opacity: 1;
+}
+
+/* Branche-Chips (Marktplatz-Filter) */
+.branche-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.branche-chip-label {
+    cursor: pointer;
+}
+
+.branche-chip {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #fff;
+    color: var(--farbe-text);
+    border: 1px solid var(--farbe-rand);
+    transition: all 0.15s ease;
+}
+
+.branche-chip:hover {
+    border-color: var(--farbe-akzent);
+    color: var(--farbe-akzent);
+}
+
+.branche-chip-aktiv {
+    background: var(--farbe-akzent);
+    color: #fff;
+    border-color: var(--farbe-akzent);
+}
+
+.branche-chip-aktiv:hover {
+    background: var(--farbe-akzent-dunkel);
+    border-color: var(--farbe-akzent-dunkel);
+    color: #fff;
+}
+
+/* Health-Hero auf Vereinsprofil */
+.health-hero-chip {
+    display: inline-block;
+    padding: 0.35rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    background: var(--farbe-akzent);
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.health-hero-chip:hover {
+    background: var(--farbe-akzent-dunkel);
+    color: #fff;
+}
+
+.health-subhead {
+    color: var(--farbe-text-muted);
+    font-size: 0.95rem;
+    margin-top: 0.25rem;
+}
+
+/* Demo-Disclaimer-Banner */
+.demo-disclaimer {
+    background: #fff3cd;
+    color: #664d03;
+    text-align: center;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-bottom: 2px solid #ffecb5;
+    position: sticky;
+    top: 0;
+    z-index: 9999;
+}
+
+/* Sprach-Umschalter im Footer */
+.lang-switch {
+    display: inline-flex;
+    gap: 0.5rem;
+    margin-left: 1rem;
+    padding-left: 1rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.lang-switch a {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* ── Neueste Projekte Preview (Marktplatz) ───────────────────────── */
+.neueste-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+@media (max-width: 900px) {
+    .neueste-grid { grid-template-columns: 1fr; }
+}
+.neueste-card {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow 0.2s, transform 0.15s;
+}
+.neueste-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+.neueste-card-img {
+    width: 100%;
+    height: 160px;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.neueste-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+}
+.neueste-card-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+}
+.neueste-card-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--farbe-primaer, #1E3A5F);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.neueste-card-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.3;
+}
+.neueste-card-desc {
+    font-size: 0.85rem;
+    color: #6b7280;
+    line-height: 1.5;
+    margin: 0;
+}
+.neueste-card-meta {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    margin-top: auto;
+    padding-top: 0.3rem;
+}
+
+/* =============================================================================
+   Accessibility — Skip-Link, Flash-Focus, Visible-Focus-Ring
+   ============================================================================= */
+
+/* Skip-Navigation-Link — unsichtbar bis Keyboard-Focus */
+.a11y-skip-link {
+    position: absolute;
+    top: -100%;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.75rem 1.25rem;
+    background: var(--farbe-primaer, #1E3A5F);
+    color: #fff;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: top 0.15s;
+}
+.a11y-skip-link:focus {
+    top: 1rem;
+    outline: 3px solid var(--farbe-akzent, #E07A5F);
+    outline-offset: 2px;
+}
+
+/* Flash-Meldungen — zugänglich mit Fokus-Ring bei programmatischem Focus */
+.app-flash {
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.app-flash:focus {
+    outline: 3px solid var(--farbe-akzent, #E07A5F);
+    outline-offset: 2px;
+}
+.app-flash-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+.app-flash-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+/* Visible Focus Ring für alle interaktiven Elemente */
+:focus-visible {
+    outline: 3px solid var(--farbe-akzent, #E07A5F);
+    outline-offset: 2px;
+}

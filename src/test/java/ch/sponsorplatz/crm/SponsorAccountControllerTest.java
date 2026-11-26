@@ -1,0 +1,328 @@
+package ch.sponsorplatz.crm;
+
+import ch.sponsorplatz.organisation.OrganisationService;
+import ch.sponsorplatz.shared.config.SecurityConfig;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * CRM-CTRL-01..04 — Web-Schicht-Schutz des SponsorAccountController. Der Service
+ * setzt die Mandanten-Isolation durch (AccessDeniedException); der Controller
+ * darf sie nicht verschlucken → muss als 403 durchschlagen.
+ */
+@WebMvcTest(controllers = SponsorAccountController.class)
+@Import(SecurityConfig.class)
+@ActiveProfiles("dev")
+class SponsorAccountControllerTest {
+
+    @Autowired private MockMvc mockMvc;
+
+    @MockitoBean private SponsorAccountService accountService;
+    @MockitoBean private KontaktPersonService kontaktService;
+    @MockitoBean private AktivitaetService aktivitaetService;
+    @MockitoBean private RenewalService renewalService;
+    @MockitoBean private CrmImportExportService importExportService;
+    @MockitoBean private OrganisationService organisationService;
+    @MockitoBean private ch.sponsorplatz.benutzer.SponsorplatzUserDetailsService userDetailsService;
+
+    private final UUID sponsorOrgId = UUID.randomUUID();
+
+    /** CRM-CTRL-01: Service wirft AccessDenied → Controller schlägt als 403 durch. */
+    @Test
+    @WithMockUser
+    void portfolioFremderSponsor403() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        when(accountService.findePortfolio(eq(sponsorOrgId), any()))
+                .thenThrow(new AccessDeniedException("kein Zugriff"));
+
+        mockMvc.perform(get("/crm/muster"))
+                .andExpect(status().isForbidden());
+    }
+
+    /** CRM-CTRL-04: Portfolio rendert mit Accounts + Renewals + gewichtetem Forecast (Thymeleaf-Smoke). */
+    @Test
+    @WithMockUser
+    void portfolioRendertMitPipelineUndRenewals() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        when(organisationService.findeKopfNachSlug("muster"))
+                .thenReturn(new OrganisationService.OrgKopf(sponsorOrgId, "Muster"));
+        when(accountService.findePortfolio(eq(sponsorOrgId), any())).thenReturn(List.of(
+                new SponsorAccountView(UUID.randomUUID(), UUID.randomUUID(), "FC Test", "fc-test",
+                        null, AccountStatus.AKTIV, AccountTier.CORE, PipelineStage.ANGEBOT,
+                        new java.math.BigDecimal("10000.00"), new java.math.BigDecimal("6000.00"),
+                        "Notiz", java.time.Instant.now(), null)));
+        when(renewalService.findeAuslaufende(eq(sponsorOrgId), any())).thenReturn(List.of(
+                new RenewalView(UUID.randomUUID(), UUID.randomUUID(), "FC Test", "fc-test",
+                        "Goldpaket", new java.math.BigDecimal("5000.00"),
+                        java.time.LocalDate.now().plusDays(30), 30, false)));
+
+        mockMvc.perform(get("/crm/muster"))
+                .andExpect(status().isOk())
+                // CRM-Toolbar gerendert: Filter-Leiste, Zähler, sortierbare Spalten.
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("liste-toolbar")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("liste-anzahl")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("liste-sort")));
+    }
+
+    /** CRM-CTRL-10: Status-Filter wirkt server-seitig durch den Controller (nur Treffer gerendert). */
+    @Test
+    @WithMockUser
+    void portfolioStatusFilter() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        when(organisationService.findeKopfNachSlug("muster"))
+                .thenReturn(new OrganisationService.OrgKopf(sponsorOrgId, "Muster"));
+        when(accountService.findePortfolio(eq(sponsorOrgId), any())).thenReturn(List.of(
+                new SponsorAccountView(UUID.randomUUID(), UUID.randomUUID(), "FC Aktiv", "fc-aktiv",
+                        null, AccountStatus.AKTIV, null, PipelineStage.LEAD, null, null, null, java.time.Instant.now(), null),
+                new SponsorAccountView(UUID.randomUUID(), UUID.randomUUID(), "FC Lead", "fc-lead",
+                        null, AccountStatus.LEAD, null, PipelineStage.LEAD, null, null, null, java.time.Instant.now(), null)));
+
+        mockMvc.perform(get("/crm/muster").param("status", "AKTIV"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("FC Aktiv")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("FC Lead"))));
+    }
+
+    /** CRM-CTRL-05: Account-Detail rendert (Stammdaten-Form + Kontakt-/Aktivitäts-Erfassung, Thymeleaf-Smoke). */
+    @Test
+    @WithMockUser
+    void accountDetailRendert() throws Exception {
+        UUID accountId = UUID.randomUUID();
+        when(accountService.findeAccount(eq(accountId), any())).thenReturn(
+                new SponsorAccountView(accountId, UUID.randomUUID(), "FC Test", "fc-test",
+                        null, AccountStatus.AKTIV, AccountTier.CORE, PipelineStage.ANGEBOT,
+                        new java.math.BigDecimal("10000.00"), new java.math.BigDecimal("6000.00"),
+                        "Notiz", java.time.Instant.now(), null));
+        // findeKontakte/findeTimeline liefern per Mockito-Default leere Listen.
+
+        mockMvc.perform(get("/crm/muster/" + accountId))
+                .andExpect(status().isOk())
+                // Redesign-Struktur ist wirklich gerendert: Überblick-Leiste + Feld-Raster + kanonische Form-Gruppen.
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("crm-overview")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("crm-form-grid")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("app-form-group")));
+    }
+
+    /** CRM-CTRL-06: Account-Anlege-Formular rendert (Verein-Picker, Thymeleaf-Smoke). */
+    @Test
+    @WithMockUser
+    void accountFormRendert() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+
+        mockMvc.perform(get("/crm/muster/neu"))
+                .andExpect(status().isOk());
+    }
+
+    /** CRM-CTRL-07: Export liefert CSV-Download mit Content-Disposition. */
+    @Test
+    @WithMockUser
+    void exportCsvDownload() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        when(importExportService.exportiere(eq(sponsorOrgId), any())).thenReturn("x".getBytes());
+
+        mockMvc.perform(get("/crm/muster/export.csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("crm-muster.csv")));
+    }
+
+    /** CRM-CTRL-08: Import-Formular rendert. */
+    @Test
+    @WithMockUser
+    void importFormularRendert() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+
+        mockMvc.perform(get("/crm/muster/import"))
+                .andExpect(status().isOk());
+    }
+
+    /** CRM-CTRL-09: Import-POST (multipart + CSRF) verarbeitet die Datei und rendert das Ergebnis. */
+    @Test
+    @WithMockUser
+    void importPostVerarbeitet() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        when(importExportService.importiere(eq(sponsorOrgId), any(), any()))
+                .thenReturn(new CrmImportExportService.ImportErgebnis(1, 0, List.of()));
+        MockMultipartFile datei = new MockMultipartFile("datei", "portfolio.csv", "text/csv", "x".getBytes());
+
+        mockMvc.perform(multipart("/crm/muster/import").file(datei).with(csrf()))
+                .andExpect(status().isOk());
+    }
+
+    /**
+     * CRM-CTRL-12: Verein inline neu anlegen (Name + Branche Pflicht) → Org wird
+     * als VEREIN erstellt und sofort als Account ins Portfolio aufgenommen.
+     */
+    @Test
+    @WithMockUser
+    void vereinAnlegenErstelltOrgUndAccount() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        UUID neueVereinId = UUID.randomUUID();
+        when(organisationService.erstelleAlsView(any())).thenReturn(
+                new ch.sponsorplatz.organisation.OrganisationView(
+                        neueVereinId, "FC Neu", "fc-neu", ch.sponsorplatz.organisation.OrgTyp.VEREIN,
+                        null, null, null, null, null, null, null, null, null, null, null, null));
+
+        mockMvc.perform(post("/crm/muster/verein-anlegen").with(csrf())
+                        .param("typ", "VEREIN")
+                        .param("name", "FC Neu")
+                        .param("branche", "SPORT"))
+                .andExpect(status().is3xxRedirection());
+
+        // Org als VEREIN erstellt …
+        org.mockito.ArgumentCaptor<ch.sponsorplatz.organisation.OrganisationFormDto> dto =
+                org.mockito.ArgumentCaptor.forClass(ch.sponsorplatz.organisation.OrganisationFormDto.class);
+        org.mockito.Mockito.verify(organisationService).erstelleAlsView(dto.capture());
+        org.assertj.core.api.Assertions.assertThat(dto.getValue().getTyp())
+                .isEqualTo(ch.sponsorplatz.organisation.OrgTyp.VEREIN);
+        org.assertj.core.api.Assertions.assertThat(dto.getValue().getName()).isEqualTo("FC Neu");
+        // … und sofort als Account verknüpft.
+        org.mockito.Mockito.verify(accountService).erstelle(eq(sponsorOrgId), eq(neueVereinId), any());
+    }
+
+    /**
+     * CRM-CTRL-13: Fehlt die Pflicht-Branche, schlägt der Service mit
+     * IllegalArgumentException fehl → Controller zeigt das Formular erneut (kein 500),
+     * KEIN Account wird angelegt.
+     */
+    @Test
+    @WithMockUser
+    void vereinAnlegenOhneBrancheZeigtFormularErneut() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        when(organisationService.erstelleAlsView(any()))
+                .thenThrow(new IllegalArgumentException("Branche ist Pflicht für Vereine"));
+
+        mockMvc.perform(post("/crm/muster/verein-anlegen").with(csrf())
+                        .param("typ", "VEREIN")
+                        .param("name", "FC Ohne Branche"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Branche ist Pflicht")));
+
+        org.mockito.Mockito.verify(accountService, org.mockito.Mockito.never())
+                .erstelle(any(), any(), any());
+    }
+
+    /**
+     * CRM-CTRL-14: Das /neu-Formular muss das versteckte Typ-Feld mit value="VEREIN"
+     * rendern — sonst sendet der Browser typ leer und @Valid scheitert an @NotNull,
+     * das Formular lädt kommentarlos neu ("hat nicht geklappt"). Regressionsschutz.
+     */
+    @Test
+    @WithMockUser
+    void neuFormularRendertTypVerein() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+
+        var html = mockMvc.perform(get("/crm/muster/neu"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        // Das gebundene Hidden-Feld muss den Typ tragen (Reihenfolge der Attribute
+        // ist Thymeleaf-abhängig, daher beide Teilstrings prüfen).
+        org.assertj.core.api.Assertions.assertThat(html).contains("name=\"typ\"");
+        org.assertj.core.api.Assertions.assertThat(html).contains("value=\"VEREIN\"");
+    }
+
+    /** CRM-CTRL-11: Bulk-Status (kodiert status:AKTIV) → an Service delegiert + Redirect. */
+    @Test
+    @WithMockUser
+    void bulkStatusDelegiert() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+
+        mockMvc.perform(post("/crm/muster/bulk").with(csrf())
+                        .param("bulkAktion", "status:AKTIV")
+                        .param("ids", id1.toString(), id2.toString()))
+                .andExpect(status().is3xxRedirection());
+
+        org.mockito.Mockito.verify(accountService)
+                .bulkSetzeStatus(eq(sponsorOrgId), eq(List.of(id1, id2)), eq(AccountStatus.AKTIV), any());
+    }
+
+    /** CRM-CTRL-12: Bulk-Entfernen (entfernen) → bulkLoesche delegiert. */
+    @Test
+    @WithMockUser
+    void bulkEntfernenDelegiert() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        UUID id1 = UUID.randomUUID();
+
+        mockMvc.perform(post("/crm/muster/bulk").with(csrf())
+                        .param("bulkAktion", "entfernen")
+                        .param("ids", id1.toString()))
+                .andExpect(status().is3xxRedirection());
+
+        org.mockito.Mockito.verify(accountService).bulkLoesche(eq(sponsorOrgId), eq(List.of(id1)), any());
+    }
+
+    /** CRM-CTRL-14: alleGefiltert=true leitet IDs server-seitig aus dem gefilterten Set ab. */
+    @Test
+    @WithMockUser
+    void bulkAlleGefiltert() throws Exception {
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        UUID aktivId = UUID.randomUUID();
+        when(accountService.findePortfolio(eq(sponsorOrgId), any())).thenReturn(List.of(
+                new SponsorAccountView(aktivId, UUID.randomUUID(), "FC Aktiv", "fc-aktiv",
+                        null, AccountStatus.AKTIV, null, PipelineStage.LEAD, null, null, null, java.time.Instant.now(), null),
+                new SponsorAccountView(UUID.randomUUID(), UUID.randomUUID(), "FC Lead", "fc-lead",
+                        null, AccountStatus.LEAD, null, PipelineStage.LEAD, null, null, null, java.time.Instant.now(), null)));
+
+        // Filter status=AKTIV → nur der eine Account; ids NICHT mitgeschickt (kommt aus Filter-Set).
+        mockMvc.perform(post("/crm/muster/bulk").with(csrf())
+                        .param("bulkAktion", "tier:CORE")
+                        .param("alleGefiltert", "true")
+                        .param("status", "AKTIV"))
+                .andExpect(status().is3xxRedirection());
+
+        org.mockito.Mockito.verify(accountService)
+                .bulkSetzeTier(eq(sponsorOrgId), eq(List.of(aktivId)), eq(AccountTier.CORE), any());
+    }
+
+    /** CRM-CTRL-13: Bulk-POST ohne CSRF → 403. */
+    @Test
+    @WithMockUser
+    void bulkOhneCsrf403() throws Exception {
+        mockMvc.perform(post("/crm/muster/bulk").param("bulkAktion", "status:AKTIV")
+                        .param("ids", UUID.randomUUID().toString()))
+                .andExpect(status().isForbidden());
+    }
+
+    /** CRM-CTRL-02: erstelle ohne CSRF-Token → 403 (CSRF-Schutz greift). */
+    @Test
+    @WithMockUser
+    void erstelleOhneCsrfWird403() throws Exception {
+        mockMvc.perform(post("/crm/muster").param("vereinOrgId", UUID.randomUUID().toString()))
+                .andExpect(status().isForbidden());
+    }
+
+    /** CRM-CTRL-03: erstelle mit CSRF + Zugriff → Redirect zurück zum Portfolio. */
+    @Test
+    @WithMockUser
+    void erstelleMitZugriffRedirect() throws Exception {
+        UUID vereinId = UUID.randomUUID();
+        when(organisationService.findeIdNachSlug("muster")).thenReturn(sponsorOrgId);
+        when(accountService.erstelle(eq(sponsorOrgId), eq(vereinId), any())).thenReturn(null);
+
+        mockMvc.perform(post("/crm/muster").with(csrf()).param("vereinOrgId", vereinId.toString()))
+                .andExpect(status().is3xxRedirection());
+    }
+}

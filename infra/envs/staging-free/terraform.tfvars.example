@@ -1,0 +1,40 @@
+tenancy_ocid             = "ocid1.tenancy.oc1..xxxxx"
+compartment_ocid         = "ocid1.compartment.oc1..xxxxx"   # sponsorplatz-staging
+region                   = "eu-zurich-1"
+object_storage_namespace = "xxxxxxxx"                       # `oci os ns get`
+availability_domain      = "fXdz:EU-ZURICH-1-AD-1"          # `oci iam availability-domain list`
+
+# Public-Key des SSH-Keypairs für Pipeline-Deploy + manueller Zugriff
+ssh_public_key = "ssh-ed25519 AAAA... fabian@laptop"
+
+# Public Hostname — Let's-Encrypt-Cert via Caddy
+domain     = "sponsorplatz.example.ch"
+acme_email = "admin@example.ch"
+
+# basis_url leer lassen → wird auf https://${domain} gesetzt
+basis_url = ""
+
+# Image-Pull aus GHCR (Standard ist Public — kein Token nötig).
+# Falls Package private bleibt: docker login auf der VM manuell mit PAT,
+# image_url-Default in variables.tf bleibt unverändert.
+image_url = "ghcr.io/fabianaschwanden/sponsorplatz:staging-latest"
+
+# DB + Initial-Admin (NIE in committed tfvars halten — siehe .gitignore)
+db_password    = "PUT_STRONG_DB_PW_HERE"
+admin_email    = "admin@example.ch"
+admin_password = "PUT_STRONG_ADMIN_PW_HERE"
+
+# SMTP (leer = Versand deaktiviert; alle Verifikations-/Einladungs-Mails fallen aus)
+# Brevo (300/Tag gratis): smtp-relay.brevo.com:587, siehe infra/staging-free/SMTP_SETUP.md
+smtp_host     = ""
+smtp_port     = 587
+smtp_user     = ""
+smtp_password = ""
+mail_absender = "noreply@sponsorplatz.ch"   # MUSS beim Provider verifiziert sein
+
+# Mail-Live-Modus (false = alle Mails an Test-Empfänger; true = echte Empfänger)
+mail_live            = false
+mail_test_empfaenger = "deine.adresse@beispiel.ch"
+
+# Object-Storage-Provider (oci = Cloud Buckets, lokal = VM-Volume)
+storage_provider = "oci"

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="de-CH"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${projekt.name + ' — Sponsorplatz'}">Projekt</title>
+    <meta name="description"
+          th:content="${projekt.beschreibung != null ? #strings.abbreviate(projekt.beschreibung, 160) : projekt.name}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" th:content="${projekt.name + ' — Sponsorplatz'}">
+    <meta property="og:description"
+          th:content="${projekt.beschreibung != null ? #strings.abbreviate(projekt.beschreibung, 200) : 'Sponsoring-Projekt auf Sponsorplatz'}">
+    <meta property="og:site_name" content="Sponsorplatz">
+    <meta property="og:locale" content="de_CH">
+    <meta property="og:image" th:content="@{/og/projekt/{slug}.png(slug=${projekt.slug})}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter / X Card: gleiches Bild, gleicher Titel, summary_large_image
+         lässt das Card 2:1 statt nur Mini-Thumbnail darstellen. -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" th:content="${projekt.name + ' — Sponsorplatz'}">
+    <meta name="twitter:description"
+          th:content="${projekt.beschreibung != null ? #strings.abbreviate(projekt.beschreibung, 200) : 'Sponsoring-Projekt auf Sponsorplatz'}">
+    <meta name="twitter:image" th:content="@{/og/projekt/{slug}.png(slug=${projekt.slug})}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="app-body">
+
+<div class="app-layout">
+
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('marktplatz', ${anzahlOffeneAnfragen})}"></aside>
+
+    <main class="app-main">
+    <header style="margin-bottom: 1.5rem;">
+        <p class="public-hero-rubrik" style="text-align:left;">
+            <a th:href="@{/marktplatz}" style="color: inherit; text-decoration: none;"
+               th:text="#{marktplatzDetail.zurueck}">← Marktplatz</a>
+        </p>
+        <h1 style="font-family:var(--dash-font-head); font-size:2.2rem; margin:0.5rem 0 0.5rem;" th:text="${projekt.name}">Projekt</h1>
+        <p class="app-muted">
+            <span th:text="#{marktplatzDetail.veranstalter}">Veranstalter:</span>
+            <a th:href="@{'/vereine/' + ${projekt.org.slug}}" style="color:inherit;"
+               th:text="${projekt.org.name}">Verein</a>
+        </p>
+    </header>
+
+    <!-- Cover-Bild als Hero — falls vorhanden. Fix-höhe + object-fit, damit
+         hochformatige Uploads nicht das ganze Layout dominieren. -->
+    <figure class="projekt-cover" th:if="${projekt.coverUrl}"
+            style="max-width:800px; margin:0 0 1.5rem; border-radius:0.75rem; overflow:hidden; background:#f3f4f6;">
+        <img th:src="${projekt.coverUrl}" alt=""
+             style="display:block; width:100%; height:auto; max-height:420px; object-fit:cover;">
+    </figure>
+
+    <section class="app-card" style="max-width: 800px;">
+        <dl class="app-datenliste">
+            <dt th:text="#{marktplatzDetail.feld.organisation}">Organisation</dt>
+            <dd>
+                <a th:href="@{'/vereine/' + ${projekt.org.slug}}" th:text="${projekt.org.name}">Verein</a>
+            </dd>
+
+            <dt th:text="#{marktplatzDetail.feld.kategorie}">Kategorie</dt>
+            <dd th:text="${projekt.kategorie} ?: '—'">—</dd>
+
+            <dt th:text="#{marktplatzDetail.feld.ort}">Ort</dt>
+            <dd th:text="${projekt.ort} ?: '—'">—</dd>
+
+            <dt th:text="#{marktplatzDetail.feld.zeitraum}">Zeitraum</dt>
+            <dd>
+                <span th:if="${projekt.startDatum}" th:text="${#temporals.format(projekt.startDatum, 'dd.MM.yyyy')}"></span>
+                <span th:if="${projekt.startDatum != null and projekt.endDatum != null}"> — </span>
+                <span th:if="${projekt.endDatum}" th:text="${#temporals.format(projekt.endDatum, 'dd.MM.yyyy')}"></span>
+                <span th:if="${projekt.startDatum == null and projekt.endDatum == null}">—</span>
+            </dd>
+
+            <dt th:if="${projekt.veroeffentlichtAm}" th:text="#{marktplatzDetail.feld.veroeffentlichtAm}">Veröffentlicht am</dt>
+            <dd th:if="${projekt.veroeffentlichtAm}"
+                th:text="${#temporals.format(projekt.veroeffentlichtAm, 'dd.MM.yyyy')}">01.01.2026</dd>
+        </dl>
+    </section>
+
+    <section class="app-card" style="max-width: 800px;" th:if="${projekt.beschreibung}">
+        <h2 style="font-family:var(--dash-font-head); font-size:1.15rem; margin:0 0 0.75rem;"
+            th:text="#{marktplatzDetail.beschreibung}">Beschreibung</h2>
+        <p style="margin:0; line-height:1.6; white-space:pre-line;" th:text="${projekt.beschreibung}">Beschreibung</p>
+    </section>
+
+    <!-- Galerie — alle GALERIE-Assets als Grid mit Lightbox-on-Click.
+         Kein JS-Framework: simples [hidden]-Toggle via inline onclick.
+         Bilder werden in nativer Auflösung im Overlay angezeigt. -->
+    <section class="app-card" style="max-width: 800px;"
+             th:if="${galerie != null and !galerie.isEmpty()}">
+        <h2 style="font-family:var(--dash-font-head); font-size:1.15rem; margin:0 0 1rem;"
+            th:text="#{marktplatzDetail.galerie.titel}">Bilder</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:0.75rem;">
+            <a th:each="g : ${galerie}" th:href="${g.url()}" target="_blank" rel="noopener"
+               th:title="${g.dateiname()}"
+               style="display:block; aspect-ratio:1/1; overflow:hidden; border-radius:0.5rem; background:#f3f4f6; border:1px solid #e5e7eb;">
+                <img th:src="${g.url()}" th:alt="${g.dateiname()}" loading="lazy"
+                     style="width:100%; height:100%; object-fit:cover; display:block; transition:transform 0.2s;"
+                     onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+            </a>
+        </div>
+    </section>
+
+    <section class="app-card" style="max-width: 800px;" th:if="${pakete != null and !pakete.isEmpty()}">
+        <h2 style="font-family:var(--dash-font-head); font-size:1.15rem; margin:0 0 1rem;"
+            th:text="#{marktplatzDetail.pakete.titel}">Sponsoring-Pakete</h2>
+        <div th:each="p : ${pakete}" class="paket-zeile"
+             style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; padding:0.75rem 0; border-top:1px solid #e5e7eb;">
+            <div>
+                <strong th:text="${p.name}">Gold</strong>
+                <p th:if="${p.beschreibung}" class="app-muted" style="margin:0.25rem 0 0; font-size:0.9rem;"
+                   th:text="${p.beschreibung}">Beschreibung</p>
+                <p th:if="${p.preisChf != null}" style="margin:0.25rem 0 0; font-size:0.9rem;"
+                   th:text="'CHF ' + ${#numbers.formatDecimal(p.preisChf, 0, 'POINT', 2, 'POINT')}">CHF 5'000</p>
+            </div>
+            <div>
+                <a sec:authorize="isAuthenticated()"
+                   th:href="@{/anfragen/neu(paketId=${p.id})}"
+                   class="app-btn" th:text="#{marktplatzDetail.anfrageStellen}">Anfrage stellen</a>
+                <a sec:authorize="!isAuthenticated()"
+                   th:href="@{/login(redirect=/anfragen/neu?paketId={id}(id=${p.id}))}"
+                   class="app-btn-secondary app-btn"
+                   th:text="#{marktplatzDetail.anmeldenFuerAnfrage}">Anmelden für Anfrage</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== DATEI-ANHÄNGE (öffentlich für Sponsoren) ==================== -->
+    <section class="app-card" style="max-width: 800px;" th:if="${anhaenge != null and !anhaenge.isEmpty()}">
+        <h2 style="font-family:var(--dash-font-head); font-size:1.15rem; margin:0 0 1rem;"
+            th:text="#{marktplatzDetail.anhaenge.titel}">📎 Projekt-Unterlagen</h2>
+        <p class="app-muted" style="margin:0 0 0.75rem; font-size:0.9rem;"
+           th:text="#{marktplatzDetail.anhaenge.text}">
+            Laden Sie die Projekt-Unterlagen herunter, um mehr über dieses Sponsoring-Projekt zu erfahren.
+        </p>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+            <a th:each="a : ${anhaenge}"
+               th:href="@{/medien/{id}(id=${a.id()})}"
+               style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:0.5rem; text-decoration:none; color:inherit; transition:background 0.15s;"
+               onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='#f9fafb'">
+                <span style="font-size:1.5rem;"
+                      th:text="${a.endung() == 'pdf' ? '📄' : (a.endung() == 'pptx' or a.endung() == 'ppt') ? '📊' : (a.endung() == 'docx' or a.endung() == 'doc') ? '📝' : '📎'}">📄</span>
+                <div style="flex:1; min-width:0;">
+                    <span th:text="${a.dateiname()}" style="font-weight:600; color:var(--farbe-primaer); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Datei.pdf</span>
+                    <span style="font-size:0.8rem; color:#6b7280;">
+                        <span th:text="${a.endung().toUpperCase()}">PDF</span> ·
+                        <span th:text="${a.groesseFormatiert()}">1.2 MB</span>
+                    </span>
+                </div>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.4; flex-shrink:0;">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <section class="app-card" style="max-width: 800px; background: var(--dash-violet-light); border-color: var(--dash-violet);"
+             th:if="${pakete == null or pakete.isEmpty()}">
+        <h2 style="font-family:var(--dash-font-head); font-size:1.15rem; margin:0 0 0.5rem;"
+            th:text="#{marktplatzDetail.interesse.titel}">Interesse?</h2>
+        <p style="margin:0;" th:utext="#{marktplatzDetail.interesse.text(${projekt.org.name})}">
+            Melden Sie sich bei Verein, um Sponsor zu werden.
+        </p>
+    </section>
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

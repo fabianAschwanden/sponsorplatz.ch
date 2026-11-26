@@ -1,0 +1,137 @@
+package ch.sponsorplatz.aufgabe;
+
+import ch.sponsorplatz.shared.config.ModelAttributeNames;
+import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Admin-UI: pflegt {@link AufgabenDefinition}en — Custom-Tasktypen erstellen,
+ * vorhandene aktivieren/deaktivieren, Titel/Beschreibung/Link anpassen.
+ * System-Seeds (V36) sind nicht löschbar, behalten ihre Trigger-Felder.
+ *
+ * <p>Controller berührt niemals die JPA-Entity direkt — Service liefert
+ * Form-DTOs und Views (CLAUDE.md View-Pflicht / ARCH-02).
+ */
+@Controller
+@RequestMapping("/admin/aufgaben-definitionen")
+@PreAuthorize("hasRole('PLATFORM_ADMIN')")
+public class AdminAufgabenDefinitionController {
+
+    private final AufgabenDefinitionService service;
+
+    public AdminAufgabenDefinitionController(AufgabenDefinitionService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public String liste(@RequestParam(required = false) String sort,
+                        @RequestParam(required = false, defaultValue = "asc") String dir,
+                        Model model) {
+        boolean absteigend = "desc".equalsIgnoreCase(dir);
+        List<AufgabenDefinitionView> defs = sortiere(AufgabenDefinitionView.von(service.alle()), sort, absteigend);
+        model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "admin");
+        model.addAttribute("definitionen", defs);
+        model.addAttribute("sortAktiv", sort);
+        model.addAttribute("absteigend", absteigend);
+        return "admin/aufgaben-definitionen";
+    }
+
+    private static List<AufgabenDefinitionView> sortiere(List<AufgabenDefinitionView> liste,
+                                                         String sort, boolean absteigend) {
+        if (sort == null) return liste;
+        Comparator<AufgabenDefinitionView> c = switch (sort) {
+            case "titel" -> Comparator.comparing(AufgabenDefinitionView::titel,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+            case "trigger" -> Comparator.comparing(d -> d.triggerEntityTyp() != null ? d.triggerEntityTyp().name() : "",
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+            case "aktiv" -> Comparator.comparing(AufgabenDefinitionView::aktiv);
+            default -> null;
+        };
+        if (c == null) return liste;
+        return liste.stream().sorted(absteigend ? c.reversed() : c).toList();
+    }
+
+    @GetMapping("/neu")
+    public String neuesFormular(Model model) {
+        zeigeFormular(model, new AufgabenDefinitionFormDto(), null, false);
+        return "admin/aufgaben-definition-form";
+    }
+
+    @PostMapping
+    public String erstelle(@Valid @ModelAttribute("defForm") AufgabenDefinitionFormDto dto,
+                            BindingResult br, Authentication auth,
+                            Model model, RedirectAttributes redirect) {
+        if (br.hasErrors()) {
+            zeigeFormular(model, dto, null, false);
+            return "admin/aufgaben-definition-form";
+        }
+        try {
+            service.erstelle(dto, auth.getName());
+            redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,
+                    "Aufgaben-Definition \"" + dto.getTitel() + "\" erstellt.");
+            return "redirect:/admin/aufgaben-definitionen";
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute(ModelAttributeNames.FEHLERMELDUNG, ex.getMessage());
+            zeigeFormular(model, dto, null, false);
+            return "admin/aufgaben-definition-form";
+        }
+    }
+
+    @GetMapping("/{id}/bearbeiten")
+    public String bearbeitenFormular(@PathVariable UUID id, Model model) {
+        zeigeFormular(model, service.findeFormular(id), id, service.istSystemDefinition(id));
+        return "admin/aufgaben-definition-form";
+    }
+
+    @PostMapping("/{id}")
+    public String aktualisiere(@PathVariable UUID id,
+                                @Valid @ModelAttribute("defForm") AufgabenDefinitionFormDto dto,
+                                BindingResult br, Model model, RedirectAttributes redirect) {
+        boolean systemSchutz = service.istSystemDefinition(id);
+        if (br.hasErrors()) {
+            zeigeFormular(model, dto, id, systemSchutz);
+            return "admin/aufgaben-definition-form";
+        }
+        service.aktualisiere(id, dto);
+        redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,
+                "Aufgaben-Definition \"" + dto.getTitel() + "\" aktualisiert.");
+        return "redirect:/admin/aufgaben-definitionen";
+    }
+
+    @PostMapping("/{id}/loeschen")
+    public String loesche(@PathVariable UUID id, RedirectAttributes redirect) {
+        try {
+            service.loesche(id);
+            redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,
+                    "Aufgaben-Definition gelöscht.");
+        } catch (IllegalStateException ex) {
+            redirect.addFlashAttribute(ModelAttributeNames.FEHLERMELDUNG, ex.getMessage());
+        }
+        return "redirect:/admin/aufgaben-definitionen";
+    }
+
+    private void zeigeFormular(Model model, AufgabenDefinitionFormDto dto,
+                                UUID bearbeitenId, boolean systemSchutz) {
+        model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "admin");
+        model.addAttribute("defForm", dto);
+        model.addAttribute("bearbeitenId", bearbeitenId);
+        model.addAttribute("systemSchutz", systemSchutz);
+        model.addAttribute("entityTypen", TriggerEntityTyp.values());
+        model.addAttribute("assigneeRegeln", AssigneeRegel.values());
+    }
+}

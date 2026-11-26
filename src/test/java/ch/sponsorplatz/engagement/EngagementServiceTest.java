@@ -1,0 +1,186 @@
+package ch.sponsorplatz.engagement;
+
+import ch.sponsorplatz.anfrage.AnfrageStatus;
+import ch.sponsorplatz.anfrage.SponsoringAnfrage;
+import ch.sponsorplatz.anfrage.SponsoringAnfrageRepository;
+import ch.sponsorplatz.organisation.Branche;
+import ch.sponsorplatz.organisation.OrgTyp;
+import ch.sponsorplatz.organisation.Organisation;
+import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.projekt.Projekt;
+import ch.sponsorplatz.projekt.SponsoringPaket;
+import ch.sponsorplatz.shared.medien.OrganisationLogoLookup;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class EngagementServiceTest {
+
+    @Mock private SponsoringAnfrageRepository anfrageRepository;
+    @Mock private OrganisationRepository orgRepository;
+    @Mock private OrganisationLogoLookup logoLookup;
+    @InjectMocks private EngagementService service;
+
+    @Test
+    @DisplayName("ENG-04: findeSchaufenster baut Marken-Kopf + Logo + Kanton-Gruppen")
+    void schaufensterMitLogoUndGruppen() {
+        Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
+        when(orgRepository.findBySlug("muster-versicherung")).thenReturn(Optional.of(sponsor));
+        when(anfrageRepository.findByAnfragenderOrgIdAndStatusOrderByCreatedAtDesc(
+                sponsor.getId(), AnfrageStatus.ANGENOMMEN))
+                .thenReturn(List.of(erstelleAnfrageMitOrt(sponsor, "Zürich", "8001"),
+                        erstelleAnfrageMitOrt(sponsor, "Bern", "3011")));
+        // lenient: mitLogos schlägt zusätzlich die Verein-Logos nach (andere IDs) —
+        // dieser Stub gilt nur für das Marken-Logo im Hero.
+        lenient().when(logoLookup.findeLogoUrl(sponsor.getId())).thenReturn(Optional.of("/medien/logo-1"));
+
+        SchaufensterAnsicht ansicht = service.findeSchaufenster("muster-versicherung", null, null);
+
+        assertThat(ansicht.sponsorName()).isEqualTo("Test muster-versicherung");
+        assertThat(ansicht.sponsorLogoUrl()).isEqualTo("/medien/logo-1");
+        // Sortiert nach Kanton-Anzeige: Bern < Zürich
+        assertThat(ansicht.nachKanton().keySet()).containsExactly("BE", "ZH");
+        assertThat(ansicht.anzahlVereine()).isEqualTo(2);
+        assertThat(ansicht.verfuegbareKantone())
+                .containsExactly(ch.sponsorplatz.organisation.Kanton.BE, ch.sponsorplatz.organisation.Kanton.ZH);
+    }
+
+    @Test
+    @DisplayName("ENG-05: findeStartseitenEngagements mappt ANGENOMMEN-Anfragen + liefert verfügbare Kantone")
+    void startseitenEngagements() {
+        Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+                .thenReturn(List.of(erstelleAnfrageMitOrt(sponsor, "Zürich", "8001")));
+
+        StartseitenTeaser teaser = service.findeStartseitenEngagements(null, 6);
+
+        assertThat(teaser.vorhanden()).isTrue();
+        assertThat(teaser.engagements()).hasSize(1);
+        assertThat(teaser.engagements().get(0).sponsorSlug()).isEqualTo("muster-versicherung");
+        assertThat(teaser.verfuegbareKantone()).containsExactly(ch.sponsorplatz.organisation.Kanton.ZH);
+    }
+
+    /** ENG-08: Kanton-Filter im Startseiten-Teaser greift. */
+    @Test
+    @DisplayName("ENG-08: findeStartseitenEngagements filtert nach Kanton")
+    void startseitenEngagementsKantonFilter() {
+        Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+                .thenReturn(List.of(erstelleAnfrageMitOrt(sponsor, "Zürich", "8001"),
+                        erstelleAnfrageMitOrt(sponsor, "Bern", "3011")));
+
+        StartseitenTeaser nurBe = service.findeStartseitenEngagements("BE", 6);
+
+        assertThat(nurBe.filterKanton()).isEqualTo(ch.sponsorplatz.organisation.Kanton.BE);
+        assertThat(nurBe.engagements()).hasSize(1);
+        // verfügbare Kantone bleiben vollständig (aus ungefiltertem Set)
+        assertThat(nurBe.verfuegbareKantone())
+                .containsExactly(ch.sponsorplatz.organisation.Kanton.BE, ch.sponsorplatz.organisation.Kanton.ZH);
+    }
+
+    /** ENG-06: Kontakt-Anfrage ohne Paket wird inkl. gemappt (null Projekt-Felder), kein NPE (500-Regression). */
+    @Test
+    @DisplayName("ENG-06: Kontakt-Anfrage ohne Paket wird gemappt statt NPE")
+    void kontaktAnfrageOhnePaketWirdGemappt() {
+        Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
+        SponsoringAnfrage kontaktOhnePaket = new SponsoringAnfrage();
+        kontaktOhnePaket.setAnfragenderOrg(sponsor);
+        kontaktOhnePaket.setEmpfaengerOrg(erstelleOrg("verein-kontakt", Branche.SPORT));
+        kontaktOhnePaket.setStatus(AnfrageStatus.ANGENOMMEN);
+        // paket bleibt null (Kontakt-Anfrage)
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+                .thenReturn(List.of(kontaktOhnePaket, erstelleAnfrage(sponsor)));
+
+        List<EngagementView> result = service.findeStartseitenEngagements(null, 6).engagements();
+
+        assertThat(result).hasSize(2);
+        assertThat(result).anyMatch(e -> e.projektName() == null);  // Kontakt-Engagement
+        assertThat(result).anyMatch(e -> e.projektName() != null);  // Paket-Engagement
+    }
+
+    /** ENG-07: Verein-Logo wird in die Engagements gemappt. */
+    @Test
+    @DisplayName("ENG-07: Verein-Logo wird in die Engagements gemappt")
+    void neuesteEngagementsMitVereinLogo() {
+        Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
+        SponsoringAnfrage anfrage = erstelleAnfrage(sponsor);
+        UUID vereinId = anfrage.getEmpfaengerOrg().getId();
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+                .thenReturn(List.of(anfrage));
+        when(logoLookup.findeLogoUrl(vereinId)).thenReturn(Optional.of("/medien/v"));
+
+        List<EngagementView> result = service.findeStartseitenEngagements(null, 6).engagements();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).vereinLogoUrl()).isEqualTo("/medien/v");
+    }
+
+    private Organisation erstelleOrg(String slug, Branche branche) {
+        Organisation org = new Organisation();
+        org.setId(UUID.randomUUID());
+        org.setSlug(slug);
+        org.setName("Test " + slug);
+        org.setBranche(branche);
+        // Org-Typ steuert die Rollen-Auflösung in EngagementView.von:
+        // Vereins-Slugs → VEREIN, Marken (Sponsoren) → UNTERNEHMEN.
+        org.setTyp(slug.startsWith("verein") ? OrgTyp.VEREIN : OrgTyp.UNTERNEHMEN);
+        return org;
+    }
+
+    private SponsoringAnfrage erstelleAnfrage(Organisation sponsor) {
+        Organisation verein = erstelleOrg("verein-test", Branche.SPORT);
+        Projekt p = new Projekt();
+        p.setName("Test-Projekt");
+        p.setSlug("test-projekt");
+        p.setOrt("Zürich");
+        p.setOrg(verein);
+        SponsoringPaket paket = new SponsoringPaket();
+        paket.setName("Gold");
+        paket.setProjekt(p);
+
+        SponsoringAnfrage a = new SponsoringAnfrage();
+        a.setAnfragenderOrg(sponsor);
+        a.setEmpfaengerOrg(verein);
+        a.setPaket(paket);
+        a.setStatus(AnfrageStatus.ANGENOMMEN);
+        a.setBeantwortetAm(Instant.now());
+        return a;
+    }
+
+    private SponsoringAnfrage erstelleAnfrageMitOrt(Organisation sponsor, String ort, String plz) {
+        Organisation verein = erstelleOrg("verein-" + ort.toLowerCase(), Branche.SPORT);
+        verein.setPostleitzahl(plz);
+        Projekt p = new Projekt();
+        p.setName("Projekt " + ort);
+        p.setSlug("projekt-" + ort.toLowerCase());
+        p.setOrt(ort);
+        p.setOrg(verein);
+        SponsoringPaket paket = new SponsoringPaket();
+        paket.setName("Gold");
+        paket.setProjekt(p);
+
+        SponsoringAnfrage a = new SponsoringAnfrage();
+        a.setAnfragenderOrg(sponsor);
+        a.setEmpfaengerOrg(verein);
+        a.setPaket(paket);
+        a.setStatus(AnfrageStatus.ANGENOMMEN);
+        a.setBeantwortetAm(Instant.now());
+        return a;
+    }
+}
+

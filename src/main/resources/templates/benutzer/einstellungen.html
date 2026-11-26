@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{einstellungen.title}">Mein Profil — Sponsorplatz</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="app-body">
+
+<div class="app-layout">
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('einstellungen', null)}"></aside>
+
+    <main class="app-main">
+        <header class="app-page-head">
+            <div>
+                <p class="app-page-rubrik" th:text="#{einstellungen.rubrik}">Mein Konto</p>
+                <h1 th:text="#{einstellungen.h1}">Profil &amp; Einstellungen</h1>
+                <p class="app-muted">
+                    <span th:text="#{einstellungen.emailLabel}">E-Mail:</span>
+                    <span th:text="${profil.email}">user@example.ch</span> ·
+                    <span th:text="#{einstellungen.mitgliedSeit}">Mitglied seit</span>
+                    <span th:text="${profil.registriertAm != null ? #temporals.format(profil.registriertAm, 'dd.MM.yyyy') : '—'}">01.01.2026</span>
+                </p>
+            </div>
+        </header>
+
+        <div th:if="${erfolgsMeldung != null}" class="app-card" style="border-left:4px solid #16a34a;"
+             th:text="${erfolgsMeldung}"></div>
+        <div th:if="${fehlermeldung != null}" class="app-card" style="border-left:4px solid #dc2626;"
+             th:text="${fehlermeldung}"></div>
+
+        <!-- ── Profilbild ───────────────────────────────────────────── -->
+        <section class="app-card">
+            <h2 th:text="#{einstellungen.profilbild.titel}">Profilbild</h2>
+            <div class="profil-bild-block">
+                <div class="profil-bild">
+                    <img th:if="${profil.profilbildUrl}" th:src="${profil.profilbildUrl}"
+                         th:alt="#{einstellungen.profilbild.titel}" alt="Profilbild">
+                    <div th:unless="${profil.profilbildUrl}" class="profil-bild-platzhalter"
+                         th:text="${#strings.substring(#strings.toUpperCase(profil.anzeigename), 0, 2)}">FA</div>
+                </div>
+                <form th:action="@{/einstellungen/profilbild}" method="post" enctype="multipart/form-data"
+                      class="profil-bild-form">
+                    <label class="app-muted" for="profilbild-datei" th:text="#{einstellungen.profilbild.label}">JPEG / PNG / WebP, max. 5 MB</label>
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                        <input id="profilbild-datei" type="file" name="datei"
+                               accept="image/jpeg,image/png,image/webp" required>
+                        <button type="submit" class="app-btn" th:text="#{einstellungen.profilbild.upload}">Hochladen</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ── Profil-Form ──────────────────────────────────────────── -->
+        <section class="app-card">
+            <h2 th:text="#{einstellungen.profil.titel}">Profil-Daten</h2>
+            <form th:action="@{/einstellungen/profil}" th:object="${profilForm}" method="post" class="app-form" novalidate>
+                <div class="app-form-grid">
+                    <div class="app-form-group">
+                        <label for="anzeigename" th:text="#{einstellungen.profil.anzeigename}">Anzeigename *</label>
+                        <input type="text" id="anzeigename" th:field="*{anzeigename}" required>
+                        <p class="app-meldung fehler" th:if="${#fields.hasErrors('anzeigename')}" th:errors="*{anzeigename}"></p>
+                    </div>
+                    <div class="app-form-group">
+                        <label for="positionTitel" th:text="#{einstellungen.profil.position}">Position / Titel</label>
+                        <input type="text" id="positionTitel" th:field="*{positionTitel}"
+                               th:placeholder="#{einstellungen.profil.positionPlaceholder}"
+                               placeholder="z.B. Geschäftsführer, Präsidentin">
+                    </div>
+                    <div class="app-form-group">
+                        <label for="sprache" th:text="#{einstellungen.profil.sprache}">Bevorzugte Sprache</label>
+                        <select id="sprache" th:field="*{sprache}">
+                            <option th:each="entry : ${sprachen}" th:value="${entry.key}" th:text="${entry.value}"></option>
+                        </select>
+                    </div>
+                    <div class="app-form-group">
+                        <label for="telefon" th:text="#{einstellungen.profil.telefon}">Telefon</label>
+                        <input type="tel" id="telefon" th:field="*{telefon}" placeholder="+41 79 123 45 67">
+                    </div>
+                    <div class="app-form-group">
+                        <label for="ort" th:text="#{einstellungen.profil.ort}">Ort</label>
+                        <input type="text" id="ort" th:field="*{ort}"
+                               th:placeholder="#{einstellungen.profil.ortPlaceholder}" placeholder="z.B. Zürich">
+                    </div>
+                    <div class="app-form-group">
+                        <label for="websiteUrl" th:text="#{einstellungen.profil.website}">Persönliche Website</label>
+                        <input type="url" id="websiteUrl" th:field="*{websiteUrl}" placeholder="https://...">
+                    </div>
+                </div>
+                <div class="app-form-group" style="margin-top:1rem;">
+                    <label for="bio" th:text="#{einstellungen.profil.bio}">Über mich</label>
+                    <textarea id="bio" th:field="*{bio}" rows="4"
+                              th:placeholder="#{einstellungen.profil.bioPlaceholder}"
+                              placeholder="Kurze Beschreibung über Sie und Ihre Rolle..."></textarea>
+                </div>
+                <div style="margin-top:1.5rem;">
+                    <button type="submit" class="app-btn" th:text="#{einstellungen.profil.speichern}">Profil speichern</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ── 2-Faktor-Authentifizierung ────────────────────────────── -->
+        <section class="app-card">
+            <h2>2-Faktor-Authentifizierung (TOTP)</h2>
+            <p class="app-muted">
+                Zweiter Faktor per Authenticator-App — schützt dein Konto auch bei kompromittiertem Passwort.
+            </p>
+            <a th:href="@{/einstellungen/2fa}" class="app-btn app-btn-ghost">
+                2FA verwalten
+            </a>
+        </section>
+
+        <!-- ── Passwort ─────────────────────────────────────────────── -->
+        <section class="app-card">
+            <h2 th:text="#{einstellungen.passwort.titel}">Passwort ändern</h2>
+            <form th:action="@{/einstellungen/passwort}" method="post" class="app-form">
+                <div class="app-form-grid">
+                    <div class="app-form-group">
+                        <label for="altesPasswort" th:text="#{einstellungen.passwort.alt}">Aktuelles Passwort</label>
+                        <input type="password" id="altesPasswort" name="altesPasswort" required autocomplete="current-password">
+                    </div>
+                    <div class="app-form-group">
+                        <label for="neuesPasswort" th:text="#{einstellungen.passwort.neu}">Neues Passwort</label>
+                        <input type="password" id="neuesPasswort" name="neuesPasswort" required minlength="8" autocomplete="new-password">
+                        <small class="app-muted" th:text="#{einstellungen.passwort.neuHint}">Mindestens 8 Zeichen.</small>
+                    </div>
+                </div>
+                <div style="margin-top:1.5rem;">
+                    <button type="submit" class="app-btn" th:text="#{einstellungen.passwort.aendernBtn}">Passwort ändern</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- ── Datenexport (DSG) ────────────────────────────────────── -->
+        <section class="app-card">
+            <h2 th:text="#{einstellungen.export.titel}">Datenexport</h2>
+            <p class="app-muted" th:text="#{einstellungen.export.text}">…</p>
+            <a th:href="@{/einstellungen/datenexport}" class="app-btn app-btn-ghost"
+               th:text="#{einstellungen.export.btn}">Daten als JSON herunterladen</a>
+        </section>
+    </main>
+</div>
+
+<style>
+    .profil-bild-block {
+        display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .profil-bild img,
+    .profil-bild-platzhalter {
+        width: 96px; height: 96px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        object-fit: cover; flex: 0 0 auto;
+    }
+    .profil-bild-platzhalter {
+        background: linear-gradient(135deg, #6d28d9, #9333ea);
+        color: #fff; font-size: 1.75rem; font-weight: 700;
+    }
+    .profil-bild-form {
+        display: flex; flex-direction: column; gap: 0.5rem; flex: 1; min-width: 240px;
+    }
+    .app-form-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+    }
+    @media (max-width: 640px) {
+        .app-form-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

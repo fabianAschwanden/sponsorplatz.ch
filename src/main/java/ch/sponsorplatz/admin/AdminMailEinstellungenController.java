@@ -1,0 +1,100 @@
+package ch.sponsorplatz.admin;
+
+import ch.sponsorplatz.shared.einstellungen.PlattformEinstellungenService;
+import ch.sponsorplatz.shared.einstellungen.PlattformEinstellungenService.MailKonfigurationsSnapshot;
+import ch.sponsorplatz.shared.mail.MailVersand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+/**
+ * Admin-UI für SMTP-Einstellungen.
+ *
+ * <p>Persistente Werte überschreiben ENV-Defaults zur Laufzeit (siehe
+ * {@link MailVersand}). Test-Mail-Button sendet sofort eine Mail an die
+ * konfigurierte Test-Empfänger-Adresse.
+ *
+ * <p>Live-Modus ({@code MAIL_LIVE}) ist <strong>nicht</strong> editierbar
+ * — bewusst nur via ENV gesteuert (Sicherheit gegen Klick-Unfälle).
+ */
+@Controller
+@RequestMapping("/admin/mail-einstellungen")
+@PreAuthorize("hasRole('PLATFORM_ADMIN')")
+public class AdminMailEinstellungenController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminMailEinstellungenController.class);
+
+    private final PlattformEinstellungenService einstellungenService;
+    private final MailVersand mailService;
+
+    public AdminMailEinstellungenController(PlattformEinstellungenService einstellungenService,
+                                            MailVersand mailService) {
+        this.einstellungenService = einstellungenService;
+        this.mailService = mailService;
+    }
+
+    @GetMapping
+    public String anzeigen(Model model) {
+        MailKonfigurationsSnapshot snapshot = einstellungenService.ladeMailKonfig();
+        model.addAttribute("einstellungen", MailEinstellungenView.von(
+                snapshot,
+                mailService.effektiverHost(),
+                mailService.effektiverAbsender(),
+                mailService.effektiverTestEmpfaenger(),
+                mailService.istLiveMode(),
+                mailService.istKonfiguriert()
+        ));
+        if (!model.containsAttribute("form")) {
+            MailEinstellungenFormDto form = new MailEinstellungenFormDto();
+            form.setSmtpHost(snapshot.smtpHost());
+            form.setSmtpPort(snapshot.smtpPort());
+            form.setSmtpUser(snapshot.smtpUser());
+            // smtpPassword bewusst nicht ins Form — Klartext bleibt in DB
+            form.setSmtpAuth(snapshot.smtpAuth());
+            form.setSmtpStarttls(snapshot.smtpStarttls());
+            form.setMailAbsender(snapshot.mailAbsender());
+            form.setMailTestEmpfaenger(snapshot.mailTestEmpfaenger());
+            model.addAttribute("form", form);
+        }
+        return "admin/mail-einstellungen";
+    }
+
+    @PostMapping("/speichern")
+    public String speichern(@ModelAttribute("form") MailEinstellungenFormDto form,
+                            Authentication auth,
+                            RedirectAttributes redirect) {
+        einstellungenService.aktualisiereMailKonfig(
+                form.getSmtpHost(), form.getSmtpPort(), form.getSmtpUser(),
+                form.getSmtpPassword(), form.isSmtpAuth(), form.isSmtpStarttls(),
+                form.getMailAbsender(), form.getMailTestEmpfaenger(),
+                auth.getName());
+
+        log.info("Mail-Einstellungen aktualisiert von {}", auth.getName());
+        redirect.addFlashAttribute("erfolgsMeldung", "Mail-Einstellungen gespeichert.");
+        return "redirect:/admin/mail-einstellungen";
+    }
+
+    @PostMapping("/test")
+    public String testMail(RedirectAttributes redirect) {
+        try {
+            mailService.sendeTestMail();
+            redirect.addFlashAttribute("erfolgsMeldung",
+                    "Test-Mail wurde an " + mailService.effektiverTestEmpfaenger() + " gesendet.");
+        } catch (IllegalStateException e) {
+            redirect.addFlashAttribute("fehlermeldung", e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("Test-Mail fehlgeschlagen: {}", e.getMessage());
+            redirect.addFlashAttribute("fehlermeldung",
+                    "Test-Mail-Versand fehlgeschlagen: " + e.getMessage());
+        }
+        return "redirect:/admin/mail-einstellungen";
+    }
+}

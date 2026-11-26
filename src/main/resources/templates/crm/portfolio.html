@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="de-CH"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{crm.portfolio.titel} + ' — ' + ${sponsorName}">CRM-Portfolio</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="app-body">
+
+<div class="app-layout">
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('crm', ${anzahlOffeneAnfragen})}"></aside>
+
+    <main class="app-main">
+        <header class="app-page-head">
+            <div>
+                <p class="app-page-rubrik" th:text="${sponsorName}">Muster Versicherung</p>
+                <h1 th:text="#{crm.portfolio.titel}">Sponsoring-Portfolio</h1>
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <a th:href="@{/crm/{slug}/import(slug=${sponsorSlug})}" class="app-btn app-btn-secondary"
+                   th:text="#{crm.import.btn}">Import</a>
+                <a th:href="@{/crm/{slug}/export.csv(slug=${sponsorSlug})}" class="app-btn app-btn-secondary"
+                   th:text="#{crm.export.btn}">Export CSV</a>
+                <a th:href="@{/crm/{slug}/neu(slug=${sponsorSlug})}" class="app-btn"
+                   th:text="#{crm.portfolio.neuBtn}">+ Verein hinzufügen</a>
+            </div>
+        </header>
+
+        <div th:if="${erfolgsMeldung != null}" class="app-meldung erfolg" th:text="${erfolgsMeldung}"></div>
+        <div th:if="${fehlerMeldung != null}" class="app-meldung fehler" th:text="${fehlerMeldung}"></div>
+
+        <p class="app-muted" style="margin-bottom:1rem;"
+           th:text="#{crm.portfolio.hinweis}">Privates CRM — nur für dein Sponsor-Team sichtbar.</p>
+
+        <!-- Renewal-Pipeline: auslaufende unterzeichnete Verträge (nächste 90 Tage,
+             inkl. überfälliger). Quick-Win auf Basis vertrag.laufzeit_bis. -->
+        <section th:if="${not #lists.isEmpty(renewals)}" class="crm-renewal">
+            <h2 th:text="#{crm.renewal.titel}">Anstehende Renewals</h2>
+            <p class="app-muted" th:text="#{crm.renewal.hinweis}">Verträge, deren Laufzeit bald endet.</p>
+            <table class="app-table">
+                <thead>
+                <tr>
+                    <th th:text="#{crm.feld.verein}">Verein</th>
+                    <th th:text="#{crm.renewal.paket}">Paket</th>
+                    <th th:text="#{crm.renewal.wert}">Wert</th>
+                    <th th:text="#{crm.renewal.laufzeitBis}">Endet</th>
+                    <th th:text="#{crm.renewal.frist}">Frist</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${renewals}" th:classappend="${r.istUeberfaellig} ? 'crm-renewal-faellig' : ''">
+                    <td><a th:href="@{/organisationen/{slug}(slug=${r.vereinSlug})}" th:text="${r.vereinName}">FC Beispiel</a></td>
+                    <td th:text="${r.paketName}">Goldpaket</td>
+                    <td th:text="'CHF ' + ${#numbers.formatDecimal(r.preisChf, 1, 'NONE', 2, 'POINT')}">CHF 5000.00</td>
+                    <td th:text="${#temporals.format(r.laufzeitBis, 'dd.MM.yyyy')}">31.12.2026</td>
+                    <td>
+                        <span th:if="${r.istUeberfaellig}" class="app-chip crm-chip-faellig"
+                              th:text="#{crm.renewal.ueberfaellig(${-r.tageVerbleibend})}">überfällig</span>
+                        <span th:unless="${r.istUeberfaellig}" class="app-chip"
+                              th:text="#{crm.renewal.inTagen(${r.tageVerbleibend})}">in 30 Tagen</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Komplett leeres Portfolio (kein Filter aktiv) -->
+        <div th:if="${ansicht.anzahlGesamt == 0}" class="app-empty">
+            <strong th:text="#{crm.portfolio.empty.titel}">Noch keine Vereine im Portfolio.</strong>
+            <span th:text="#{crm.portfolio.empty.text}">Füge den ersten gesponserten Verein hinzu.</span>
+        </div>
+
+        <!-- CRM-Toolbar: Zähler + Filter (Status/Pipeline) + Freitext-Suche (server-seitig) -->
+        <th:block th:if="${ansicht.anzahlGesamt > 0}">
+        <form method="get" th:action="@{/crm/{slug}(slug=${sponsorSlug})}" class="app-filter liste-toolbar">
+            <input type="hidden" name="sort" th:value="${ansicht.sort}">
+            <input type="hidden" name="dir" th:value="${ansicht.absteigend} ? 'desc' : 'asc'">
+            <div class="app-filter-felder">
+                <label>
+                    <span th:text="#{crm.feld.status}">Status</span>
+                    <select name="status" onchange="this.form.submit()" th:aria-label="#{crm.feld.status}">
+                        <option value="" th:text="#{crm.filter.alle}">Alle</option>
+                        <option th:each="s : ${statusWerte}" th:value="${s}"
+                                th:selected="${ansicht.filterStatus == s}" th:text="#{'crm.status.' + ${s}}">Lead</option>
+                    </select>
+                </label>
+                <label>
+                    <span th:text="#{crm.feld.pipelineStage}">Pipeline-Stufe</span>
+                    <select name="pipeline" onchange="this.form.submit()" th:aria-label="#{crm.feld.pipelineStage}">
+                        <option value="" th:text="#{crm.filter.alle}">Alle</option>
+                        <option th:each="p : ${pipelineStageWerte}" th:value="${p}"
+                                th:selected="${ansicht.filterPipeline == p}" th:text="#{'crm.pipelineStage.' + ${p}}">Lead</option>
+                    </select>
+                </label>
+                <label class="liste-suche">
+                    <span th:text="#{crm.filter.suche}">Suche</span>
+                    <input type="search" name="suche" th:value="${ansicht.suche}"
+                           th:placeholder="#{crm.filter.suche.placeholder}" placeholder="Vereinsname, Notiz">
+                </label>
+            </div>
+            <div class="app-filter-aktionen">
+                <button type="submit" class="app-btn app-btn-sm" th:text="#{crm.filter.anwenden}">Anwenden</button>
+                <a th:if="${ansicht.istGefiltert()}" th:href="@{/crm/{slug}(slug=${sponsorSlug})}"
+                   class="liste-reset" th:text="#{crm.filter.zuruecksetzen}">Zurücksetzen</a>
+                <span class="liste-anzahl"
+                      th:text="${ansicht.istGefiltert()}
+                               ? #{crm.portfolio.anzahlGefiltert(${ansicht.anzahlGezeigt}, ${ansicht.anzahlGesamt})}
+                               : #{crm.portfolio.anzahl(${ansicht.anzahlGesamt})}">12 Vereine</span>
+            </div>
+        </form>
+
+        <!-- Bulk-Form umschliesst die Tabelle: Zeilen-Checkboxen + kodierte Bulk-Aktion.
+             data-* tragen die gefilterte Gesamtzahl + Seitengrösse für die „Alle N"-Auswahl. -->
+        <form method="post" th:action="@{/crm/{slug}/bulk(slug=${sponsorSlug})}" id="bulkForm"
+              th:attr="data-gefiltert=${ansicht.anzahlGezeigt}, data-seite=${#lists.size(ansicht.accounts)}"
+              onsubmit="return crmBulkBestaetigen(this);">
+            <!-- Aktuelle Filter mitgeben: ermöglicht „Alle Treffer" server-seitig (über Seitengrenzen). -->
+            <input type="hidden" name="alleGefiltert" id="bulkAlleGefiltert" value="false">
+            <input type="hidden" name="suche" th:value="${ansicht.suche}">
+            <input type="hidden" name="status" th:value="${ansicht.filterStatus}">
+            <input type="hidden" name="pipeline" th:value="${ansicht.filterPipeline}">
+            <!-- Bulk-Aktionsleiste — JS blendet sie ein, sobald ≥1 Zeile markiert ist -->
+            <div class="liste-bulkbar" id="bulkBar" hidden>
+                <span class="liste-bulkbar-anzahl"><span id="bulkAnzahl">0</span>
+                    <span th:text="#{crm.bulk.markiert}">markiert</span></span>
+                <!-- „Alle N Treffer auswählen" — nur wenn Treffer über die aktuelle Seite hinausgehen -->
+                <a href="#" id="bulkAlleLink" class="liste-bulk-alle" hidden
+                   th:text="#{crm.bulk.alleTreffer(${ansicht.anzahlGezeigt})}">Alle 120 Treffer auswählen</a>
+                <a href="#" id="bulkSeiteLink" class="liste-bulk-alle" hidden
+                   th:text="#{crm.bulk.nurSeite}">Auswahl auf Seite beschränken</a>
+                <label>
+                    <select name="bulkAktion" id="bulkAktion">
+                        <option value="" th:text="#{crm.bulk.aktionWaehlen}">Aktion wählen …</option>
+                        <optgroup th:label="#{crm.bulk.gruppe.status}">
+                            <option th:each="s : ${statusWerte}" th:value="'status:' + ${s}"
+                                    th:text="#{'crm.status.' + ${s}}">Aktiv</option>
+                        </optgroup>
+                        <optgroup th:label="#{crm.bulk.gruppe.pipeline}">
+                            <option th:each="p : ${pipelineStageWerte}" th:value="'pipeline:' + ${p}"
+                                    th:text="#{'crm.pipelineStage.' + ${p}}">Angebot</option>
+                        </optgroup>
+                        <optgroup th:label="#{crm.bulk.gruppe.tier}">
+                            <option th:each="t : ${tierWerte}" th:value="'tier:' + ${t}"
+                                    th:text="#{'crm.tier.' + ${t}}">Kern</option>
+                        </optgroup>
+                        <option value="entfernen" th:text="#{crm.bulk.entfernen}">Aus Portfolio entfernen</option>
+                    </select>
+                </label>
+                <button type="submit" class="app-btn app-btn-sm" th:text="#{crm.bulk.anwenden}">Anwenden</button>
+                <span class="confirm-msg" hidden th:text="#{crm.bulk.entfernen.bestaetigung}"></span>
+            </div>
+
+            <!-- Sortierbare Header: jeder Link toggelt asc/desc und bewahrt die aktiven Filter -->
+            <table class="app-table crm-portfolio-table">
+                <thead>
+                <tr>
+                    <th class="liste-check"><input type="checkbox" id="bulkAlle" th:aria-label="#{crm.bulk.alle}"></th>
+                    <th th:replace="~{crm/portfolio :: sortKopf('verein', #{crm.feld.verein})}">Verein</th>
+                    <th th:replace="~{crm/portfolio :: sortKopf('status', #{crm.feld.status})}">Status</th>
+                    <th th:replace="~{crm/portfolio :: sortKopf('pipeline', #{crm.feld.pipelineStage})}">Pipeline-Stufe</th>
+                    <th th:replace="~{crm/portfolio :: sortKopf('tier', #{crm.feld.tier})}">Tier</th>
+                    <th th:replace="~{crm/portfolio :: sortKopf('forecast', #{crm.feld.forecastBetrag})}">Forecast</th>
+                    <th th:text="#{crm.feld.notiz}">Notiz</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Master-Detail: Verein-Name verlinkt auf die Account-Detail. -->
+                <tr th:each="a : ${ansicht.accounts}">
+                    <td class="liste-check">
+                        <input type="checkbox" class="crm-row-check" name="ids" th:value="${a.id}"
+                               th:aria-label="${a.vereinName}">
+                    </td>
+                    <td>
+                        <a th:href="@{/crm/{slug}/{id}(slug=${sponsorSlug}, id=${a.id})}" th:text="${a.vereinName}">FC Beispiel</a>
+                    </td>
+                    <td><span class="app-chip" th:text="#{'crm.status.' + ${a.status}}">Lead</span></td>
+                    <td><span class="app-chip" th:text="#{'crm.pipelineStage.' + ${a.pipelineStage}}">Lead</span></td>
+                    <td th:text="${a.tier != null ? #messages.msg('crm.tier.' + a.tier) : '—'}">Kern</td>
+                    <td th:text="${a.gewichteterForecastChf != null ? 'CHF ' + #numbers.formatDecimal(a.gewichteterForecastChf, 1, 'NONE', 2, 'POINT') : '—'}">CHF 6000.00</td>
+                    <td class="app-muted" th:text="${a.notiz}"></td>
+                </tr>
+                <tr th:if="${ansicht.anzahlGezeigt == 0}">
+                    <td colspan="7" class="app-muted" style="text-align:center; padding:1.5rem;"
+                        th:text="#{crm.portfolio.keineTreffer}">Keine Vereine passen zu Filter/Suche.</td>
+                </tr>
+                </tbody>
+                <tfoot th:if="${ansicht.forecastSummeChf != null and ansicht.forecastSummeChf.signum() > 0}">
+                <tr>
+                    <td colspan="5" style="text-align:right; font-weight:600;"
+                        th:text="#{crm.pipeline.forecastSumme}">Gewichteter Pipeline-Forecast</td>
+                    <td colspan="2" style="font-weight:600;"
+                        th:text="'CHF ' + ${#numbers.formatDecimal(ansicht.forecastSummeChf, 1, 'NONE', 2, 'POINT')}">CHF 12000.00</td>
+                </tr>
+                </tfoot>
+            </table>
+        </form>
+
+        <!-- Paginierung: Seitengrösse + Vor/Zurück, bewahren Filter + Sortierung -->
+        <nav class="liste-pager" th:if="${ansicht.hatMehrereSeiten() or ansicht.anzahlGezeigt > 25}"
+             aria-label="Seitennavigation">
+            <form method="get" th:action="@{/crm/{slug}(slug=${sponsorSlug})}" class="liste-pager-groesse">
+                <input type="hidden" name="suche" th:value="${ansicht.suche}">
+                <input type="hidden" name="status" th:value="${ansicht.filterStatus}">
+                <input type="hidden" name="pipeline" th:value="${ansicht.filterPipeline}">
+                <input type="hidden" name="sort" th:value="${ansicht.sort}">
+                <input type="hidden" name="dir" th:value="${ansicht.absteigend} ? 'desc' : 'asc'">
+                <label>
+                    <select name="groesse" onchange="this.form.submit()" th:aria-label="#{crm.pager.proSeite}">
+                        <option th:each="g : ${seitenGroessen}" th:value="${g}"
+                                th:selected="${ansicht.seitenGroesse == g}" th:text="${g}">25</option>
+                    </select>
+                    <span th:text="#{crm.pager.proSeite}">pro Seite</span>
+                </label>
+            </form>
+            <span class="liste-pager-info"
+                  th:text="#{crm.pager.seiteVon(${ansicht.seite}, ${ansicht.anzahlSeiten})}">Seite 1 von 5</span>
+            <span class="liste-pager-nav">
+                <a th:if="${ansicht.seite > 1}"
+                   th:href="@{/crm/{slug}(slug=${sponsorSlug}, suche=${ansicht.suche}, status=${ansicht.filterStatus},
+                             pipeline=${ansicht.filterPipeline}, sort=${ansicht.sort},
+                             dir=${ansicht.absteigend} ? 'desc' : 'asc', groesse=${ansicht.seitenGroesse},
+                             seite=${ansicht.seite - 1})}" th:text="'‹ ' + #{crm.pager.zurueck}">‹ Zurück</a>
+                <a th:if="${ansicht.seite < ansicht.anzahlSeiten}"
+                   th:href="@{/crm/{slug}(slug=${sponsorSlug}, suche=${ansicht.suche}, status=${ansicht.filterStatus},
+                             pipeline=${ansicht.filterPipeline}, sort=${ansicht.sort},
+                             dir=${ansicht.absteigend} ? 'desc' : 'asc', groesse=${ansicht.seitenGroesse},
+                             seite=${ansicht.seite + 1})}" th:text="#{crm.pager.weiter} + ' ›'">Weiter ›</a>
+            </span>
+        </nav>
+        </th:block>
+    </main>
+</div>
+
+<!-- Wiederverwendbarer Sortier-Spaltenkopf: toggelt asc/desc, bewahrt aktive Filter, zeigt ▲/▼/⇅ -->
+<th th:fragment="sortKopf(spalte, label)" class="liste-sort">
+    <a th:href="@{/crm/{slug}(slug=${sponsorSlug},
+                 suche=${ansicht.suche}, status=${ansicht.filterStatus}, pipeline=${ansicht.filterPipeline},
+                 sort=${spalte}, dir=${ansicht.sort == spalte and !ansicht.absteigend ? 'desc' : 'asc'})}">
+        <span th:text="${label}">Spalte</span>
+        <span class="liste-sort-ind" th:text="${ansicht.sort != spalte ? '⇅' : (ansicht.absteigend ? '▼' : '▲')}">⇅</span>
+    </a>
+</th>
+
+<style>
+    /* Portfolio-spezifisch — die generische Listen-UX (.liste-*) lebt in dashboard.css. */
+    .app-table { width:100%; border-collapse:collapse; }
+    .app-table th, .app-table td { padding:0.6rem 0.5rem; text-align:left; border-bottom:1px solid var(--dash-border, #e5e7eb); vertical-align:middle; }
+    .app-btn-sm { font-size:0.8rem; padding:0.3rem 0.7rem; }
+    .crm-renewal { margin:1.5rem 0; padding:1rem 1.2rem; border:1px solid #fbbf24; border-radius:8px; background:#fffbeb; }
+    .crm-renewal h2 { margin:0 0 0.2rem; font-size:1.05rem; }
+    .crm-renewal .app-table { margin-top:0.8rem; }
+    .crm-renewal-faellig td { background:#fef2f2; }
+    .crm-chip-faellig { background:#fecaca; color:#991b1b; }
+</style>
+
+<!-- Bulk-Auswahl: Select-all, Zähler, „Alle N Treffer", Leiste ein-/ausblenden, Lösch-Bestätigung.
+     Progressiv: ohne JS sendet die Form die sichtbaren Zeilen-Checkboxen trotzdem. -->
+<script th:inline="none">
+  (function () {
+    var alle = document.getElementById('bulkAlle');
+    var bar = document.getElementById('bulkBar');
+    var anzahl = document.getElementById('bulkAnzahl');
+    var form = document.getElementById('bulkForm');
+    if (!bar || !form) return;
+    var anzahlEl = document.getElementById('bulkAnzahl');
+    var alleGefiltert = document.getElementById('bulkAlleGefiltert');
+    var alleLink = document.getElementById('bulkAlleLink');
+    var seiteLink = document.getElementById('bulkSeiteLink');
+    var gefiltertTotal = parseInt(form.getAttribute('data-gefiltert') || '0', 10);
+    var seitenAnzahl = parseInt(form.getAttribute('data-seite') || '0', 10);
+    var rows = function () { return Array.prototype.slice.call(document.querySelectorAll('.crm-row-check')); };
+
+    function setzeAlleModus(an) {
+      alleGefiltert.value = an ? 'true' : 'false';
+      if (alleLink) alleLink.hidden = an || !alleVerfuegbar();
+      if (seiteLink) seiteLink.hidden = !an;
+      if (anzahlEl) anzahlEl.textContent = an ? gefiltertTotal : rows().filter(function (c) { return c.checked; }).length;
+    }
+    function alleVerfuegbar() {
+      // „Alle N" nur anbieten, wenn alle sichtbaren markiert sind UND es mehr Treffer als die Seite gibt.
+      var n = rows().filter(function (c) { return c.checked; }).length;
+      return n === seitenAnzahl && gefiltertTotal > seitenAnzahl;
+    }
+
+    function aktualisiere() {
+      var n = rows().filter(function (c) { return c.checked; }).length;
+      if (anzahl) anzahl.textContent = n;
+      bar.hidden = (n === 0);
+      if (alle) {
+        alle.checked = (n > 0 && n === seitenAnzahl);
+        alle.indeterminate = (n > 0 && n < seitenAnzahl);
+      }
+      // Jede manuelle Änderung verlässt den „Alle Treffer"-Modus.
+      if (alleGefiltert.value === 'true') setzeAlleModus(false);
+      if (alleLink) alleLink.hidden = !alleVerfuegbar();
+      if (seiteLink) seiteLink.hidden = true;
+    }
+    if (alle) alle.addEventListener('change', function () {
+      rows().forEach(function (c) { c.checked = alle.checked; });
+      aktualisiere();
+    });
+    rows().forEach(function (c) { c.addEventListener('change', aktualisiere); });
+    if (alleLink) alleLink.addEventListener('click', function (e) { e.preventDefault(); setzeAlleModus(true); });
+    if (seiteLink) seiteLink.addEventListener('click', function (e) { e.preventDefault(); setzeAlleModus(false); aktualisiere(); });
+    aktualisiere();
+  })();
+
+  function crmBulkBestaetigen(form) {
+    var alleAn = form.querySelector('#bulkAlleGefiltert');
+    var checked = form.querySelectorAll('.crm-row-check:checked').length;
+    var aktion = form.querySelector('#bulkAktion');
+    var alleModus = alleAn && alleAn.value === 'true';
+    if (checked === 0 && !alleModus) { return false; }
+    if (!aktion || !aktion.value) { return false; }
+    if (aktion.value === 'entfernen') {
+      var msg = form.querySelector('.confirm-msg');
+      return confirm(msg ? msg.textContent : 'Markierte Vereine entfernen?');
+    }
+    return true;
+  }
+</script>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

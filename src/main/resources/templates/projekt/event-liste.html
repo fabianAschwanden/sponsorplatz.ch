@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${orgName} + ' — ' + #{eventListe.titel}">Events</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="app-body">
+
+<div class="app-layout">
+
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('organisationen', ${anzahlOffeneAnfragen})}"></aside>
+
+    <main class="app-main">
+    <div class="app-page-head">
+        <h1>
+            <span th:text="#{eventListe.titel}">Events</span> —
+            <span th:text="${orgName}">Org</span>
+        </h1>
+    </div>
+
+    <p th:if="${#lists.isEmpty(events)}" class="muted" th:text="#{eventListe.empty}">Noch keine Events vorhanden.</p>
+
+    <table class="tabelle" th:unless="${#lists.isEmpty(events)}">
+        <thead>
+            <tr>
+                <th th:text="#{eventListe.feld.name}">Name</th>
+                <th th:text="#{eventListe.feld.datum}">Datum</th>
+                <th th:text="#{eventListe.feld.ort}">Ort</th>
+                <th th:text="#{eventListe.feld.kapazitaet}">Kapazität</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="e : ${events}">
+                <td th:text="${e.name()}">Event</td>
+                <td th:text="${#temporals.format(e.datum(), 'dd.MM.yyyy')}">01.01.2026</td>
+                <td th:text="${e.ort() ?: '—'}">—</td>
+                <td th:text="${e.kapazitaet() ?: '—'}">—</td>
+            </tr>
+        </tbody>
+    </table>
+    </main>
+</div>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>
+

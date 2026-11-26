@@ -1,0 +1,161 @@
+package ch.sponsorplatz.crm;
+
+import ch.sponsorplatz.organisation.AccessControl;
+import ch.sponsorplatz.organisation.Organisation;
+import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.shared.exception.NotFoundException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Service für die private Sponsor-CRM-Layer (ADR-0011). JEDE Methode prüft als
+ * erstes {@link AccessControl#kannSponsorDatenSehen} — es gibt keinen Pfad zu
+ * SponsorAccount-Daten ohne diese Schranke. Damit ist die Mandanten-Isolation
+ * zentral an einer Stelle durchgesetzt (Controller dürfen das Repository wegen
+ * ARCH-01 nicht direkt aufrufen).
+ */
+@Service
+@Transactional
+public class SponsorAccountService {
+
+    private final SponsorAccountRepository repository;
+    private final OrganisationRepository organisationRepository;
+    private final AccessControl accessControl;
+
+    public SponsorAccountService(SponsorAccountRepository repository,
+                                 OrganisationRepository organisationRepository,
+                                 AccessControl accessControl) {
+        this.repository = repository;
+        this.organisationRepository = organisationRepository;
+        this.accessControl = accessControl;
+    }
+
+    /** Portfolio (alle Accounts) einer Sponsor-Org — nur für berechtigte User. */
+    @Transactional(readOnly = true)
+    public List<SponsorAccountView> findePortfolio(UUID sponsorOrgId, Authentication auth) {
+        pruefeZugriff(sponsorOrgId, auth);
+        return SponsorAccountView.von(
+                repository.findByBesitzerSponsorOrgIdOrderByErstelltAmDesc(sponsorOrgId));
+    }
+
+    /** Einzel-Account für die Detail-Seite — Zugriff über den Mandanten-Key des Accounts. */
+    @Transactional(readOnly = true)
+    public SponsorAccountView findeAccount(UUID accountId, Authentication auth) {
+        SponsorAccount account = repository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Account nicht gefunden: " + accountId));
+        pruefeZugriff(account.getBesitzerSponsorOrgId(), auth);
+        return SponsorAccountView.von(account);
+    }
+
+    /**
+     * Legt einen Account für einen Verein an. {@link AccountStatus#LEAD} als
+     * Start. Dublette (Sponsor↔Verein-Paar existiert schon) → IllegalArgument.
+     */
+    public SponsorAccountView erstelle(UUID sponsorOrgId, UUID vereinOrgId, Authentication auth) {
+        pruefeZugriff(sponsorOrgId, auth);
+        if (repository.existsByBesitzerSponsorOrgIdAndVereinId(sponsorOrgId, vereinOrgId)) {
+            throw new IllegalArgumentException("Für diesen Verein existiert bereits ein Account");
+        }
+        Organisation verein = organisationRepository.findById(vereinOrgId)
+                .orElseThrow(() -> new NotFoundException("Verein nicht gefunden: " + vereinOrgId));
+
+        SponsorAccount account = new SponsorAccount();
+        account.setBesitzerSponsorOrgId(sponsorOrgId);
+        account.setVerein(verein);
+        account.setStatus(AccountStatus.LEAD);
+        return SponsorAccountView.von(repository.save(account));
+    }
+
+    /**
+     * Aktualisiert Status / Tier / Notiz eines Accounts. Der Zugriffs-Check
+     * läuft gegen den Mandanten-Schlüssel des geladenen Accounts — ein User
+     * kann nie einen fremd-besessenen Account ändern, auch nicht per ID-Guessing.
+     */
+    public SponsorAccountView aktualisiere(UUID accountId, AccountStatus status,
+                                           AccountTier tier, PipelineStage pipelineStage,
+                                           java.math.BigDecimal forecastBetragChf,
+                                           String notiz, Authentication auth) {
+        SponsorAccount account = repository.findById(accountId)
+                .orElseThrow(() -> new NotFoundException("Account nicht gefunden: " + accountId));
+        pruefeZugriff(account.getBesitzerSponsorOrgId(), auth);
+        account.setStatus(status);
+        account.setTier(tier);
+        if (pipelineStage != null) account.setPipelineStage(pipelineStage);
+        account.setForecastBetragChf(forecastBetragChf);
+        account.setNotiz(notiz);
+        return SponsorAccountView.von(repository.save(account));
+    }
+
+    // ----------------------------- Bulk-Aktionen -----------------------------
+    // Alle Bulk-Methoden sind an sponsorOrgId der aufrufenden Seite gebunden:
+    // pruefeZugriff(sponsorOrgId) ZUERST, danach laedeUndBindeAccounts(...), das
+    // jeden Account auf besitzer == sponsorOrgId prüft — eine fremde Account-ID
+    // im Batch lässt die ganze Operation mit AccessDenied scheitern (atomar via
+    // @Transactional). So kann kein User über die ID-Liste fremde Accounts ändern.
+
+    /** Setzt den Status mehrerer Accounts. @return Anzahl geänderter Accounts. */
+    public int bulkSetzeStatus(UUID sponsorOrgId, List<UUID> accountIds, AccountStatus status, Authentication auth) {
+        List<SponsorAccount> accounts = laedeUndBindeAccounts(sponsorOrgId, accountIds, auth);
+        accounts.forEach(a -> a.setStatus(status));
+        repository.saveAll(accounts);
+        return accounts.size();
+    }
+
+    /** Setzt die Pipeline-Stufe mehrerer Accounts. */
+    public int bulkSetzePipeline(UUID sponsorOrgId, List<UUID> accountIds, PipelineStage stage, Authentication auth) {
+        List<SponsorAccount> accounts = laedeUndBindeAccounts(sponsorOrgId, accountIds, auth);
+        accounts.forEach(a -> a.setPipelineStage(stage));
+        repository.saveAll(accounts);
+        return accounts.size();
+    }
+
+    /** Setzt das Tier mehrerer Accounts. */
+    public int bulkSetzeTier(UUID sponsorOrgId, List<UUID> accountIds, AccountTier tier, Authentication auth) {
+        List<SponsorAccount> accounts = laedeUndBindeAccounts(sponsorOrgId, accountIds, auth);
+        accounts.forEach(a -> a.setTier(tier));
+        repository.saveAll(accounts);
+        return accounts.size();
+    }
+
+    /**
+     * Entfernt mehrere Accounts aus dem Portfolio (nur die CRM-Beziehung; der
+     * Verein selbst bleibt). DB-Level-Bulk-Delete → FK-Cascade räumt Kontakte +
+     * Aktivitäten mit weg.
+     */
+    public int bulkLoesche(UUID sponsorOrgId, List<UUID> accountIds, Authentication auth) {
+        List<SponsorAccount> accounts = laedeUndBindeAccounts(sponsorOrgId, accountIds, auth);
+        repository.deleteByIdIn(accounts.stream().map(SponsorAccount::getId).toList());
+        return accounts.size();
+    }
+
+    /**
+     * Lädt die Accounts und stellt sicher, dass jeder zum übergebenen Sponsor
+     * gehört. Leere/teilweise-fremde Auswahl → {@link AccessDeniedException}
+     * (kein stilles Überspringen — Defense in depth).
+     */
+    private List<SponsorAccount> laedeUndBindeAccounts(UUID sponsorOrgId, List<UUID> accountIds, Authentication auth) {
+        pruefeZugriff(sponsorOrgId, auth);
+        if (accountIds == null || accountIds.isEmpty()) {
+            throw new IllegalArgumentException("Keine Accounts ausgewählt");
+        }
+        List<SponsorAccount> accounts = repository.findAllById(accountIds);
+        boolean alleEigen = accounts.size() == accountIds.stream().distinct().count()
+                && accounts.stream().allMatch(a -> sponsorOrgId.equals(a.getBesitzerSponsorOrgId()));
+        if (!alleEigen) {
+            throw new AccessDeniedException("Auswahl enthält Accounts ausserhalb dieser Sponsor-Organisation");
+        }
+        return accounts;
+    }
+
+    private void pruefeZugriff(UUID sponsorOrgId, Authentication auth) {
+        if (!accessControl.kannSponsorDatenSehen(sponsorOrgId, auth)) {
+            throw new AccessDeniedException(
+                    "Kein Zugriff auf die CRM-Daten dieser Sponsor-Organisation");
+        }
+    }
+}

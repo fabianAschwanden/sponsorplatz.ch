@@ -1,0 +1,74 @@
+# Maven
+target/
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# IDEs — IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse / Spring-Tool-Suite
+.project
+.classpath
+.settings/
+.factorypath
+.metadata
+bin/
+
+# VS Code — team-shared configs werden committet (extensions, settings, launch, tasks),
+# nur lokale/personal Files ignorieren:
+.vscode/*.local.json
+.vscode/launch.local.json
+.vscode/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Lokale Datenbank
+data/
+data.bak.*/
+*.mv.db
+*.h2.db
+*.lock.db
+*.trace.db
+
+# Lokales Storage (LokalerStorageService, Default-Basispfad)
+uploads/
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot devtools
+.spring-boot-devtools.properties
+
+# Lokale ENV
+.env
+.env.local
+
+# Coverage
+coverage/
+.nyc_output/
+.java-version
+backups/
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.*
+**/terraform.tfvars
+**/terraform.tfvars.json
+**/cloud-init.rendered.yaml
+infra/envs/staging-free/plan.tfplan
+infra/envs/staging-free/cloud-init.rendered.yaml
+.claude/

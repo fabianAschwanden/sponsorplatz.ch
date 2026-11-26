@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{verifizierung.title} + ' — Sponsorplatz'">E-Mail-Verifizierung — Sponsorplatz</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="public-body">
+
+<header class="public-topbar">
+    <div class="public-topbar-inner">
+        <a class="public-logo" th:href="@{/}">
+            <img class="dash-logo-icon" th:src="@{/images/logo/icon-ringe.svg}" alt="">
+            <span>Sponsorplatz</span>
+        </a>
+    </div>
+</header>
+
+<main class="public-main">
+    <section class="public-auth-card">
+        <div th:if="${erfolg}">
+            <h1 style="color: var(--dash-success);" th:text="#{verifizierung.erfolgTitel}">✓ E-Mail bestätigt</h1>
+            <p class="app-muted" style="text-align:center;" th:text="#{verifizierung.erfolgText1}">Ihre E-Mail-Adresse wurde erfolgreich verifiziert.</p>
+            <p class="app-muted" style="text-align:center;" th:text="#{verifizierung.erfolgText2}">Sie können sich jetzt anmelden.</p>
+            <div class="app-form-actions" style="margin-top: 1.5rem;">
+                <a th:href="@{/login}" class="app-btn" style="width: 100%; justify-content: center;"
+                   th:text="#{verifizierung.zurAnmeldung}">Zur Anmeldung</a>
+            </div>
+        </div>
+        <div th:unless="${erfolg}">
+            <h1 style="color: var(--dash-coral);" th:text="#{verifizierung.fehlerTitel}">Verifizierung fehlgeschlagen</h1>
+            <p class="app-meldung fehler" th:text="${fehlermeldung}">Fehler</p>
+            <div class="app-form-actions" style="margin-top: 1.5rem;">
+                <a th:href="@{/login}" class="app-btn app-btn-secondary" style="width: 100%; justify-content: center;"
+                   th:text="#{verifizierung.zurAnmeldung}">Zur Anmeldung</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer class="public-footer">
+    <div class="public-footer-inner">
+        <p style="margin:0;">&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> Sponsorplatz</p>
+    </div>
+</footer>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

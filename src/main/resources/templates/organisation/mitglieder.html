@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="de-CH"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{mitglieder.titel} + ' — ' + ${org.name} + ' — Sponsorplatz'">Mitglieder</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="app-body">
+
+<div class="app-layout">
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('organisationen', ${anzahlOffeneAnfragen})}"></aside>
+
+    <main class="app-main">
+        <header class="app-page-head">
+            <div>
+                <p class="app-page-rubrik">
+                    <a th:href="@{/organisationen}" style="color:inherit;" th:text="#{orgListe.titel}">Organisationen</a>
+                    /
+                    <a th:href="@{/organisationen/{slug}(slug=${org.slug})}" style="color:inherit;" th:text="${org.name}">Org</a>
+                </p>
+                <h1 th:text="#{mitglieder.titel}">Mitglieder</h1>
+            </div>
+            <a th:href="@{/organisationen/{slug}(slug=${org.slug})}" class="app-btn app-btn-secondary"
+               th:text="#{mitglieder.zurueckOrg}">← Organisation</a>
+        </header>
+
+        <div th:if="${erfolgsMeldung != null}" class="app-meldung erfolg" th:text="${erfolgsMeldung}"></div>
+        <div th:if="${fehlermeldung != null}" class="app-meldung fehler" th:text="${fehlermeldung}"></div>
+
+        <div th:if="${!mitglieder.isEmpty()}" style="display:flex; justify-content:flex-end; margin-bottom:0.5rem;">
+            <span class="liste-anzahl" th:text="#{mitglieder.anzahl(${#lists.size(mitglieder)})}">3 Mitglieder</span>
+        </div>
+
+        <table class="app-table" th:if="${!mitglieder.isEmpty()}">
+            <thead>
+            <tr>
+                <th th:replace="~{organisation/mitglieder :: sortKopf('name', #{mitglieder.feld.name})}">Name</th>
+                <th th:replace="~{organisation/mitglieder :: sortKopf('email', #{mitglieder.feld.email})}">E-Mail</th>
+                <th th:replace="~{organisation/mitglieder :: sortKopf('rolle', #{mitglieder.feld.rolle})}">Rolle</th>
+                <th th:replace="~{organisation/mitglieder :: sortKopf('beigetreten', #{mitglieder.feld.beigetreten})}">Beigetreten</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${mitglieder}">
+                <td>
+                    <div class="user-avatar-cell">
+                        <span th:replace="~{fragments/avatar :: avatar(
+                                name=${m.userAnzeigename},
+                                bildUrl=${m.userProfilbildUrl},
+                                cssClass='user-avatar')}"></span>
+                        <span th:text="${m.userAnzeigename}">Max Muster</span>
+                    </div>
+                </td>
+                <td th:text="${m.userEmail}">max@example.com</td>
+                <td><span class="app-chip" th:text="${m.rolle}">ORG_EDITOR</span></td>
+                <td th:text="${#temporals.format(m.beigetretenAm, 'dd.MM.yyyy')}">01.01.2026</td>
+                <td>
+                    <form th:action="@{/organisationen/{slug}/mitglieder/{id}/entfernen(slug=${org.slug}, id=${m.id})}"
+                          method="post" style="display:inline;"
+                          onsubmit="return confirm(this.querySelector('.confirm-msg').textContent);">
+                        <span class="confirm-msg" hidden th:text="#{mitglieder.entfernen.bestaetigung}"></span>
+                        <button type="submit" class="app-btn app-btn-secondary"
+                                style="padding:0.35rem 0.75rem;font-size:0.82rem;color:var(--dash-coral);"
+                                th:text="#{mitglieder.entfernen}">Entfernen</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${mitglieder.isEmpty()}" class="app-empty">
+            <strong th:text="#{mitglieder.empty.titel}">Noch keine Mitglieder.</strong>
+            <span th:text="#{mitglieder.empty.text}">Lade unten den ersten Benutzer ein.</span>
+        </div>
+
+        <section class="app-card" style="margin-top:2rem;">
+            <h2 style="font-family:var(--dash-font-head); font-size:1.15rem; margin:0 0 1rem;"
+                th:text="#{mitglieder.hinzufuegenTitel}">Mitglied hinzufügen</h2>
+            <form th:action="@{/organisationen/{slug}/mitglieder/hinzufuegen(slug=${org.slug})}" method="post" class="app-form">
+                <div class="app-form-group">
+                    <label for="email" th:text="#{mitglieder.feld.emailLabel}">E-Mail des Benutzers</label>
+                    <input type="email" id="email" name="email" required placeholder="benutzer@example.com">
+                </div>
+                <div class="app-form-group">
+                    <label for="rolle" th:text="#{mitglieder.feld.rolle}">Rolle</label>
+                    <select id="rolle" name="rolle" required>
+                        <option value="ORG_VIEWER" th:text="#{mitglieder.rolle.viewer}">Betrachter (ORG_VIEWER)</option>
+                        <option value="ORG_EDITOR" th:text="#{mitglieder.rolle.editor}">Bearbeiter (ORG_EDITOR)</option>
+                        <option value="ORG_OWNER" th:text="#{mitglieder.rolle.owner}">Eigentümer (ORG_OWNER)</option>
+                    </select>
+                </div>
+                <div class="app-form-actions">
+                    <button type="submit" class="app-btn" th:text="#{mitglieder.hinzufuegenBtn}">Hinzufügen</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+
+<!-- Sortier-Spaltenkopf (leichte Liste: nur Sort, kein Filter/Pager) -->
+<th th:fragment="sortKopf(spalte, label)" class="liste-sort">
+    <a th:href="@{/organisationen/{slug}/mitglieder(slug=${org.slug},
+                 sort=${spalte}, dir=${sortAktiv == spalte and !absteigend ? 'desc' : 'asc'})}">
+        <span th:text="${label}">Spalte</span>
+        <span class="liste-sort-ind" th:text="${sortAktiv != spalte ? '⇅' : (absteigend ? '▼' : '▲')}">⇅</span>
+    </a>
+</th>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

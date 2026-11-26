@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${org.name} + ' — ' + #{anfragenListe.titel} + ' — Sponsorplatz'">Anfragen</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+</head>
+<body class="dashboard-body">
+<div class="dashboard-layout">
+
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('anfragen', null)}"></aside>
+
+    <main class="dash-main">
+    <h1 th:text="#{anfragenListe.titel}">Eingehende Anfragen</h1>
+
+    <div th:if="${erfolgsMeldung != null}" class="alert success" th:text="${erfolgsMeldung}"></div>
+
+    <div th:if="${anfragen.isEmpty()}" class="empty-state">
+        <p th:text="#{anfragenListe.empty}">Noch keine Anfragen erhalten.</p>
+    </div>
+
+    <div th:each="a : ${anfragen}" class="card anfrage-card">
+        <div class="anfrage-header">
+            <strong th:text="${a.kontaktName ?: #messages.msg('meineAnfragen.unbekannt')}">Name</strong>
+            <span class="badge" th:classappend="'badge-' + ${a.status.name().toLowerCase()}"
+                  th:text="#{'status.anfrage.' + ${a.status.name()}}">NEU</span>
+        </div>
+        <p class="anfrage-meta">
+            <span th:text="#{meineAnfragen.paketLabel}">Paket:</span>
+            <span th:text="${a.paketName}">Gold</span> ·
+            <span th:if="${a.kontaktEmail != null}" th:text="${a.kontaktEmail}">email</span>
+        </p>
+        <p th:text="${a.nachricht}">Nachricht</p>
+
+        <div th:if="${a.antwort != null}" class="anfrage-antwort">
+            <strong th:text="#{meineAnfragen.antwortLabel}">Antwort:</strong>
+            <span th:text="${a.antwort}">Antwort</span>
+        </div>
+
+        <div th:if="${a.status.name() == 'ANGENOMMEN'}" class="anfrage-actions">
+            <a th:href="@{'/organisationen/' + ${org.slug} + '/anfragen/' + ${a.id} + '/nachrichten'}"
+               class="btn btn-primary" th:text="#{meineAnfragen.konversation}">Konversation öffnen</a>
+            <form th:action="@{'/organisationen/' + ${org.slug} + '/anfragen/' + ${a.id} + '/vertrag/erstellen'}"
+                  method="post" style="display:inline; margin-left:0.5rem;">
+                <button type="submit" class="btn" th:text="#{meineAnfragen.vertragErstellen}">Vertrag erstellen</button>
+            </form>
+        </div>
+
+        <div th:if="${a.status.name() == 'NEU'}" class="anfrage-actions"
+             style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <form th:action="@{'/organisationen/' + ${org.slug} + '/anfragen/' + ${a.id} + '/annehmen'}" method="post"
+                  style="display:flex; flex-direction:column; align-items:flex-start; gap:0.4rem; flex:1 1 260px; min-width:240px;">
+                <textarea name="antwort" rows="3" th:placeholder="#{meineAnfragen.antwortPlaceholder}"
+                          placeholder="Antwort (optional)"
+                          style="width:100%; min-height:4.5rem; resize:vertical; font-family:inherit; line-height:1.5; box-sizing:border-box;"></textarea>
+                <button type="submit" class="btn btn-success" th:text="#{meineAnfragen.annehmen}">Annehmen</button>
+            </form>
+            <form th:action="@{'/organisationen/' + ${org.slug} + '/anfragen/' + ${a.id} + '/ablehnen'}" method="post"
+                  style="display:flex; flex-direction:column; align-items:flex-start; gap:0.4rem; flex:1 1 260px; min-width:240px;">
+                <textarea name="antwort" rows="3" th:placeholder="#{meineAnfragen.begruendungPlaceholder}"
+                          placeholder="Begründung (optional)"
+                          style="width:100%; min-height:4.5rem; resize:vertical; font-family:inherit; line-height:1.5; box-sizing:border-box;"></textarea>
+                <button type="submit" class="btn btn-danger" th:text="#{meineAnfragen.ablehnen}">Ablehnen</button>
+            </form>
+        </div>
+    </div>
+    </main>
+</div>
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>
+

@@ -1,0 +1,278 @@
+package ch.sponsorplatz.organisation;
+
+import ch.sponsorplatz.benutzer.AppUserService;
+import ch.sponsorplatz.shared.config.ModelAttributeNames;
+import ch.sponsorplatz.shared.exception.NotFoundException;
+import ch.sponsorplatz.shared.medien.OrganisationLogoLookup;
+import ch.sponsorplatz.shared.util.ListenSeite;
+import jakarta.validation.Valid;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+import java.util.UUID;
+
+@Controller
+@RequestMapping("/organisationen")
+public class OrganisationController {
+
+    private static final String ROLE_PLATFORM_ADMIN = "ROLE_PLATFORM_ADMIN";
+
+    private final OrganisationService service;
+    private final AccessControl accessControl;
+    private final OrgHierarchieService hierarchieService;
+    private final AppUserService appUserService;
+    private final OrganisationLogoLookup logoLookup;
+
+    public OrganisationController(OrganisationService service, AccessControl accessControl,
+                                  OrgHierarchieService hierarchieService,
+                                  AppUserService appUserService,
+                                  OrganisationLogoLookup logoLookup) {
+        this.service = service;
+        this.accessControl = accessControl;
+        this.hierarchieService = hierarchieService;
+        this.appUserService = appUserService;
+        this.logoLookup = logoLookup;
+    }
+
+    /**
+     * Org-Liste — gefiltert nach Berechtigung, dann optional weiter
+     * eingeschränkt durch Query-Filter (Typ, Status, Branche, Suche).
+     *
+     * <ul>
+     *   <li><b>Anonyme User:</b> alle Orgs (öffentliche Übersicht).</li>
+     *   <li><b>Eingeloggte User:</b> nur Orgs, in denen sie Mitglied sind
+     *       (jede Rolle, also auch ORG_VIEWER zählt).</li>
+     *   <li><b>Plattform-Admins:</b> alle Orgs (für Admin-Zwecke wie
+     *       Verifizierungs-Queue).</li>
+     * </ul>
+     *
+     * <p>Filter-Parameter sind alle optional und werden mit UND verknüpft.
+     * Reihenfolge: Auth-Sichtbarkeit zuerst, dann Filter — der Filter kann
+     * also nie Orgs zeigen, die der User sonst nicht sehen dürfte.
+     */
+    @GetMapping
+    public String liste(Authentication auth,
+                        @RequestParam(required = false) OrgTyp typ,
+                        @RequestParam(required = false) OrgStatus status,
+                        @RequestParam(required = false) String branche,
+                        @RequestParam(required = false) String q,
+                        @RequestParam(required = false) String sort,
+                        @RequestParam(required = false, defaultValue = "asc") String dir,
+                        @RequestParam(required = false, defaultValue = "1") int seite,
+                        @RequestParam(required = false, defaultValue = "25") int groesse,
+                        Model model) {
+        OrganisationFilter filter = new OrganisationFilter(typ, status, branche, q);
+        List<OrganisationView> sichtbar = ladeListeViews(auth);
+        List<OrganisationView> gefiltert = filter.istLeer()
+                ? sichtbar
+                : sichtbar.stream().filter(filter::matcht).toList();
+        boolean absteigend = "desc".equalsIgnoreCase(dir);
+        List<OrganisationView> sortiert = sortiere(gefiltert, sort, absteigend);
+        var liste = ListenSeite.von(sortiert, seite, groesse, sort, absteigend);
+
+        model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "organisationen");
+        model.addAttribute("organisationen", liste.inhalt());   // aktuelle Seite (ORG-08-kompatibel)
+        model.addAttribute("liste", liste);                     // Pager + Sort-Zustand
+        model.addAttribute("anzahlGesamt", sichtbar.size());
+        model.addAttribute("anzahlGezeigt", gefiltert.size());
+        model.addAttribute("filterAktiv", !filter.istLeer());
+        model.addAttribute("filterTyp", typ);
+        model.addAttribute("filterStatus", status);
+        model.addAttribute("filterBranche", branche);
+        model.addAttribute("filterSuche", q);
+        model.addAttribute("typen", OrgTyp.values());
+        model.addAttribute("statusWerte", OrgStatus.values());
+        model.addAttribute("branchen", Branche.values());
+        model.addAttribute("sponsorBranchen", SponsorBranche.values());
+        model.addAttribute("seitenGroessen", ListenSeite.SEITENGROESSEN);
+        return "organisation/organisationen";
+    }
+
+    /** Sortiert die Org-Liste server-seitig; {@code sort == null} bewahrt die Eingangsreihenfolge. */
+    private static List<OrganisationView> sortiere(List<OrganisationView> liste, String sort, boolean absteigend) {
+        if (sort == null) {
+            return liste;
+        }
+        java.util.Comparator<OrganisationView> c = switch (sort) {
+            case "name" -> java.util.Comparator.comparing(OrganisationView::name,
+                    java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+            case "typ" -> java.util.Comparator.comparing(o -> o.typ() != null ? o.typ().name() : "",
+                    java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+            case "branche" -> java.util.Comparator.comparing(OrganisationController::brancheLabel,
+                    java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+            case "status" -> java.util.Comparator.comparing(o -> o.status() != null ? o.status().name() : "",
+                    java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+            case "registriert" -> java.util.Comparator.comparing(OrganisationView::registriertAm,
+                    java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder()));
+            default -> null;
+        };
+        if (c == null) {
+            return liste;
+        }
+        return liste.stream().sorted(absteigend ? c.reversed() : c).toList();
+    }
+
+    private static String brancheLabel(OrganisationView o) {
+        if (o.branche() != null) return o.branche().getAnzeige();
+        if (o.sponsorBranche() != null) return o.sponsorBranche().getAnzeige();
+        return "";
+    }
+
+    private List<OrganisationView> ladeListeViews(Authentication auth) {
+        boolean eingeloggt = auth != null && auth.isAuthenticated()
+                && !"anonymousUser".equals(auth.getPrincipal());
+        if (!eingeloggt || istPlattformAdmin(auth)) {
+            return service.alleViews();
+        }
+        return appUserService.findeOptionalIdNachEmail(auth.getName())
+                .map(service::findeViewsFuerUserMitgliedschaften)
+                .orElseGet(List::of);
+    }
+
+    private boolean istPlattformAdmin(Authentication auth) {
+        return auth.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .anyMatch(ROLE_PLATFORM_ADMIN::equals);
+    }
+
+    /**
+     * Wizard-Schritt 1: ohne Typ-Param zeigen wir die Typ-Auswahl-Seite.
+     * Mit {@code ?typ=VEREIN|UNTERNEHMEN|...} gehen wir direkt zum
+     * typ-spezifischen Formular.
+     */
+    @GetMapping("/neu")
+    public String neuesFormular(@RequestParam(required = false) OrgTyp typ, Model model) {
+        model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "organisationen");
+        if (typ == null) {
+            model.addAttribute("typen", OrgTyp.values());
+            return "organisation/organisation-typ-waehlen";
+        }
+        OrganisationFormDto dto = new OrganisationFormDto();
+        dto.setTyp(typ);
+        model.addAttribute("orgForm", dto);
+        zeigeFormularModelDaten(model);
+        return "organisation/organisation-form";
+    }
+
+    /**
+     * Create — POST /organisationen. Der eingeloggte User wird automatisch
+     * als ORG_OWNER verknüpft, damit er die neue Org sofort bearbeiten und
+     * verwalten kann.
+     */
+    @PostMapping
+    public String erstelle(@Valid @ModelAttribute("orgForm") OrganisationFormDto dto,
+                           BindingResult br,
+                           Authentication auth,
+                           Model model,
+                           RedirectAttributes redirect) {
+        if (br.hasErrors()) {
+            return zeigeFormular(model);
+        }
+        try {
+            OrganisationView neu;
+            UUID userId = (auth != null && auth.isAuthenticated())
+                    ? appUserService.findeOptionalIdNachEmail(auth.getName()).orElse(null)
+                    : null;
+            if (userId != null) {
+                neu = service.erstelleMitEigentuemerAlsView(dto, userId);
+            } else {
+                neu = service.erstelleAlsView(dto);
+            }
+            redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,
+                "Organisation \"" + neu.name() + "\" erstellt.");
+            return "redirect:/organisationen/" + neu.slug();
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute(ModelAttributeNames.FEHLERMELDUNG, ex.getMessage());
+            return zeigeFormular(model);
+        }
+    }
+
+    /** Update — POST /organisationen/{slug}, Slug aus URL. AccessControl-Check vorab. */
+    @PostMapping("/{slug}")
+    public String aktualisiere(@PathVariable String slug,
+                               @Valid @ModelAttribute("orgForm") OrganisationFormDto dto,
+                               BindingResult br,
+                               Authentication auth,
+                               Model model,
+                               RedirectAttributes redirect) {
+        if (!accessControl.kannOrgEditierenNachSlug(slug, auth)) {
+            throw new AccessDeniedException("Keine Edit-Berechtigung für Org: " + slug);
+        }
+        if (br.hasErrors()) {
+            return zeigeFormular(model);
+        }
+        try {
+            OrganisationView aktualisiert = service.aktualisiereAlsView(slug, dto);
+            redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,
+                "Organisation \"" + aktualisiert.name() + "\" aktualisiert.");
+            return "redirect:/organisationen/" + aktualisiert.slug();
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute(ModelAttributeNames.FEHLERMELDUNG, ex.getMessage());
+            return zeigeFormular(model);
+        }
+    }
+
+    private String zeigeFormular(Model model) {
+        zeigeFormularModelDaten(model);
+        return "organisation/organisation-form";
+    }
+
+    /** Pure Model-Befüllung — von zeigeFormular und vom Pre-Fill-GET genutzt. */
+    private void zeigeFormularModelDaten(Model model) {
+        model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "organisationen");
+        model.addAttribute("typen", OrgTyp.values());
+        model.addAttribute("branchen", Branche.values());
+        model.addAttribute("sponsorBranchen", SponsorBranche.values());
+        model.addAttribute("verfuegbareElternOrgs", service.alleViews());
+    }
+
+    @GetMapping("/{slug}")
+    public String detail(@PathVariable String slug, Authentication auth, Model model) {
+        OrganisationView org = service.findeViewNachSlug(slug)
+            .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + slug));
+        org = org.mitLogoUrl(logoLookup.findeLogoUrl(org.id()).orElse(null));
+        model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "organisationen");
+        model.addAttribute("org", org);
+        model.addAttribute("statusOk", org.status() == OrgStatus.ACTIVE || org.status() == OrgStatus.VERIFIED);
+        model.addAttribute("kannEditieren", accessControl.kannOrgEditierenNachSlug(slug, auth));
+        // CRM-Einstieg nur für Sponsor-Orgs (UNTERNEHMEN) und nur für Team-Mitglieder.
+        model.addAttribute("kannCrmSehen",
+                org.typ() == OrgTyp.UNTERNEHMEN && accessControl.kannSponsorDatenSehen(org.id(), auth));
+        model.addAttribute("untergeordneteOrgs", service.findeUntergeordneteViews(org.id()));
+        model.addAttribute("elternkette", hierarchieService.findeElternketteNachSlug(slug));
+        return "organisation/organisation-detail";
+    }
+
+    @GetMapping("/{slug}/bearbeiten")
+    public String bearbeitenFormular(@PathVariable String slug, Authentication auth, Model model) {
+        if (!accessControl.kannOrgEditierenNachSlug(slug, auth)) {
+            throw new AccessDeniedException("Keine Edit-Berechtigung für Org: " + slug);
+        }
+        model.addAttribute("orgForm", service.findeFormularNachSlug(slug));
+        model.addAttribute("bearbeitenSlug", slug);
+        zeigeFormularModelDaten(model);
+        return "organisation/organisation-form";
+    }
+
+    @PostMapping("/{slug}/loeschen")
+    public String loesche(@PathVariable String slug, Authentication auth, RedirectAttributes redirect) {
+        if (!accessControl.kannOrgVerwaltenNachSlug(slug, auth)) {
+            throw new AccessDeniedException("Keine Verwalten-Berechtigung für Org: " + slug);
+        }
+        String name = service.loescheNachSlug(slug);
+        redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,
+            "Organisation \"" + name + "\" gelöscht.");
+        return "redirect:/organisationen";
+    }
+}

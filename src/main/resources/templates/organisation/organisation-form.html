@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de-CH"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${bearbeitenSlug != null} ? #{orgForm.title.bearbeiten} : #{orgForm.title.neu}">Organisation</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="app-body">
+
+<div class="app-layout">
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('organisationen', ${anzahlOffeneAnfragen})}"></aside>
+
+    <main class="app-main">
+        <header class="app-page-head">
+            <div>
+                <p class="app-page-rubrik" th:text="#{orgForm.rubrik}">Organisation</p>
+                <h1 th:text="${bearbeitenSlug != null} ? #{orgForm.title.bearbeiten} : #{orgForm.title.neu}">Neue Organisation</h1>
+            </div>
+        </header>
+
+        <div th:if="${fehlermeldung != null}" class="app-meldung fehler" th:text="${fehlermeldung}"></div>
+
+        <section class="app-card">
+            <form th:action="${bearbeitenSlug != null} ? @{/organisationen/{slug}(slug=${bearbeitenSlug})} : @{/organisationen}"
+                  method="post" th:object="${orgForm}" class="app-form" novalidate>
+
+                <!--
+                  Typ wird im Wizard-Schritt 1 oder beim Edit fest gewählt und ist
+                  hier nicht mehr editierbar — verhindert Inkonsistenz mit den
+                  weiter unten konditional gerenderten Branche-Feldern.
+                -->
+                <input type="hidden" th:field="*{typ}">
+                <div class="app-form-group">
+                    <label th:text="#{orgForm.feld.typ}">Typ</label>
+                    <p style="margin:0; font-weight:600;" th:text="*{typ}">VEREIN</p>
+                    <small class="app-muted" th:if="${bearbeitenSlug == null}">
+                        <span th:text="#{orgForm.typFalsch}">Falsch gewählt?</span>
+                        <a th:href="@{/organisationen/neu}" th:text="#{orgForm.zurAuswahl}">Zurück zur Auswahl</a>.
+                    </small>
+                </div>
+
+                <div class="app-form-group">
+                    <label for="name" th:text="#{orgForm.feld.name}">Name *</label>
+                    <input id="name" type="text" th:field="*{name}" required>
+                    <p class="app-meldung fehler" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+                </div>
+
+                <div class="app-form-group">
+                    <label for="slug" th:text="#{orgForm.feld.slug}">Slug</label>
+                    <span class="hint" th:text="#{orgForm.feld.slugHint}">Optional — wird sonst aus dem Namen generiert</span>
+                    <input id="slug" type="text" th:field="*{slug}" th:placeholder="#{orgForm.feld.slugPlaceholder}" placeholder="z. B. fc-beispiel">
+                    <p class="app-meldung fehler" th:if="${#fields.hasErrors('slug')}" th:errors="*{slug}"></p>
+                </div>
+
+                <div class="app-form-group">
+                    <label for="rechtsform" th:text="#{orgForm.feld.rechtsform}">Rechtsform</label>
+                    <input id="rechtsform" type="text" th:field="*{rechtsform}" th:placeholder="#{orgForm.feld.rechtsformPlaceholder}" placeholder="z. B. Verein, AG, GmbH">
+                </div>
+
+                <!-- Verein-Branche (Health/Sport) — nur für VEREIN sowie optional für STIFTUNG/ANDERE -->
+                <div class="app-form-group" th:if="*{typ?.name()} == 'VEREIN' or *{typ?.name()} == 'STIFTUNG' or *{typ?.name()} == 'ANDERE'">
+                    <label for="branche">
+                        <span th:if="*{typ?.name()} == 'VEREIN'" th:text="#{orgForm.feld.branche.verein}">Branche *</span>
+                        <span th:unless="*{typ?.name()} == 'VEREIN'" th:text="#{orgForm.feld.branche.optional}">Branche (optional)</span>
+                    </label>
+                    <span class="hint" th:text="#{orgForm.feld.brancheHint}">In welchem Health/Sport-Bereich seid ihr tätig?</span>
+                    <select id="branche" th:field="*{branche}">
+                        <option value="" th:text="#{orgForm.feld.waehlen}">— wählen —</option>
+                        <option th:each="b : ${branchen}" th:value="${b}" th:text="${b.anzeige}"></option>
+                    </select>
+                    <p class="app-meldung fehler" th:if="${#fields.hasErrors('branche')}" th:errors="*{branche}"></p>
+                </div>
+
+                <!-- Sponsor-Industrie — für UNTERNEHMEN sowie optional für STIFTUNG/ANDERE -->
+                <div class="app-form-group" th:if="*{typ?.name()} == 'UNTERNEHMEN' or *{typ?.name()} == 'STIFTUNG' or *{typ?.name()} == 'ANDERE'">
+                    <label for="sponsorBranche">
+                        <span th:if="*{typ?.name()} == 'UNTERNEHMEN'" th:text="#{orgForm.feld.industrie.unternehmen}">Industrie *</span>
+                        <span th:unless="*{typ?.name()} == 'UNTERNEHMEN'" th:text="#{orgForm.feld.industrie.optional}">Industrie (optional)</span>
+                    </label>
+                    <span class="hint" th:text="#{orgForm.feld.industrieHint}">In welcher Industrie ist die Firma aktiv?</span>
+                    <select id="sponsorBranche" th:field="*{sponsorBranche}">
+                        <option value="" th:text="#{orgForm.feld.waehlen}">— wählen —</option>
+                        <option th:each="s : ${sponsorBranchen}" th:value="${s}" th:text="${s.anzeige}"></option>
+                    </select>
+                    <p class="app-meldung fehler" th:if="${#fields.hasErrors('sponsorBranche')}" th:errors="*{sponsorBranche}"></p>
+                </div>
+
+                <div class="app-form-group">
+                    <label for="beschreibung" th:text="#{orgForm.feld.beschreibung}">Beschreibung</label>
+                    <textarea id="beschreibung" th:field="*{beschreibung}" rows="4"></textarea>
+                </div>
+
+                <div class="app-form-group">
+                    <label for="websiteUrl" th:text="#{orgForm.feld.website}">Website</label>
+                    <input id="websiteUrl" type="url" th:field="*{websiteUrl}" placeholder="https://...">
+                    <p class="app-meldung fehler" th:if="${#fields.hasErrors('websiteUrl')}" th:errors="*{websiteUrl}"></p>
+                </div>
+
+                <div class="app-form-group">
+                    <label for="iban" th:text="#{orgForm.feld.iban}">IBAN (für Sponsoring-Rechnungen)</label>
+                    <input id="iban" type="text" th:field="*{iban}"
+                           placeholder="CH00 0000 0000 0000 0000 0"
+                           pattern="^$|^[A-Za-z]{2}[0-9]{2}[A-Za-z0-9 ]+$"
+                           autocomplete="off">
+                    <p class="app-meldung fehler" th:if="${#fields.hasErrors('iban')}" th:errors="*{iban}"></p>
+                    <small class="app-muted" th:text="#{orgForm.feld.ibanHint}">Wird für Swiss QR-Bill auf Rechnungen verwendet…</small>
+                </div>
+
+                <div class="app-form-group">
+                    <label for="strasse" th:text="#{orgForm.feld.strasse}">Strasse + Hausnummer</label>
+                    <input id="strasse" type="text" th:field="*{strasse}" placeholder="Bahnhofstrasse 1">
+                    <small class="app-muted" th:text="#{orgForm.feld.strasseHint}">Pflicht für Swiss QR-Bill auf Rechnungen.</small>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 8rem 1fr; gap:0.75rem;">
+                    <div class="app-form-group">
+                        <label for="postleitzahl" th:text="#{orgForm.feld.plz}">PLZ</label>
+                        <input id="postleitzahl" type="text" th:field="*{postleitzahl}" placeholder="8001">
+                    </div>
+                    <div class="app-form-group">
+                        <label for="ort" th:text="#{orgForm.feld.ort}">Ort</label>
+                        <input id="ort" type="text" th:field="*{ort}"
+                               th:placeholder="#{orgForm.feld.ortPlaceholder}"
+                               placeholder="Zürich">
+                        <small id="plzKantonHint" class="app-muted" aria-live="polite"></small>
+                    </div>
+                </div>
+
+                <!--
+                  Hierarchie: optionale Eltern-Org (Konzern → Tochter → Abteilung).
+                  Service-Validierung verhindert Self-Reference, Cycles, Max-Tiefe (3).
+                  Eigene Org wird beim Edit aus der Auswahl ausgeblendet.
+                -->
+                <div class="app-form-group">
+                    <label for="uebergeordneteOrgId" th:text="#{orgForm.feld.eltern}">Übergeordnete Organisation</label>
+                    <span class="hint" th:text="#{orgForm.feld.elternHint}">Optional — für Konzern-Strukturen…</span>
+                    <select id="uebergeordneteOrgId" th:field="*{uebergeordneteOrgId}">
+                        <option value="" th:text="#{orgForm.feld.elternKeine}">— keine (Root) —</option>
+                        <option th:each="o : ${verfuegbareElternOrgs}"
+                                th:if="${bearbeitenSlug == null or o.slug() != bearbeitenSlug}"
+                                th:value="${o.id()}"
+                                th:text="|${o.name()} (${o.typ().name()})|"></option>
+                    </select>
+                    <p class="app-meldung fehler" th:if="${#fields.hasErrors('uebergeordneteOrgId')}" th:errors="*{uebergeordneteOrgId}"></p>
+                </div>
+
+                <div class="app-form-actions">
+                    <button type="submit" class="app-btn" th:text="#{allgemein.speichern}">Speichern</button>
+                    <a th:href="@{/organisationen}" class="app-btn app-btn-secondary" th:text="#{allgemein.abbrechen}">Abbrechen</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+
+<!-- Adress-Auswahlhilfe: PLZ → Ort/Kanton aus dem offiziellen PLZ-Verzeichnis -->
+<script th:inline="none">
+  (function () {
+    var plz = document.getElementById('postleitzahl');
+    var ort = document.getElementById('ort');
+    var hint = document.getElementById('plzKantonHint');
+    if (!plz || !ort) return;
+
+    function nachschlagen() {
+      var wert = (plz.value || '').trim();
+      if (!/^[0-9]{4}$/.test(wert)) { if (hint) hint.textContent = ''; return; }
+      fetch('/plz/' + wert, { headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data) { if (hint) hint.textContent = ''; return; }
+          // Ort nur vorbefüllen, wenn das Feld leer ist — keine Eingabe überschreiben.
+          if (data.ort && !ort.value.trim()) { ort.value = data.ort; }
+          if (hint) { hint.textContent = data.kantonName ? ('Kanton ' + data.kantonName) : ''; }
+        })
+        .catch(function () { /* offline / Fehler → still */ });
+    }
+
+    plz.addEventListener('change', nachschlagen);
+    plz.addEventListener('blur', nachschlagen);
+  })();
+</script>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{login.titel} + ' — Sponsorplatz'">Anmelden — Sponsorplatz</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="public-body">
+
+<a th:replace="~{fragments/a11y :: skip-link}"></a>
+
+<header class="public-topbar">
+    <div class="public-topbar-inner">
+        <a class="public-logo" th:href="@{/}">
+            <img class="dash-logo-icon" th:src="@{/images/logo/icon-ringe.svg}" alt="">
+            <span>Sponsorplatz</span>
+        </a>
+        <nav class="public-nav">
+            <a sec:authorize="isAuthenticated()" th:href="@{/marktplatz}" th:text="#{navigation.marktplatz}">Marktplatz</a>
+            <a sec:authorize="!isAuthenticated()" th:href="@{/kontakt}" th:text="#{navigation.kontakt}">Kontakt</a>
+            <a th:href="@{/registrieren}" th:text="#{navigation.registrieren}">Registrieren</a>
+        </nav>
+    </div>
+</header>
+
+<main class="public-main" id="inhalt">
+    <section class="public-auth-card">
+        <h1 th:text="#{login.titel}">Anmelden</h1>
+
+        <div th:if="${param.error}" class="app-meldung fehler" role="alert" th:text="#{login.fehlerCredentials}">
+            E-Mail oder Passwort ist falsch.
+        </div>
+        <div th:if="${param.gesperrt}" class="app-meldung fehler" role="alert">
+            <span th:text="#{login.fehlerGesperrtBeginn}">Zu viele Fehlversuche…</span>
+            <a th:href="@{/passwort-vergessen}" th:text="#{login.fehlerGesperrtLink}">setzen Sie Ihr Passwort zurck</a>.
+        </div>
+        <div th:if="${param.logout}" class="app-meldung erfolg" role="status" th:text="#{login.erfolgAbgemeldet}">
+            Sie wurden erfolgreich abgemeldet.
+        </div>
+        <div th:if="${param.registriert}" class="app-meldung info" role="status" th:text="#{login.infoRegistriert}">
+            Registrierung erfolgreich! Bitte E-Mail besttigen und dann anmelden.
+        </div>
+        <div th:if="${erfolgsMeldung != null}" class="app-meldung erfolg" role="status" th:text="${erfolgsMeldung}"></div>
+
+        <form th:action="@{/login}" method="post" class="app-form">
+            <div class="app-form-group">
+                <label for="username" th:text="#{login.email}">E-Mail</label>
+                <input type="email" id="username" name="username" required autofocus>
+            </div>
+            <div class="app-form-group">
+                <label for="password" th:text="#{login.passwort}">Passwort</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="app-form-actions">
+                <button type="submit" class="app-btn" style="width: 100%; justify-content: center;"
+                        th:text="#{login.anmeldenBtn}">Anmelden</button>
+            </div>
+        </form>
+
+        <!-- OIDC-SSO-Buttons (nur wenn Identity-Provider konfiguriert sind, Spec §3.2) -->
+        <div th:if="${oauth2Anbieter != null and !oauth2Anbieter.isEmpty()}"
+             class="oidc-anbieter" style="margin-top:1.5rem;">
+            <div style="text-align:center; margin:1rem 0; color:var(--farbe-text-muted); font-size:0.85rem;"
+                 th:text="#{login.oder}">— oder —</div>
+            <a th:each="anbieter : ${oauth2Anbieter}"
+               th:href="@{'/oauth2/authorization/' + ${anbieter.registrationId}}"
+               class="app-btn app-btn-secondary"
+               style="display:flex; width:100%; justify-content:center; margin-bottom:0.5rem;"
+               th:text="#{login.mitProvider(${anbieter.clientName})}">
+                Mit Firmenkonto anmelden
+            </a>
+        </div>
+
+        <p class="public-auth-foot">
+            <span th:text="#{login.kontoLosFrage}">Noch kein Konto?</span>
+            <a th:href="@{/registrieren}" th:text="#{login.jetztRegistrieren}">Jetzt registrieren</a><br>
+            <a th:href="@{/passwort-vergessen}" th:text="#{login.passwortVergessen}">Passwort vergessen?</a>
+        </p>
+    </section>
+</main>
+
+<footer class="public-footer">
+    <div class="public-footer-inner">
+        <p style="margin:0;">&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> Sponsorplatz</p>
+    </div>
+</footer>
+
+<th:block th:replace="~{fragments/sentry-browser :: sentry-script}"></th:block>
+</body>
+</html>

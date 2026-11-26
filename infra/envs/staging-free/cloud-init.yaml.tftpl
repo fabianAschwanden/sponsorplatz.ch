@@ -1,0 +1,190 @@
+#cloud-config
+# Cloud-Init für die Always-Free-VM (Sponsorplatz):
+# 1. Docker installieren
+# 2. firewalld → 80/443 öffnen
+# 3. /opt/sponsorplatz/{Caddyfile, docker-compose.yml} schreiben
+# 4. systemd-Service einrichten der den Compose-Stack startet
+# 5. OCIR-Login + initial pull + start
+
+# kein package_update — spart Minuten auf E2.1.Micro
+package_update: false
+package_upgrade: false
+
+write_files:
+  # ── docker-compose.yml ────────────────────────────────────────────────────
+  # Enthält Klartext-PWs als ENV — Mode 0600, owner root.
+  # (`owner: root:opc` würde scheitern: opc-User wird erst nach write_files
+  # angelegt — bekannter Cloud-Init-Race.)
+  - path: /opt/sponsorplatz/docker-compose.yml
+    permissions: '0600'
+    content: |
+      services:
+        db:
+          image: postgres:17-alpine
+          container_name: sponsorplatz-db
+          restart: unless-stopped
+          mem_limit: 512m
+          environment:
+            POSTGRES_DB: sponsorplatz
+            POSTGRES_USER: sponsorplatz
+            POSTGRES_PASSWORD: ${db_password}
+          volumes:
+            - /var/lib/sponsorplatz/db-data:/var/lib/postgresql/data
+          healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U sponsorplatz -d sponsorplatz"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+        app:
+          image: ${image_url}
+          container_name: sponsorplatz-app
+          restart: unless-stopped
+          mem_limit: 2g
+          depends_on:
+            db:
+              condition: service_healthy
+          environment:
+            SPRING_PROFILES_ACTIVE: cloud-free
+            DB_URL: jdbc:postgresql://db:5432/sponsorplatz
+            DB_USER: sponsorplatz
+            DB_PASSWORD: ${db_password}
+            SMTP_HOST: ${smtp_host}
+            SMTP_PORT: "${smtp_port}"
+            SMTP_USER: ${smtp_user}
+            SMTP_PASSWORD: ${smtp_password}
+            SMTP_AUTH: "true"
+            SMTP_STARTTLS: "true"
+            MAIL_ABSENDER: ${mail_absender}
+            MAIL_LIVE: "${mail_live}"
+            MAIL_TEST_EMPFAENGER: ${mail_test_empfaenger}
+            BASIS_URL: ${basis_url}
+            SPONSORPLATZ_ADMIN_EMAIL: ${admin_email}
+            SPONSORPLATZ_ADMIN_PASSWORD: ${admin_password}
+            SPONSORPLATZ_UMGEBUNG: oci-staging-free
+            STORAGE_PROVIDER: ${storage_provider}
+            OCI_AUTH_MODE: instance
+            OCI_REGION: ${region}
+            OCI_NAMESPACE: ${object_storage_ns}
+            OCI_BUCKET_UPLOADS: ${bucket_uploads}
+            OCI_BUCKET_BACKUPS: ${bucket_backups}
+            # Sentry — DSN + Release CD-managed via /opt/sponsorplatz/.env.
+            # '$${VAR:-}'-Escape lässt Terraform den Ausdruck literal stehen;
+            # docker compose löst ihn beim 'up' aus der .env auf. Environment
+            # ist hardcoded weil es die Cloud-Zone identifiziert.
+            SENTRY_DSN: "$${SENTRY_DSN:-}"
+            SENTRY_RELEASE: "$${SENTRY_RELEASE:-}"
+            SENTRY_ENVIRONMENT: oci-staging-free
+            # REST-API-Key — CD-managed via .env (off-by-default → 503).
+            SPONSORPLATZ_API_KEY: "$${SPONSORPLATZ_API_KEY:-}"
+            # OIDC Google — CLIENT_ID/SECRET CD-managed (Repo-Secrets), Rest hardcoded.
+            # Spring registriert den Google-Client erst wenn client-id + secret
+            # nicht-leer sind, daher off-by-default ohne gesetzte Secrets.
+            SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: "$${GOOGLE_CLIENT_ID:-}"
+            SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: "$${GOOGLE_CLIENT_SECRET:-}"
+            SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_NAME: Google
+            SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,profile,email
+            SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_GOOGLE_ISSUER_URI: https://accounts.google.com
+            JAVA_OPTS: "-Xms512m -Xmx1500m"
+          volumes:
+            - /var/lib/sponsorplatz/uploads:/app/uploads
+          expose:
+            - "8080"
+          healthcheck:
+            test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+            start_period: 90s
+
+        caddy:
+          image: caddy:2-alpine
+          container_name: sponsorplatz-caddy
+          restart: unless-stopped
+          mem_limit: 128m
+          depends_on:
+            - app
+          ports:
+            - "80:80"
+            - "443:443"
+          volumes:
+            - /opt/sponsorplatz/Caddyfile:/etc/caddy/Caddyfile:ro
+            - /var/lib/sponsorplatz/caddy-data:/data
+            - /var/lib/sponsorplatz/caddy-config:/config
+
+  # ── Caddyfile ─────────────────────────────────────────────────────────────
+  # Primärer Hostname + nip.io-Fallback (funktioniert auch ohne A-Record).
+  - path: /opt/sponsorplatz/Caddyfile
+    permissions: '0644'
+    content: |
+      {
+          email ${acme_email}
+      }
+      ${domain} {
+          encode gzip
+          header {
+              Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+              X-Content-Type-Options "nosniff"
+              X-Frame-Options "DENY"
+              Referrer-Policy "strict-origin-when-cross-origin"
+          }
+          reverse_proxy app:8080 {
+              header_up X-Forwarded-Proto https
+          }
+      }
+
+  # ── systemd-Service ──────────────────────────────────────────────────────
+  - path: /etc/systemd/system/sponsorplatz.service
+    permissions: '0644'
+    content: |
+      [Unit]
+      Description=Sponsorplatz (docker compose)
+      Requires=docker.service
+      After=docker.service network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=true
+      WorkingDirectory=/opt/sponsorplatz
+      ExecStart=/usr/bin/docker compose up -d --remove-orphans
+      ExecStop=/usr/bin/docker compose down
+
+      [Install]
+      WantedBy=multi-user.target
+
+  # ── Convenience-Aliases ──────────────────────────────────────────────────
+  - path: /etc/profile.d/sponsorplatz.sh
+    permissions: '0644'
+    content: |
+      alias logs='cd /opt/sponsorplatz && docker compose logs -f'
+      alias restart-app='cd /opt/sponsorplatz && docker compose restart app'
+      alias pull-app='cd /opt/sponsorplatz && docker compose pull app && docker compose up -d app'
+
+runcmd:
+  # Docker Engine
+  - dnf -y install dnf-plugins-core
+  - dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  - dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - systemctl enable --now docker
+
+  # Firewall: 22 ist Default offen, 80 + 443 freischalten
+  - systemctl enable --now firewalld
+  - firewall-cmd --permanent --add-port=80/tcp
+  - firewall-cmd --permanent --add-port=443/tcp
+  - firewall-cmd --reload
+
+  # Persistenz-Verzeichnisse
+  - mkdir -p /var/lib/sponsorplatz/db-data /var/lib/sponsorplatz/uploads /var/lib/sponsorplatz/caddy-data /var/lib/sponsorplatz/caddy-config
+  - chown -R 70:70 /var/lib/sponsorplatz/db-data         # postgres-User in alpine
+  - chown -R 1001:1001 /var/lib/sponsorplatz/uploads     # sponsor-User im App-Container
+
+  # GHCR-Pull funktioniert ohne Login, sofern das Package public ist
+  # (Settings → Packages → sponsorplatz → Change visibility → Public).
+  # Falls Package private bleibt: docker login auf der VM manuell mit PAT
+  # (Pattern: echo $PAT | docker login ghcr.io -u <user> --password-stdin).
+
+  # Stack starten — auf E5.Flex (4 GB) reicht paralleler Pull problemlos
+  - cd /opt/sponsorplatz && docker compose pull
+  - systemctl daemon-reload
+  - systemctl enable --now sponsorplatz.service

@@ -1,0 +1,254 @@
+package ch.sponsorplatz.anfrage;
+
+import ch.sponsorplatz.audit.AuditAktion;
+import ch.sponsorplatz.audit.AuditService;
+import ch.sponsorplatz.aufgabe.AufgabenEngine;
+import ch.sponsorplatz.organisation.Organisation;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * Tests für {@link RechnungService}.
+ *
+ * Test-IDs: RECH-01..06.
+ */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class RechnungServiceTest {
+
+    @Mock private RechnungRepository repository;
+    @Mock private VertragService vertragService;
+    @Mock private RechnungsnummerGenerator rechnungsnummerGenerator;
+    @Mock private AuditService auditService;
+    @Mock private AufgabenEngine aufgabenEngine;
+    @Mock private RechnungsMailService rechnungsMailService;
+    @Mock private ch.sponsorplatz.shared.einstellungen.PlattformEinstellungenService einstellungenService;
+
+    private RechnungService service;
+
+    private final UUID vertragId = UUID.randomUUID();
+    private Vertrag vertrag;
+
+    @BeforeEach
+    void setUp() {
+        service = new RechnungService(repository, vertragService,
+                rechnungsnummerGenerator, auditService, aufgabenEngine, rechnungsMailService,
+                einstellungenService);
+        when(rechnungsnummerGenerator.naechste(any())).thenReturn("R-2026-00001");
+
+        Organisation verein = neueOrg("FC Beispiel", "fc-beispiel", "CH4431999123000889012");
+
+        vertrag = new Vertrag();
+        vertrag.setId(vertragId);
+        vertrag.setStatus(VertragsStatus.ENTWURF);
+        vertrag.setOrg(verein);
+        vertrag.setOrgName(verein.getName());
+        vertrag.setSponsorName("Acme AG");
+        vertrag.setSponsorEmail("kontakt@acme.ch");
+        vertrag.setPaketName("Gold");
+        vertrag.setPreisChf(new BigDecimal("5000.00"));
+
+        when(vertragService.findeNachId(vertragId)).thenReturn(vertrag);
+        when(repository.save(any(Rechnung.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repository.countByOrgId(any())).thenReturn(0L);
+    }
+
+    @Test
+    @DisplayName("RECH-01: erstelle aus Vertrag kopiert IBAN, Betrag, Sponsor — Status OFFEN")
+    void erstelleSnapshot() {
+        when(repository.findByVertragId(vertragId)).thenReturn(Optional.empty());
+
+        Rechnung r = service.erstelle(vertragId, "fabian@example.ch");
+
+        assertThat(r.getStatus()).isEqualTo(RechnungsStatus.OFFEN);
+        assertThat(r.getBetragChf()).isEqualByComparingTo(new BigDecimal("5000.00"));
+        assertThat(r.getIban()).isEqualTo("CH4431999123000889012");
+        assertThat(r.getSponsorName()).isEqualTo("Acme AG");
+        assertThat(r.getSponsorEmail()).isEqualTo("kontakt@acme.ch");
+        assertThat(r.getZahlungszweck()).contains("Gold");
+        assertThat(r.getRechnungsnummer()).isEqualTo("R-2026-00001");
+        assertThat(r.getFaelligAm()).isAfter(java.time.LocalDate.now());
+    }
+
+    @Test
+    @DisplayName("RECH-17: QR-Modus aktiv → QR-Bill-Mail wird async ausgelöst (mit Rechnungs-ID)")
+    void qrModusSendetMail() {
+        when(repository.findByVertragId(vertragId)).thenReturn(Optional.empty());
+        when(einstellungenService.istOnlineZahlungAktiv()).thenReturn(false);
+
+        Rechnung r = service.erstelle(vertragId, "fabian@example.ch");
+
+        verify(rechnungsMailService).sendeRechnungPerEmail(r.getId());
+    }
+
+    @Test
+    @DisplayName("RECH-18: Datatrans-Modus aktiv → KEINE QR-Bill-Mail (exklusiver Kanal)")
+    void datatransModusKeineMail() {
+        when(repository.findByVertragId(vertragId)).thenReturn(Optional.empty());
+        when(einstellungenService.istOnlineZahlungAktiv()).thenReturn(true);
+
+        service.erstelle(vertragId, "fabian@example.ch");
+
+        verify(rechnungsMailService, org.mockito.Mockito.never()).sendeRechnungPerEmail(any());
+    }
+
+    @Test
+    @DisplayName("RECH-02: erstelle bei vorhandener Rechnung wirft IllegalStateException")
+    void erstelleNurEinmal() {
+        when(repository.findByVertragId(vertragId)).thenReturn(Optional.of(new Rechnung()));
+
+        assertThatThrownBy(() -> service.erstelle(vertragId, "u"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("bereits");
+    }
+
+    @Test
+    @DisplayName("RECH-03: erstelle ohne IBAN auf der Org wirft IllegalStateException")
+    void erstelleNurMitIban() {
+        Organisation ohneIban = neueOrg("FC", "fc", null);
+        vertrag.setOrg(ohneIban);
+        when(repository.findByVertragId(vertragId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.erstelle(vertragId, "u"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("IBAN");
+    }
+
+    @Test
+    @DisplayName("RECH-04: erstelle generiert QR-Referenz nur bei QR-IBAN (Institut-ID 30000-31999)")
+    void qrReferenzNurBeiQrIban() {
+        // Test-IBAN oben (CH4431999123000889012) ist eine QR-IBAN — Referenz erwartet
+        when(repository.findByVertragId(vertragId)).thenReturn(Optional.empty());
+
+        Rechnung r = service.erstelle(vertragId, "u");
+
+        assertThat(r.getQrReferenz()).isNotBlank();
+        assertThat(r.getQrReferenz()).hasSize(27);
+    }
+
+    @Test
+    @DisplayName("RECH-05: markiereBezahlt setzt Status, Zeitstempel, User")
+    void markiereBezahlt() {
+        Rechnung r = new Rechnung();
+        r.setId(UUID.randomUUID());
+        r.setStatus(RechnungsStatus.OFFEN);
+        when(repository.findById(r.getId())).thenReturn(Optional.of(r));
+
+        Rechnung result = service.markiereBezahlt(r.getId(), "fabian@example.ch");
+
+        assertThat(result.getStatus()).isEqualTo(RechnungsStatus.BEZAHLT);
+        assertThat(result.getBezahltAm()).isNotNull();
+        assertThat(result.getBezahltVon()).isEqualTo("fabian@example.ch");
+    }
+
+    @Test
+    @DisplayName("RECH-06: stornieren bezahlter Rechnung wirft IllegalStateException")
+    void stornierenNichtAusBezahlt() {
+        Rechnung r = new Rechnung();
+        r.setId(UUID.randomUUID());
+        r.setStatus(RechnungsStatus.BEZAHLT);
+        when(repository.findById(r.getId())).thenReturn(Optional.of(r));
+
+        assertThatThrownBy(() -> service.stornieren(r.getId(), "ignored"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("RECH-15: markiereBezahlt schreibt RECHNUNG_BEZAHLT ins Audit-Log mit Quelle MANUELL")
+    void markiereBezahlt_auditEvent() {
+        Rechnung r = new Rechnung();
+        r.setId(UUID.randomUUID());
+        r.setStatus(RechnungsStatus.OFFEN);
+        r.setRechnungsnummer("R-2026-00042");
+        when(repository.findById(r.getId())).thenReturn(Optional.of(r));
+
+        service.markiereBezahlt(r.getId(), "owner@verein.ch");
+
+        verify(auditService).protokolliere(
+                eq(AuditAktion.RECHNUNG_BEZAHLT),
+                eq("RECHNUNG"),
+                eq(r.getId()),
+                eq("Rechnung"),
+                contains("quelle=MANUELL"));
+    }
+
+    @Test
+    @DisplayName("RECH-16: stornieren schreibt RECHNUNG_STORNIERT ins Audit-Log mit Grund + vorherigem Status")
+    void stornieren_auditEventMitGrund() {
+        Rechnung r = new Rechnung();
+        r.setId(UUID.randomUUID());
+        r.setStatus(RechnungsStatus.OFFEN);
+        r.setRechnungsnummer("R-2026-00042");
+        when(repository.findById(r.getId())).thenReturn(Optional.of(r));
+
+        service.stornieren(r.getId(), "Sponsor zog Anfrage zurück");
+
+        verify(auditService).protokolliere(
+                eq(AuditAktion.RECHNUNG_STORNIERT),
+                eq("RECHNUNG"),
+                eq(r.getId()),
+                eq("Rechnung"),
+                contains("Sponsor zog Anfrage zurück"));
+        assertThat(r.getStornoGrund()).isEqualTo("Sponsor zog Anfrage zurück");
+        assertThat(r.getStatus()).isEqualTo(RechnungsStatus.STORNIERT);
+    }
+
+    @Test
+    @DisplayName("RECH-19: findeViewsNachOrgs mappt Rechnungen zu Views")
+    void findeViewsNachOrgs() {
+        UUID orgId = UUID.randomUUID();
+        Organisation org = neueOrg("FC Liste", "fc-liste", "CH4431999123000889012");
+        org.setId(orgId);
+        Rechnung r = new Rechnung();
+        r.setId(UUID.randomUUID());
+        r.setOrg(org);
+        r.setRechnungsnummer("R-2026-00007");
+        r.setStatus(RechnungsStatus.OFFEN);
+        r.setBetragChf(new BigDecimal("2500.00"));
+        r.setIban("CH4431999123000889012");
+        when(repository.findByOrgIdInOrderByErstelltAmDesc(java.util.List.of(orgId)))
+                .thenReturn(java.util.List.of(r));
+
+        var views = service.findeViewsNachOrgs(java.util.List.of(orgId));
+
+        assertThat(views).hasSize(1);
+        assertThat(views.get(0).rechnungsnummer()).isEqualTo("R-2026-00007");
+        assertThat(views.get(0).orgSlug()).isEqualTo("fc-liste");
+    }
+
+    @Test
+    @DisplayName("RECH-20: findeViewsNachOrgs mit leerer Org-Menge → leere Liste")
+    void findeViewsNachOrgsLeer() {
+        assertThat(service.findeViewsNachOrgs(java.util.List.of())).isEmpty();
+    }
+
+    private static Organisation neueOrg(String name, String slug, String iban) {
+        Organisation o = new Organisation();
+        o.setId(UUID.randomUUID());
+        o.setName(name);
+        o.setSlug(slug);
+        o.setIban(iban);
+        o.setStrasse("Bahnhofstrasse 1");
+        o.setPostleitzahl("8001");
+        o.setOrt("Zürich");
+        return o;
+    }
+}

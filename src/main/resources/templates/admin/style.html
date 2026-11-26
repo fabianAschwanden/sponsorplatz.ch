@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{admin.rubrik} + ' — ' + #{admin.style.titel} + ' — Sponsorplatz'">Admin — Plattform-Style — Sponsorplatz</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body class="app-body">
+
+<div class="app-layout">
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('admin-style', null)}"></aside>
+
+    <main class="app-main">
+        <header class="app-page-head">
+            <div>
+                <p class="app-page-rubrik" th:text="#{admin.rubrik}">Plattform-Admin</p>
+                <h1 th:text="#{admin.style.titel}">Plattform-Style</h1>
+                <p class="app-muted" style="margin-top:0.5rem;"
+                   th:text="#{admin.style.beschreibung}">
+                    Wähle das aktive Design-Token-Set.
+                </p>
+            </div>
+        </header>
+
+        <div th:replace="~{fragments/a11y :: flash-meldungen}"></div>
+
+        <form th:action="@{/admin/style/speichern}" method="post" class="app-card"
+              style="max-width:560px; padding:1.5rem;">
+
+            <div th:each="opt : ${verfuegbareStyles}" style="margin-bottom:1rem;">
+                <label style="display:flex; align-items:flex-start; gap:0.75rem; cursor:pointer;">
+                    <input type="radio" name="style" th:value="${opt}"
+                           th:checked="${opt == aktiverStyle}" style="margin-top:0.25rem;">
+                    <span>
+                        <strong th:switch="${opt}">
+                            <span th:case="'default'" th:text="#{admin.style.option.default.label}">Sponsorplatz Standard</span>
+                            <span th:case="*" th:text="${opt}">—</span>
+                        </strong>
+                        <span class="app-muted" style="display:block; font-size:0.85rem;"
+                              th:switch="${opt}">
+                            <span th:case="'default'" th:text="#{admin.style.option.default.beschreibung}">…</span>
+                            <span th:case="*">—</span>
+                        </span>
+                    </span>
+                </label>
+            </div>
+
+            <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                <button type="submit" class="app-btn" th:text="#{allgemein.speichern}">Speichern</button>
+                <a th:href="@{/admin}" class="app-btn app-btn-ghost"
+                   th:text="#{allgemein.abbrechen}">Abbrechen</a>
+            </div>
+        </form>
+
+        <p class="app-muted" style="margin-top:1.5rem; font-size:0.85rem;">
+            <span th:text="#{admin.style.aktuellAktiv}">Aktuell aktiv:</span>
+            <strong th:switch="${aktiverStyle}">
+                <span th:case="'default'" th:text="#{admin.style.option.default.label}">Sponsorplatz Standard</span>
+                <span th:case="*" th:text="${aktiverStyle}">—</span>
+            </strong>
+        </p>
+    </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!--
+  App-Sidebar — wird in alle eingeloggten Seiten via th:replace eingebunden.
+  Parameter:
+    aktiv: String, einer von { dashboard, organisationen, mitglieder, projekte, anfragen, marktplatz, crm, einstellungen }
+    badgeAnfragen: Integer (optional)
+-->
+<aside th:fragment="app-sidebar(aktiv, badgeAnfragen)" class="dash-sidebar">
+    <div class="dash-sidebar-top">
+        <a class="dash-logo" th:href="@{/}">
+            <img class="dash-logo-icon" th:src="@{/images/logo/icon-ringe-on-dark.svg}" alt="">
+            <span class="dash-logo-text">Sponsorplatz</span>
+        </a>
+        <a class="dash-back" th:href="@{/}">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+            <span th:text="#{sidebar.zurueck}">Zurück</span>
+        </a>
+    </div>
+
+    <nav class="dash-nav">
+        <a th:href="@{/dashboard}" class="dash-nav-item"
+           th:classappend="${aktiv == 'dashboard'} ? 'aktiv'">
+            <span class="dash-nav-dot"></span>
+            <span th:text="#{sidebar.dashboard}">Dashboard</span>
+        </a>
+        <a th:href="@{/organisationen}" class="dash-nav-item"
+           th:classappend="${aktiv == 'organisationen'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 21h18M5 21V7l8-4 8 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/>
+            </svg>
+            <span th:text="#{sidebar.organisationen}">Organisationen</span>
+        </a>
+        <a sec:authorize="isAuthenticated()" th:href="@{/meine-projekte}" class="dash-nav-item"
+           th:classappend="${aktiv == 'projekte'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="15" y2="17"/>
+            </svg>
+            <span th:text="#{sidebar.projekte}">Projekte</span>
+        </a>
+        <a th:href="@{/marktplatz}" class="dash-nav-item"
+           th:classappend="${aktiv == 'marktplatz'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <span th:text="#{sidebar.marktplatz}">Marktplatz</span>
+        </a>
+        <a th:href="@{/anfragen}" class="dash-nav-item"
+           th:classappend="${aktiv == 'anfragen'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+            <span th:text="#{sidebar.anfragen}">Anfragen</span>
+            <span class="dash-nav-badge"
+                  th:if="${badgeAnfragen != null and badgeAnfragen > 0}"
+                  th:text="${badgeAnfragen}">3</span>
+        </a>
+        <a sec:authorize="isAuthenticated()" th:href="@{/vertraege-rechnungen}" class="dash-nav-item"
+           th:classappend="${aktiv == 'vertraege-rechnungen'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span th:text="#{sidebar.vertraegeRechnungen}">Verträge &amp; Rechnungen</span>
+        </a>
+        <!-- CRM — nur für Mitglieder einer Firma mit Bearbeitungsrechten
+             (crmSponsorSlug via CrmZugangAdvice). Privater Sponsor-Layer. -->
+        <a sec:authorize="isAuthenticated()" th:if="${crmSponsorSlug != null}"
+           th:href="@{/crm/{slug}(slug=${crmSponsorSlug})}" class="dash-nav-item"
+           th:classappend="${aktiv == 'crm'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
+            </svg>
+            <span th:text="#{sidebar.crm}">CRM</span>
+        </a>
+        <!-- Statistiken — sichtbar für alle eingeloggten User. Vereins-only
+             User landen auf einer Empty-Page mit Sponsor-Hinweis. Sponsor-
+             Sichtbarkeits-Filter wäre ein zusätzlicher Repo-Roundtrip pro
+             Sidebar-Render — bewusst nicht. -->
+        <a sec:authorize="isAuthenticated()" th:href="@{/statistiken}" class="dash-nav-item"
+           th:classappend="${aktiv == 'statistiken'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="20" x2="12" y2="10"/>
+                <line x1="18" y1="20" x2="18" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="16"/>
+            </svg>
+            <span th:text="#{sidebar.statistiken}">Statistiken</span>
+        </a>
+        <a sec:authorize="isAuthenticated()" th:href="@{/aufgaben}" class="dash-nav-item"
+           th:classappend="${aktiv == 'aufgaben'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 11 12 14 22 4"/>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+            </svg>
+            <span th:text="#{sidebar.aufgaben}">Aufgaben</span>
+            <span class="dash-nav-badge"
+                  th:if="${badgeAufgaben != null and badgeAufgaben > 0}"
+                  th:text="${badgeAufgaben}">3</span>
+        </a>
+
+        <!-- Admin-Bereich (nur für PLATFORM_ADMIN) -->
+        <div sec:authorize="hasRole('PLATFORM_ADMIN')" style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid rgba(255,255,255,0.1);">
+            <span style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:rgba(255,255,255,0.9); padding:0 0.75rem;"
+                  th:text="#{sidebar.admin}">Admin</span>
+            <a th:href="@{/admin}" class="dash-nav-item"
+               th:classappend="${aktiv == 'admin'} ? 'aktiv'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15 1.65 1.65 0 003 14.08V14a2 2 0 014 0v.09"/>
+                </svg>
+                <span th:text="#{sidebar.admin}">Admin</span>
+            </a>
+            <a th:href="@{/admin/system}" class="dash-nav-item"
+               th:classappend="${aktiv == 'admin-system'} ? 'aktiv'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                    <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                <span th:text="#{sidebar.adminSystem}">System</span>
+            </a>
+            <a th:href="@{/admin/backlog}" class="dash-nav-item"
+               th:classappend="${aktiv == 'admin-backlog'} ? 'aktiv'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 11l3 3L22 4"/>
+                    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                </svg>
+                <span th:text="#{sidebar.adminBacklog}">Backlog</span>
+            </a>
+            <a th:href="@{/admin/aufgaben-definitionen}" class="dash-nav-item"
+               th:classappend="${aktiv == 'admin-aufgaben'} ? 'aktiv'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 4h6v6"/>
+                    <path d="M20 4L9 15l-5-5"/>
+                </svg>
+                <span th:text="#{sidebar.adminAufgaben}">Aufgaben-Definitionen</span>
+            </a>
+            <a th:href="@{/admin/style}" class="dash-nav-item"
+               th:classappend="${aktiv == 'admin-style'} ? 'aktiv'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
+                    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
+                    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
+                    <circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/>
+                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125 0-.926.746-1.687 1.688-1.687h1.992c3.094 0 5.617-2.523 5.547-5.617C21.367 5.882 17.072 2 12 2z"/>
+                </svg>
+                <span th:text="#{sidebar.adminStyle}">Plattform-Style</span>
+            </a>
+            <a th:href="@{/admin/payment-einstellungen}" class="dash-nav-item"
+               th:classappend="${aktiv == 'admin-payment'} ? 'aktiv'">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+                <span th:text="#{sidebar.adminPayment}">Payment</span>
+            </a>
+        </div>
+
+        <!-- Hilfe — unten in der Navigation, direkt oberhalb der Benutzer-Box. -->
+        <a sec:authorize="isAuthenticated()" th:href="@{/hilfe}" class="dash-nav-item dash-nav-hilfe"
+           th:classappend="${aktiv == 'hilfe'} ? 'aktiv'">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span th:text="#{sidebar.hilfe}">Hilfe</span>
+        </a>
+    </nav>
+
+    <!--
+      Anonyme User sehen Login/Registrieren-Buttons statt User-Box.
+      Damit funktioniert die Sidebar auf Public-Pages (Marktplatz,
+      Verein-Profil, Marken-Landing etc.) — sie ersetzt die alte
+      Public-Topbar und gibt anonymen Besuchern den Auth-Pfad.
+    -->
+    <footer class="dash-userbox" sec:authorize="!isAuthenticated()" style="flex-direction:column; gap:0.5rem;">
+        <a th:href="@{/login}" class="dash-user-link" style="justify-content:center;"
+           th:text="#{navigation.anmelden}">Anmelden</a>
+        <a th:href="@{/registrieren}" class="dash-user-link"
+           style="justify-content:center; background:rgba(255,255,255,0.12);"
+           th:text="#{navigation.registrieren}">Registrieren</a>
+    </footer>
+
+    <footer class="dash-userbox" sec:authorize="isAuthenticated()">
+        <div class="dash-notification-bell" id="notificationBell"
+             role="button" tabindex="0"
+             th:aria-label="#{sidebar.benachrichtigungen}">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 01-3.46 0"/>
+            </svg>
+            <span class="dash-notification-badge" id="notificationBadge" style="display:none;" aria-live="polite">0</span>
+        </div>
+        <a th:href="@{/einstellungen}" class="dash-user-link"
+           th:classappend="${aktiv == 'einstellungen'} ? 'aktiv'"
+           th:title="#{sidebar.profilTooltip}">
+            <span th:replace="~{fragments/avatar :: avatar(
+                    name=${aktuellerUser != null ? aktuellerUser.anzeigename : #authentication.name},
+                    bildUrl=${aktuellerUser != null ? aktuellerUser.profilbildUrl : null},
+                    cssClass='dash-avatar')}"></span>
+            <div class="dash-user-info">
+                <span class="dash-user-name"
+                      th:text="${aktuellerUser != null ? aktuellerUser.anzeigename : #authentication.name}">User</span>
+                <span class="dash-user-handle" th:text="#{sidebar.profilBearbeiten}">Profil bearbeiten</span>
+            </div>
+        </a>
+        <form th:action="@{/logout}" method="post" class="dash-logout-form">
+            <button type="submit" class="dash-logout-btn" th:title="#{sidebar.abmelden}" th:aria-label="#{sidebar.abmelden}">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+                </svg>
+            </button>
+        </form>
+    </footer>
+
+    <!--
+      Sprachumschalter — bewusst auf der Sidebar, damit auch eingeloggte
+      Dashboard-/App-Seiten zwischen DE/FR/IT wechseln können (nicht nur die
+      Public-Pages). Pfad-relative Query-Param-URLs sind robust gegen
+      unterschiedliche Test-/Produktiv-Setups (kein {@code #httpServletRequest}-
+      Lookup nötig); der Browser appended an den aktuellen Pfad und der
+      LocaleChangeInterceptor schreibt das lang-Cookie.
+    -->
+    <div class="dash-sidebar-lang">
+        <a href="?lang=de">DE</a>
+        <span aria-hidden="true">·</span>
+        <a href="?lang=fr">FR</a>
+        <span aria-hidden="true">·</span>
+        <a href="?lang=it">IT</a>
+        <span aria-hidden="true">·</span>
+        <a href="?lang=en">EN</a>
+    </div>
+</aside>
+
+<!-- Notification Badge Polling -->
+<script sec:authorize="isAuthenticated()">
+    (function() {
+        function updateBadge() {
+            fetch('/benachrichtigungen/anzahl')
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('notificationBadge');
+                    if (data.ungelesen > 0) {
+                        badge.textContent = data.ungelesen > 99 ? '99+' : data.ungelesen;
+                        badge.style.display = 'flex';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(() => {});
+        }
+        updateBadge();
+        setInterval(updateBadge, 30000); // alle 30 Sekunden
+
+        // Bell-Click: navigiert auf die HTML-Liste — der Server markiert beim
+        // Laden alle als gelesen (atomar, keine fetch+navigate-Race-Condition).
+        var bell = document.getElementById('notificationBell');
+        bell.addEventListener('click', function() {
+            window.location.href = '/benachrichtigungen';
+        });
+        // Keyboard-Support (Enter/Space) für role="button"
+        bell.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                window.location.href = '/benachrichtigungen';
+            }
+        });
+    })();
+</script>
+
+<style>
+    .dash-user-link {
+        display: flex; align-items: center; gap: 0.5rem; flex: 1;
+        padding: 0.4rem 0.5rem; border-radius: 0.375rem;
+        text-decoration: none; color: inherit;
+        transition: background 0.15s;
+    }
+    .dash-user-link:hover { background: rgba(255,255,255,0.08); }
+    .dash-user-link.aktiv { background: rgba(255,255,255,0.12); }
+    .dash-user-link .dash-avatar { flex: 0 0 auto; }
+    .dash-user-link .dash-user-info { flex: 1; min-width: 0; }
+    .dash-notification-bell {
+        position: relative; cursor: pointer; padding: 0.4rem;
+        border-radius: 0.375rem; transition: background 0.15s;
+    }
+    .dash-notification-bell:hover { background: rgba(255,255,255,0.1); }
+    .dash-notification-badge {
+        position: absolute; top: -2px; right: -4px;
+        background: #ef4444; color: #fff; font-size: 0.65rem; font-weight: 700;
+        min-width: 16px; height: 16px; border-radius: 999px;
+        display: flex; align-items: center; justify-content: center;
+        padding: 0 3px;
+    }
+</style>
+
+</body>
+</html>
