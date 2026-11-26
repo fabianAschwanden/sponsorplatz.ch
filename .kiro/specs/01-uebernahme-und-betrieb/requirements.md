@@ -18,15 +18,16 @@ Cucumber-Szenario mit Tag `@req-<x.y>` in einer Feature-Datei mit `@spec-01`; Au
 Für den Bestand gilt Bestandsschutz (`tech.md`): Diese Spec beschreibt nur, was sich ändert oder neu dazukommt.
 
 ### Offene Entscheide
-Entschieden sind E3 (Repo) und E8 (Umzug des SCA-Stands). Alle anderen Entscheide sind offen; die Kriterien
-rechnen mit der Empfehlung des Umsetzungsplans und sind mit `[offen: …]` gekennzeichnet, wo sie davon abhängen.
+Entschieden sind E3 (Repo) und E8 (Umzug des SCA-Stands) sowie am 26.11.2026 durch Fabian E1, E2, E4 und E7 (je nach
+Empfehlung des Umsetzungsplans). Die übrigen Entscheide sind offen; die Kriterien rechnen mit der Empfehlung des
+Umsetzungsplans und sind mit `[offen: …]` gekennzeichnet, wo sie davon abhängen.
 
-| Nr. | Frage | Annahme dieser Spec |
+| Nr. | Frage | Stand |
 | --- | --- | --- |
-| E1 | Stack behalten oder portieren | behalten |
-| E2 | Bauweise neuer Fachbereiche | hexagonal, per ArchUnit nur für neue Pakete |
-| E4 | Anmeldung | die der Plattform |
-| E7 | Zahlung, Vertrag und Rechnung, Aufgaben-Engine, Matching | per Schalter aus, nicht löschen |
+| E1 | Stack behalten oder portieren | **entschieden 26.11.2026:** behalten |
+| E2 | Bauweise neuer Fachbereiche | **entschieden 26.11.2026:** hexagonal, per ArchUnit nur für neue Pakete |
+| E4 | Anmeldung | **entschieden 26.11.2026:** die der Plattform, kein Keycloak |
+| E7 | Zahlung, Vertrag und Rechnung, Aufgaben-Engine, Matching | **entschieden 26.11.2026:** per Schalter aus, nicht löschen |
 | I1 | Sicherung bei zwei Volumes | die zentrale Sicherung holt das Volume `daten` |
 | U1 | Domain-Umzug schon in der Vorschau | ja |
 | U4 | Absender der Mails | ein Postfach der Domain |
@@ -57,7 +58,7 @@ gegen Fehlgriffe wehrt, damit zwei Agenten nebeneinander arbeiten können, ohne 
 2. Das Repo SOLL für die neuen Fachbereiche aus `structure.md` erzwingen: `domain` hängt nur von `java` und
    `domain` ab, `application` nur von `domain` und `application`, Klassen unter `adapter.out` implementieren nur
    Ports aus `application`, Beträge sind nie Gleitkomma, kein Zugriff auf Umgebungsvariablen. Die Regeln des
-   Bestands bleiben unverändert. Nachweis: JUnit (`HexagonRegelnTest`). `[offen: E2]`
+   Bestands bleiben unverändert. Nachweis: JUnit (`HexagonRegelnTest`). (Entscheid E2, 26.11.2026)
 3. WENN jede geänderte Datei eine `.md`-Datei unter `.kiro/` oder `docs/` ist, DANN SOLL die CI nur die
    Spec-Prüfungen ausführen; in jedem anderen Fall und im Zweifel den vollen Lauf. Nachweis: JUnit
    (`NurSpecTest`).
@@ -227,7 +228,7 @@ Stand der Plattform: vorhanden. Die Plattform erhebt keine Gebühren.
 #### Acceptance Criteria
 1. Die Plattform SOLL von Vereinen kein Geld verlangen.
 2. Zahlung, Vertrag und Rechnung SOLLEN im Pilot abgeschaltet sein: Ihre Seiten sind nicht erreichbar, der Code
-   bleibt. `[offen: E7]`
+   bleibt. (Entscheid E7, 26.11.2026)
 
 ### Requirement 14: Domain-Umzug (ohne v5-Kennung)
 **User Story:** Als Betreiber möchte ich die Domain umziehen, solange die Seite in der Vorschau ist, damit es

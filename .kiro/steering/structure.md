@@ -93,7 +93,7 @@ ARCH-04 und ARCH-07 ein; das ist eine Ergänzung der Liste, keine Änderung der 
 ## Templates und statische Dateien
 - Templates neuer Fachbereiche liegen unter `templates/<fachbereich>/`.
 - Öffentliche Seiten teilen sich ein Fragment und ein Stylesheet; der Bereich hinter dem Login behält seinen
-  eigenen Stil (offen, Entscheid E6).
+  eigenen Stil (Entscheid E6, 26.11.2026).
 - Schriften, Skripte und Stylesheets liefert die App selbst aus.
 
 ## Namen
