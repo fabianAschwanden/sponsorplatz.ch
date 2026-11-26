@@ -17,28 +17,24 @@ skinparam rectangle<<AzureBlobStorage>> {
   BackgroundColor #999999
   FontColor #ffffff
   BorderColor #6b6b6b
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Datatrans>> {
   BackgroundColor #999999
   FontColor #ffffff
   BorderColor #6b6b6b
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<MicrosoftEntraID>> {
   BackgroundColor #999999
   FontColor #ffffff
   BorderColor #6b6b6b
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<OCIObjectStorage>> {
   BackgroundColor #999999
   FontColor #ffffff
   BorderColor #6b6b6b
-  roundCorner 20
   shadowing false
 }
 skinparam database<<Sponsorplatz.PostgreSQL17AzureFlex>> {
@@ -57,35 +53,30 @@ skinparam rectangle<<SMTPServer>> {
   BackgroundColor #999999
   FontColor #ffffff
   BorderColor #6b6b6b
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<SentryGlitchTip>> {
   BackgroundColor #999999
   FontColor #ffffff
   BorderColor #6b6b6b
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudazureDR>> {
   BackgroundColor #438dd5
   FontColor #ffffff
   BorderColor #2e6295
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI>> {
   BackgroundColor #438dd5
   FontColor #ffffff
   BorderColor #2e6295
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Zefix>> {
   BackgroundColor #999999
   FontColor #ffffff
   BorderColor #6b6b6b
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz>> {

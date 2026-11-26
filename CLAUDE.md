@@ -1,331 +1,172 @@
-# CLAUDE.md — Kontext für Claude in VS Code
+# Sponsorplatz – Arbeitsweise für Agenten (Claude Code, GitHub Copilot)
 
-> Diese Datei wird automatisch von Claude Code / Cursor / ähnlichen IDE-Integrationen geladen.
-> Sie ist die zentrale Anlaufstelle für KI-Assistenten, die an diesem Projekt mitarbeiten.
+Sponsoring-Plattform für Sport und Gesundheit: Der Verein beschreibt, was er bietet, der Sponsor
+findet Pakete und sieht, was daraus wird, das Mitglied erfährt, was die Partnerschaft ihm bringt.
+Entwickelt wird spec-driven im Kiro-Stil (`.kiro/`), umgesetzt mit Claude Code und GitHub Copilot.
 
----
+## Immer geltende Vorgaben
 
-## Projekt: Sponsorplatz
+@.kiro/steering/product.md
+@.kiro/steering/tech.md
+@.kiro/steering/structure.md
 
-**Vision:** Schweizer Sponsoring-Plattform für **Sport und Gesundheit** — *Wo Vereine und Marken zueinander finden.*
-**Nische (strikt):** Wir nehmen ausschliesslich Vereine auf, deren Mission im Sport- oder Gesundheitsbereich liegt.
-Themen-Umfang ist **breit:** Sport, Bewegung, Reha, Behindertensport, Seniorensport, Prävention, Mental Health,
-Ernährung, Wellness, Selbsthilfe, Patientenorganisationen — siehe `Branche`-Enum.
-**Modell:** Kollaborative Plattform — mehrere Vereine teilen eine offene Datenbasis, Edit-Rechte über `Mitgliedschaft`.
-**Sprache:** Deutsch (Code, Logs, Specs). Default-Locale `de_CH`. CHF, Datum `dd.MM.yyyy`.
-**Lizenz:** MIT.
+## Specs
 
-## Tech-Stack (zwingend einhalten)
+- `.kiro/specs/<nr>-<name>/requirements.md` – User Stories und EARS-Kriterien (Nummern x.y)
+- `design.md` – Architektur, Komponenten, Datenmodell, Fehler, Tests
+- `tasks.md` – Aufgaben als Checkboxen mit `_Anforderungen: x.y_` und `_Abhängig von:_`; Wellen und
+  Gates stehen dort
+- Dokumente des Bestands (frühere Specs, ADRs): `docs/bestand/`
+
+## Arbeitsweise
+
+1. **Nur freigegebene Specs umsetzen.** Freigegeben ist, was gemergt auf `main` liegt. Keine Aufgabe
+   aus einem offenen Spec-PR beginnen.
+2. **Eine Aufgabe = ein Branch + ein PR.** Branch `<agent>/<spec>-<aufgabe>-<stichwort>`, z. B.
+   `claude/02-4.5-vorteilsseite`. Aufgaben anderer Wellen nicht vorziehen.
+3. **PR-Beschreibung** nennt die erfüllten Akzeptanzkriterien (`@req-x.y`) und die Szenarien bzw.
+   Tests dazu; manuelle Nachweise werden verlinkt.
+4. **Checkbox in `tasks.md`** im selben PR abhaken.
+5. **Erkenntnisse** (Spikes, Abweichungen vom Design) im selben PR in `design.md` nachtragen.
+6. **Requirements nie stillschweigend ändern.** Jede Änderung an `requirements.md` im PR
+   ausdrücklich als Änderung ausweisen (Kriterium, alt → neu, Grund); bestehende Nummern nie
+   umnummerieren, neue hinten anhängen.
+7. **Offenes nicht raten.** Steht ein Wert als `[offen: …]` in der Spec, nachfragen statt erfinden.
+8. **Nur über die Pipeline deployen.** Kein Zugriff auf Server oder Secrets aus der Sitzung; Deploy
+   nur über den GitHub-Actions-Workflow.
+9. **Das Repo ist öffentlich.** Keine Server-Adressen, keine Betriebsdetails und keine echten
+   Personendaten in Dateien, PR-Texten, Kommentaren oder Commit-Messages. Marken und Programme
+   einzelner Sponsoren sind Daten, nicht Code: Code, Tests, Demodaten und Dokumente nennen keine
+   echte Marke.
+
+## Bestandsschutz
+
+Die Plattform ist ein bestehendes System. Für sie gilt die Methode mit einer Anpassung:
+
+1. Das Verhalten des Bestands gilt als Ausgangslage. Belegt ist es durch die vorhandenen Tests; es
+   wird nicht nachträglich spezifiziert.
+2. Wer bestehendes Verhalten ändert, schreibt zuerst ein EARS-Kriterium in eine Spec und belegt es
+   mit einem Test oder Szenario, das `@req-x.y` trägt.
+3. Neue Fachbereiche folgen der Methode vollständig: Kriterium, Test oder Szenario mit `@req-x.y`,
+   Pakete nach `structure.md`.
+4. `ReqAbdeckungTest` zählt nur die Kriterien der Specs.
+
+## Zwei Agenten parallel
+
+Claude Code und GitHub Copilot (Agent-Modus, eigene VS-Code-Instanz) arbeiten gleichzeitig.
+
+1. **Eigener Ordner je Agent.** Claude Code in `~/git/sponsorplatz.ch`, Copilot im Worktree
+   `~/git/sponsorplatz.ch-copilot`. Nie im Ordner des anderen arbeiten. Weitere Worktrees heissen
+   `~/git/sponsorplatz.ch-<spec>-<aufgabe>`.
+2. **Aufgabe reservieren, bevor du anfängst.** `git fetch` und
+   `gh pr list --state open --search "<aufgabe>"` prüfen; gibt es für die Aufgabe schon einen
+   Branch oder PR, ist sie vergeben. Sonst Branch vom aktuellen `origin/main` anlegen, sofort
+   pushen und einen **Draft-PR** «[<agent>] <spec> <aufgabe> <stichwort>» eröffnen – der Draft-PR
+   ist die Reservierung.
+3. **Keine Überschneidung.** Aufgaben, die dieselben Dateien ändern (ausser dem eigenen Haken in
+   `tasks.md`), nicht gleichzeitig bearbeiten; `_Abhängig von_` beachten.
+4. **Vor «Ready for review»** auf aktuellen `origin/main` rebasen und die Tests lokal laufen
+   lassen. Entwürfe bekommen keine CI.
+
+## Definition of Done
+
+- Die Akzeptanzkriterien der Aufgabe sind erfüllt und mit `@req-x.y` belegt.
+- `mvn verify` ist lokal grün, die CI auch (inklusive Secret-Scan).
+- Schemaänderungen sind additiv (siehe «Migrationen»).
+- Neue oder geänderte Seiten haben keinen neuen axe-Befund.
+- Ergänzend gilt `tech.md`.
+
+Gemergt wird nur mit «Squash and merge»; Branches werden nach dem Merge gelöscht. Wer merged:
+
+- Umsetzungs-PRs merged Claude Code, wenn die CI grün ist (inklusive Secret-Scan), das Review von
+  Claude Code keinen Muss-Befund hat und unter «Offen für Fabian» nichts steht. Technische
+  Auslegungen innerhalb der Spec stehen im PR im Abschnitt «Auslegungen (Review entscheidet)»; das
+  Review entscheidet sie und nennt sie im Bericht an Fabian.
+- «Offen für Fabian» heisst nur echte Entscheide: was eine Anforderung, Rechte oder
+  Produktverhalten ändert.
+- Fabian merged selbst: Spec-PRs mit neuen Anforderungen oder Entscheiden (die Freigabe ist der
+  Merge), PRs zu Gates und zu Aufgaben **[Fabian]** sowie jeden PR mit Punkten «Offen für Fabian».
+- Ändert ein Umsetzungs-PR `requirements.md` oder `design.md` nur nach einem schon gefallenen und
+  datierten Entscheid von Fabian (Entscheid mit Datum im Text), merged ihn ebenfalls Claude Code.
+- Copilot erhält seine Aufträge von Claude Code; die Reihenfolge der Aufgaben bleibt die der
+  `tasks.md`.
+
+## Leitplanken
+
+- `.claude/hooks/harness/`, `.githooks/`, `.gitleaks.toml`, `secret-scan.yml` und `ci-fehler.yml`
+  kommen aus der Harness-Vorlage und werden von dort ausgerollt, nicht hier geändert. Dem Repo
+  gehören `.claude/harness.yml` und die Liste der bewachten Workflows in `ci-fehler.yml`.
+- Nach dem Klonen einmal `git config core.hooksPath .githooks` setzen. Der Pre-Commit-Hook braucht
+  `gitleaks`, der Pre-Push-Hook sperrt direkte Pushes auf `main`.
+- Geschützte Pfade (`.claude/harness.yml`) fragen vor jeder Änderung nach. Dazu gehören die
+  Migrationen: Bestehende Dateien unter `src/main/resources/db/` werden nie geändert.
+
+## Stack
 
 | Schicht | Wahl |
-|---|---|
-| Sprache | Java 25 LTS |
+| --- | --- |
+| Sprache | Java 25 |
 | Framework | Spring Boot 3.5.x |
-| Frontend | Thymeleaf + light CSS (kein SPA) |
-| DB dev | H2 (file: `./data/sponsorplatz`) |
-| DB prod | PostgreSQL 17 |
-| Schema | Flyway (versioniert, additiv) |
+| Oberfläche | Thymeleaf, serverseitig gerendert (kein SPA) |
+| Datenbank | PostgreSQL 17 im Betrieb, H2 in der Entwicklung und in den Bestandstests |
+| Schema | Flyway, versioniert und additiv |
 | Build | Maven 3.9+ |
-| Container | Docker multi-stage |
-| CI | GitHub Actions |
+| Betrieb | Container, Deploy über GitHub Actions |
 
----
+Sprache: Deutsch in Code, Logs und Specs (Schweizer Schreibweise, kein ß). Locale `de_CH`, Währung
+CHF, Datum `dd.MM.yyyy`. Organisationen werden mit «ihr» angesprochen, Mitglieder mit «du».
 
-## Wo stehen wir gerade
+## Code-Regeln des Bestands
 
-**Phasen 0 – 9, 11, 12:** ✅ erledigt
-**Phase 10 — Production-Readiness** (ohne 10.4): ✅ 10.1–10.3 + 10.5 fertig
-- 10.1 Monitoring ✓ (TraceId-Filter, Actuator-Probes)
-- 10.2 Error-Tracking ✓ (Sentry Java + Browser, DSG-konform, SRI-Pinning)
-- 10.3 DSG-Compliance & Public-Pages ✓ (Impressum, Datenschutz, AGB, kein Cookie-Banner nötig)
-- 10.5 Security-Hardening ✓ (CSP, Permissions-Policy, Referrer-Policy)
-- ~~10.4~~ → verschoben auf **Phase 14**
+Durchgesetzt von `ArchitekturRegelnTest` (ArchUnit) und `I18nLintTest`; vor jedem Umbau
+`mvn test -Dtest=ArchitekturRegelnTest` laufen lassen. Eine Regel wird nie stillschweigend
+gelockert.
 
-**Phase 13 — Pre-Pilot-Hardening:** ⏳ aktiv
-- 13.1 A11y-Smoke für authentifizierte Seiten (Backlog-V40)
-- 13.2 Zwei-Faktor-Authentifizierung TOTP (Backlog-V39, Priorität HOCH)
-- 13.3 OIDC-Identity-Provider-Anbindung (Backlog-V27)
-
-**Phase 14 — Produktivschaltung sponsorplatz.ch:** 🔜 sobald Phase 13 durch
-- 14.1 Infrastruktur (HTTPS, prod-SMTP, SPF/DKIM/DMARC, OCI-Backups, DNS)
-- 14.2 Cutover-Validation (Prod-Smoke, OCIR-Retention, Rollback-Pfad)
-- 14.3 Pilot-Welle (5 Vereine + 3 Sponsoren onboarden)
-
-**Phase 15 — Post-Pilot — Wachstum:** teilweise vorgezogen (Ops-Themen, die das laufende DR-Setup brauchten)
-- 15.1 Echte Zahlungs-Provider-Integration: 📋 geplant
-- 15.2 Mahnwesen (Mahnstufen, CH-Inkasso-Anbindung): 📋 geplant
-- 15.3 **Multi-Cloud — Azure als zweite Zone**: ⏳ Slices 1–4 ✅
-  - Slice 1+2: `AzureBlobStorageService` + `AzureBackupCloudUploader` mit Seam-Interface gegen final-class-SDK
-  - Slice 3: Terraform-Modul `infra/envs/azure-staging/` (VNet + Flex-Postgres PG17 + ACR + Blob + UAMI) + Spring-Profil `cloud-azure`
-  - Slice 4: `cd-azure-staging.yml` mit ACR-Push via SP, SSH-Deploy mit MSI-Refresh, Smoke gegen `/login`
-  - **Live in Sweden Central** (Sub-Restrictions in `switzerlandnorth`), DB cross-cloud restored
-  - Slices 5–7 (DNS-Failover via Cloudflare, automatische Cross-Replication, beidseitiger Smoke): noch offen
-- 15.4 **Datei-Backup + Restore** (Sponsoring-Files-Roundtrip): ✅ ZIP-basiert, provider-agnostisch, `/admin/datei-backups`
-- Cross-Cloud-Sync-Schutz: ✅ `audit_log.umgebung` (V41) + Backfill (V42) + Sentry-Tag `sponsorplatz.umgebung`
-
-Architektur-Disziplin ist statisch durchgesetzt: **14 ArchUnit-Regeln** (`ArchitekturRegelnTest`, ARCH-01..13 + ARCH-17 + ARCH-20/21/22 für Ports-&-Adapter), **890+ Tests** grün, **Feature-Folder-Topologie** ohne Cycles (Java + Templates parallel strukturiert).
-
-Vollständige Roadmap in [`specs/ROADMAP.md`](specs/ROADMAP.md), detaillierte Phase-Pläne in `docs/` (siehe unten).
-
-### Zuletzt umgesetzt
-
-- **Multi-Cloud Azure-Staging** — zweite Zone in Sweden Central produktiv, eigene CD-Pipeline, DB + Files aus OCI cross-restored (ADR-0009)
-- **Datei-Backup + Restore als ZIP** — `/admin/datei-backups`, walkt MedienAsset, schreibt provider-agnostisch via `StorageService.speichereBytes(...)`
-- **`umgebung`-Marker** — jeder Audit-Eintrag + jedes Sentry-Event trägt die Quell-Cloud, damit nach DB-Sync klar ist wo das Ereignis entstand
-- **`StorageObjectNotFoundException`** — typed Exception, `MedienController.ausliefern` liefert 404 statt 500-Stacktrace bei orphaned Asset
-- **Java 25 LTS + Spring Boot 3.5.15** — Plattform-Upgrade (Java 21→25, ArchUnit 1.4.2 für JDK-25-Bytecode, OCI-SDK 3.89.1); die früheren manuellen CVE-Overrides (Tomcat/Netty/Spring/Thymeleaf/Postgres) durch die neuere BOM abgelöst (spring-framework 6.2.19, spring-security 6.5.11, netty 4.1.135)
-- **Templates strukturiert nach Bounded-Context** — 47 Templates aus dem flachen Top-Level in Feature-Unterordner verschoben
-- **`/kontakt`-Seite** als einziger anonymer Anfrage-Funnel
-- **Sentry-Hardening** — Browser-SDK, SRI-Hash, SentryAppender für `log.error(...)`
-- **ARCH-02 + ARCH-06** komplett aufgelöst (View-DTO-Pflicht + Feature-Cycles-DAG)
-- **Aufgaben-Sidebar-Badge** + Task-Engine
-
-### Nächste Iteration: Phase 13 (Pre-Pilot-Hardening)
-
-Vor der Produktivschaltung (jetzt Phase 14) priorisierte
-Sicherheits-/A11y-Themen — alle als Backlog-Items in der DB:
-
-1. **13.2 — 2FA (TOTP)** *(Priorität HOCH)* — TOTP via `dev.samstevens.totp`,
-   Setup-Flow `/einstellungen/2fa`, Backup-Codes, Pflicht für PLATFORM_ADMIN.
-2. **13.1 — A11y-Smoke für auth-Seiten** — `A11ySmokeIT` um Login-Helper
-   + axe-core auf `/dashboard`, `/aufgaben`, `/meine-anfragen`, `/einstellungen`.
-3. **13.3 — OIDC-Anbindung** — Entra/Google/SwissID, deckt einen Teil
-   von 2FA mit (IdP bringt den zweiten Faktor mit).
-
-Phase 14 (Produktivschaltung, Ops-Themen — kein Code, OCI/DNS/SMTP-Zugriff):
-- HTTPS via OCI Load Balancer + Let's Encrypt
-- prod-SMTP statt MailHog
-- SPF/DKIM/DMARC für sponsorplatz.ch
-- Backup-Spiegel in OCI Object Storage
-- DNS sponsorplatz.ch + www-Redirect
-
----
-
-## Verbindliche Arbeitsweise
-
-Diese Regeln gelten für jede Code-Änderung:
-
-### TDD-Pflicht (in dieser Reihenfolge)
-
-```
-1. SPEC   → in specs/ beschreiben, was passieren soll
-2. TEST   → Test schreiben, der zunächst rot ist
-3. IMPL   → Minimale Implementation, die den Test grün macht
-```
-
-> **Kein produktiver Code ohne vorherigen Test. Kein Test ohne vorherige Spec.**
-
-### Clean-Code-Regeln (aus `.instructions.md`)
-
-- **Deutsche Domain-Sprache:** `speichere`, `findeNachSlug`, `kannOrgEditieren` — nicht `save`, `findBySlug`
-- **Keine Abkürzungen:** `sponsoringPaket` statt `sp`
-- **Booleans als Aussage:** `istVerifiziert`, `kannEditieren`, `hatFehler`
-- **Eine Aufgabe pro Methode**, max. 2–3 Einrückungs-Ebenen
-- **Guard Clauses** statt tiefes `else`-Nesting
-- **Keine Magic Strings:** Model-Attribute-Keys in `ModelAttributeNames`
-- **Konstanten** als `private static final`
-- **Services werfen** spezifische Exceptions:
-  - `NotFoundException` (404) — Slug/ID nicht gefunden
-  - `IllegalArgumentException` (400) — ungültige Eingabe (Slug-Konflikt, leerer Name)
-  - `IllegalStateException` (409) — inkonsistenter Zustand (z.B. Org löschen mit Mitgliedschaften)
-  - `AccessDeniedException` (403) — fehlende Berechtigung
-- **Controller fangen keine** Business-Fehler — `GlobalExceptionHandler` übernimmt das Mapping auf HTTP-Statuscodes und rendert `error.html`
-
-### View-DTO-Pflicht (Entities verlassen Service-Layer NICHT)
-
-> **Verbindlich für jede neue oder geänderte Controller-Methode, die ein Template rendert.**
-> Verstoß = Code Review-Block. Bei Verletzung: zuerst View-DTO nachziehen, dann Feature mergen.
-
-**Regel:** Im Controller darf `model.addAttribute(...)` ausschliesslich Java-Records aus `ch.sponsorplatz.dto.*View` (oder `*FormDto` für Schreibe-Forms) bekommen. **Keine** JPA-Entity, **keine** `List<Entity>`, **keine** `Optional<Entity>`.
-
-**Schnell-Check in Code-Review:**
-```bash
-# Diese grep-Zeile darf NIE Treffer liefern (außer in den fachlichen Packages und Tests):
-grep -rn 'model.addAttribute' src/main/java/ch/sponsorplatz/ \
-  | grep -E '(service|repository)\.|\.get'
-```
-
-**Bestehende Views** (jeweils im fachlichen Bounded-Context, z. B. `ch.sponsorplatz.organisation.OrganisationView`):
-
-| View | Wofür |
-|---|---|
-| `OrganisationView` | Org-Detail/Liste (volle Felder) |
-| `ProjektView` (mit nested `OrganisationKurzView`) | Projekt-Detail/Liste, inkl. Marktplatz |
-| `MitgliedView` | Mitgliederliste — flacht `user.anzeigename`/`user.email` ein, **kein passwortHash** |
-| `SponsoringPaketView` | Pakete einer Org/Projekt |
-| `AnfrageView` | Sponsoring-Anfragen — `paketName` flach |
-| `WatchlistEintragView` (mit nested `ProjektView`) | Watchlist |
-
-**Neuer Controller? Pattern:**
-```java
-// FALSCH — Entity ins Model:
-model.addAttribute("anfragen", anfrageService.findeEingehende(orgId));
-
-// RICHTIG — View vor model.addAttribute:
-List<SponsoringAnfrage> anfragen = anfrageService.findeEingehende(orgId);
-model.addAttribute("anfragen", AnfrageView.von(anfragen));
-```
-
-**Neue Entity → neuer View:**
-1. Java-`record` neben der Entity im selben fachlichen Package (z. B. `src/main/java/ch/sponsorplatz/organisation/<Entity>View.java`)
-2. Statische `von(entity)` und `von(List<entity>)`-Methoden
-3. **Mapping-Test** `<Entity>ViewTest` mit Test-ID `VIEW-NN` in `specs/TESTSTRATEGIE.md`
-4. Niemals Felder ins View packen, die nicht auf einer Detail-/Liste-Seite gerendert werden (Defense in depth — z. B. nie `passwortHash`, `verifikationsToken`)
-
-**Templates** sprechen ausschliesslich View-Properties an, niemals JPA-Relationen wie `${m.user.email}`. Bei nested Daten: View flachet ein (`${m.userEmail}`) oder hält nested-Record (`${e.projekt.name}`).
-
-### Test-Konventionen
-
-- Naming: `<Klasse>Test` (Unit/Web/Repo) bzw. `<Klasse>IT` (Integration)
-- Test-IDs nach Schema `<Bereich>-<Nummer>` in `specs/TESTSTRATEGIE.md` pflegen
-- Jede Spec-Anforderung referenziert ihre Test-ID
-- AssertJ statt Hamcrest, Mockito für Mocks
-- **Jeder neue View-DTO** braucht einen `<Name>ViewTest` mit `VIEW-NN`-Test-ID
-
-### Architektur-Verifikation (Schicht 1)
-
-Die in CLAUDE.md und `.instructions.md` formulierten Regeln werden **automatisch** durch `ArchitekturRegelnTest` (ArchUnit) durchgesetzt — bricht eine PR die Disziplin, ist der Build rot. Test-IDs `ARCH-01..13` + `ARCH-17` (kein generisches `catch (Exception|Throwable)`) + `ARCH-20/21/22` (Ports-&-Adapter) in `specs/TESTSTRATEGIE.md`.
-
-**Vor jedem Refactoring:** `mvn test -Dtest=ArchitekturRegelnTest` lokal laufen lassen. Wenn eine Regel bewusst gelockert werden soll, neue Test-ID pflegen und Ausnahme dokumentieren — niemals stillschweigend ändern.
+- **Fachpakete.** Jedes Paket unter `ch.sponsorplatz.<paket>` hält Entities, Repositories, Services,
+  Controller und DTOs zusammen. Querschnitt (Mail, PDF, Storage, Konfiguration) liegt in `shared/`,
+  und `shared/` importiert nichts aus Fachpaketen. Templates liegen im Ordner ihres Pakets.
+- **Entities verlassen die Service-Schicht nicht.** Ins Model kommen nur Records (`*View`,
+  `*FormDto`) aus dem Fachpaket, nie eine JPA-Entity. Jeder neue View bekommt einen `<Name>ViewTest`.
+- **Controller rufen Services auf**, nicht Repositories. Sie fangen keine Fachfehler; das
+  übernimmt der `GlobalExceptionHandler`.
+- **Services werfen** `NotFoundException` (404), `IllegalArgumentException` (400),
+  `IllegalStateException` (409) und `AccessDeniedException` (403).
+- **Jede schreibende Route prüft das Recht** (`AccessControl` oder `@PreAuthorize`). Datensätze
+  werden über den Slug in der Adresse bestimmt, nicht über eine `id` im Formular.
+- **Namen in deutscher Fachsprache**, ohne Abkürzungen: `speichere`, `findeNachSlug`,
+  `istVerifiziert`. Eine Aufgabe pro Methode, Guard Clauses statt tiefer Verschachtelung.
+- **Keine Magic Strings:** Schlüssel der Model-Attribute stehen in `ModelAttributeNames`.
+- **Texte der Oberfläche** stehen in `messages_*.properties`, nicht im Template.
+- **Tests:** `<Klasse>Test` für Unit-, Web- und Repository-Tests, `<Klasse>IT` für Integration;
+  AssertJ und Mockito.
 
 ### Migrationen
 
-- **Additiv, niemals destruktiv ändern.** Neue Spalte → Backfill → alte Spalte droppen erst in nächster V-Nummer.
-- SQL kompatibel zu H2 (dev) und PostgreSQL (prod): `MODE=PostgreSQL` am H2-JDBC-URL hilft.
-- Vor Deployment auf prod: gegen Prod-Snapshot im Staging testen.
-- `ddl-auto=validate` in beiden Profilen — Hibernate prüft, dass Schema zur Annotation passt.
-
-### Verzeichnisstruktur
-
-Bounded-Context-orientiert: jedes fachliche Package hält seine eigenen
-Entities, Repositories, Services, Controller und DTOs zusammen.
-
-```
-src/main/java/ch/sponsorplatz/
-├── PlatformApplication.java
-├── shared/                # Querschnitts-Infrastruktur, kein Domänen-State
-│   ├── config/            # SecurityConfig, RateLimitFilter, ModelAttributeNames
-│   ├── exception/         # NotFoundException, GlobalExceptionHandler
-│   ├── util/              # SlugGenerator, TokenGenerator
-│   ├── pdf/               # PdfGeneratorService
-│   ├── storage/           # StorageService + Lokal/OCI-Implementierung
-│   ├── mail/              # MailService (zentrale SMTP-Abstraktion)
-│   └── einstellungen/     # PlattformEinstellungen (DB-Settings)
-│
-├── benutzer/              # AppUser, Auth, Profil, Verifizierung,
-│                          # PasswortReset, Einstellungen, Seed-Runner
-├── organisation/          # Organisation, Mitgliedschaft, AccessControl,
-│                          # Branche, Zefix, Sponsor-Self-Service-Reg
-├── projekt/               # Projekt, Sponsoring-Pakete, Watchlist,
-│                          # MedienAssets, Marktplatz, Suche, Matching,
-│                          # Dashboard, Sitemap
-├── anfrage/               # SponsoringAnfrage + Vertrag + Rechnung +
-│                          # QR-Bill + Nachrichten + Mail-Benachrichtigung
-├── engagement/            # Öffentliches Schaufenster (Marken-Engagements,
-│                          # Kantons-/Branche-Filter, Startseiten-Teaser);
-│                          # liest anfrage (ANGENOMMEN), einseitige Kante
-├── crm/                   # Private Sponsor-CRM-Layer (ADR-0011):
-│                          # SponsorAccount, KontaktPerson, Aktivitaet,
-│                          # Pipeline, Renewal, Import/Export
-├── einladung/             # Einladung + Mail-Listener + Cleanup-Job
-├── benachrichtigung/      # In-App-Glocke (NotificationService + Bell-UI)
-├── aufgabe/               # Customizable Task-Engine (AufgabenEngine,
-│                          # AufgabenDefinition, Aufgabe, Badge-Advice)
-├── dashboard/             # DashboardService + DashboardChartService
-│                          # (aggregiert Kennzahlen + SVG-Charts)
-├── kontakt/               # /kontakt (anonymer Anfrage-Funnel)
-├── audit/                 # AuditLog + DSG-Datenexport
-├── backup/                # BackupService + Restore + Cloud-Upload
-├── ops/                   # Ops-Dashboard, Alerts, RecentErrors,
-│                          # DB/Bucket-Stats, SystemSnapshot
-├── admin/                 # Admin-UI: Backlog, Mail-Settings, Verifizierung
-├── seed/                  # DemoSeedRunner (Demo-Profil-Daten)
-└── home/                  # HomeController, InfoController (Impressum/DSG)
-
-src/main/resources/
-├── application*.properties     # default + dev + prod
-├── db/migration/V*.sql         # Flyway
-├── templates/                  # Thymeleaf
-├── static/                     # CSS, Bilder
-└── messages_de_CH.properties   # i18n
-
-specs/                          # technische Specs (aktiv gehalten)
-docs/                           # Konzept-Dokumente (Hintergrund)
-```
-
-**Konvention:** Neue Klassen gehören in das fachlich passende Package.
-Querschnitts-Tools (Mail, PDF, Storage) bleiben in `shared/`. Wenn ein
-neues Aggregat entsteht, das in keinen bestehenden Kontext passt, lege
-ein eigenes Top-Level-Package an statt es in `shared/` abzuladen.
-
----
+- Additiv, nie rückwirkend: neue Spalte, dann Daten übernehmen, die alte Spalte erst in einem
+  späteren Deploy entfernen. Ein Rollback setzt das Image zurück, nicht die Datenbank.
+- SQL läuft auf H2 und PostgreSQL; was nur PostgreSQL kann, liegt in `db/migration_postgres`.
+- `ddl-auto=validate` gilt in allen Profilen.
 
 ## Häufige Befehle
 
-```bash
-# Lokal entwickeln
-mvn spring-boot:run                              # → http://localhost:8080
-
-# Tests
-mvn test                                         # alle
+```sh
+mvn spring-boot:run                              # lokal, http://localhost:8080
+mvn test                                         # alle Tests ohne Browser
 mvn test -Dtest=OrganisationServiceTest          # einzeln
-
-# Build
-mvn clean package
-mvn clean verify                                 # inkl. JaCoCo-Coverage
-
-# Docker (Compose liegt in docker/, Build-Kontext bleibt Repo-Root)
-docker compose -f docker/docker-compose.yml up -d postgres mailhog   # nur Backing-Services
-docker compose -f docker/docker-compose.yml --profile app up --build # alles inkl. App
-
-# H2-DB-Reset bei Migration-Konflikten in dev
-rm -rf data/
+mvn verify                                       # wie die CI, mit JaCoCo
+mvn verify -P e2e -Dit.test='SmokeIT,A11ySmokeIT'  # Browser-Prüfungen (Playwright, axe)
+docker compose -f docker/docker-compose.yml up -d postgres mailhog   # nur die Hilfsdienste
+rm -rf data/                                     # H2 zurücksetzen
 ```
-
----
 
 ## Wo finde ich was
 
-| Suchen | Datei |
-|---|---|
-| **Architektur-Entscheidungen + Warum** | [`docs/adr/README.md`](docs/adr/README.md) (ADR-Index) |
-| **Architektur-Diagramme (C4)** | [`docs/architektur/README.md`](docs/architektur/README.md) — Structurizr-DSL + Auto-Render |
-| Was ist Sponsorplatz | [`specs/PROJEKT_INFO.md`](specs/PROJEKT_INFO.md) |
-| Stack & Routen | [`specs/TECHNISCHE_SPEZIFIKATION.md`](specs/TECHNISCHE_SPEZIFIKATION.md) |
-| Datenbank-Schema | [`specs/DATENMODELL.md`](specs/DATENMODELL.md) |
-| Berechtigungen | [`specs/ROLLENKONZEPT.md`](specs/ROLLENKONZEPT.md) |
-| Tests & IDs | [`specs/TESTSTRATEGIE.md`](specs/TESTSTRATEGIE.md) |
-| Roadmap | [`specs/ROADMAP.md`](specs/ROADMAP.md) |
-| TDD-Prozess + Clean Code | [`.instructions.md`](.instructions.md) |
-| **Vollständiges Konzept** | [`docs/konzept.md`](docs/konzept.md) |
-| **Ausführliche Roadmap** | [`docs/roadmap-detailliert.md`](docs/roadmap-detailliert.md) |
-| Marketing-Strategie | [`docs/marketing.md`](docs/marketing.md) |
-| Naming-Begründung | [`docs/naming.md`](docs/naming.md) |
-| Pitch-Präsentation | [`docs/Pitch_Sponsorplatz.pptx`](docs/Pitch_Sponsorplatz.pptx) |
-| Infrastruktur (Übersicht) | [`infra/README.md`](infra/README.md) |
-| Terraform staging-free | [`infra/envs/staging-free/README.md`](infra/envs/staging-free/README.md) |
-| Manuelles VM-Setup | [`infra/staging-free/README.md`](infra/staging-free/README.md) |
-
----
-
-## Offene Punkte / Backlog
-
-- **Phase 13** (Pre-Pilot-Hardening) — 13.1 A11y-auth-Smoke, 13.2 2FA-TOTP, 13.3 OIDC; alle als Backlog-Items in der DB (V27/V39/V40)
-- **Phase 14** (Produktivschaltung, war 10.4) — HTTPS, prod-SMTP, SPF/DKIM/DMARC, OCI-Backups, DNS, Pilot-Welle
-- **Phase 15** (Post-Pilot) — Mahnwesen + echte Zahlungs-Provider-Integration kommen erst NACH dem ersten Pilot-Run
-- `target/` ist in `.gitignore`, niemals committen
-- VS-Code-Configs in `.vscode/` werden bewusst committet (Team-Standard)
-- Domain `sponsorplatz.ch` ist zu sichern (Hosting-Aufgabe)
-
----
-
-## Wenn Du als Claude in einer neuen Session startest
-
-Sag dem Benutzer:
-1. „Ich habe die `CLAUDE.md` gelesen, Phasen 0–9 + 11 + 12 + 10 (ohne 10.4) sind erledigt, Phase 13 (Pre-Pilot-Hardening: 2FA HOCH, A11y-auth, OIDC) ist aktiv. Phase 14 = Produktivschaltung kommt danach, Phase 15 = Mahnwesen + echte Zahlungs-Integration erst nach Pilot."
-2. Frage gezielt: Soll ich mit Spec-Update beginnen oder zuerst die Tests anlegen? (TDD-Disziplin halten!)
-3. Lies vor jeder Spec-/Test-Änderung die zugehörige Datei in `specs/` — dort ist der aktuelle Stand.
-
----
-
-**Maintainer:** Fabian Aschwanden (`fabian.aschwanden@gmail.com`)
+| Thema | Ort |
+| --- | --- |
+| Zweck, Rollen, Abgrenzung | `.kiro/steering/product.md` |
+| Stack und nicht verhandelbare Regeln | `.kiro/steering/tech.md` |
+| Pakete: Bestand und neue Fachbereiche | `.kiro/steering/structure.md` |
+| Anforderungen, Entwurf, Aufgaben | `.kiro/specs/` |
+| Datenmodell, Rollenkonzept, Teststrategie und ADRs des Bestands | `docs/bestand/` |
+| Architektur-Diagramme (C4) | `docs/architektur/` |
+| Mitarbeit, Checkliste für PRs | `.github/CONTRIBUTING.md`, `.github/PULL_REQUEST_TEMPLATE.md` |

@@ -2,7 +2,7 @@
 
 Lebende Architektur-Sicht auf Sponsorplatz. Single source of truth ist
 [`workspace.dsl`](workspace.dsl) — die generierten Diagramme unter
-[`diagramme/`](diagramme/) werden von der CI bei jeder Änderung neu erzeugt.
+[`diagramme/`](diagramme/) werden lokal daraus erzeugt und mit committet; die CI prüft, dass sie passen.
 
 Bei jeder strukturellen Architektur-Änderung (neuer Feature-Folder, neue
 Container-Abhängigkeit, neue externe Integration) wird `workspace.dsl`
@@ -22,13 +22,15 @@ modelliert — sie wären Doppelung des Codes selbst und der OCI-Cloud-Configs.
 
 ## Workflow
 
-### Diagramm-Änderung in einer PR
+### Diagramm-Änderung in einem PR
 
-1. `workspace.dsl` editieren
-2. Lokale Vorschau via Structurizr Lite (siehe unten) — optional, aber empfohlen
-3. Commit + Push → CI rendert die Diagramme neu, validiert die DSL und committet
-   die `.mmd`-Files nach dem Merge automatisch zurück nach `diagramme/`
-4. In der PR-Description nutzen wir die Mermaid-Diagramme als visuelle Diff-Hilfe
+1. `workspace.dsl` ändern
+2. Diagramme lokal neu rendern (Structurizr CLI, siehe unten) und im selben PR committen
+3. Der Workflow «Architektur-Diagramme» prüft die DSL und vergleicht die Diagramme im Repo mit einem
+   frischen Lauf. Er schreibt nichts ins Repo; weichen sie ab, ist er rot und hängt die gerenderten
+   Dateien als Artefakt an
+
+`workspace.dsl` lädt kein externes Theme: Der Lauf braucht kein Netz ausser für den Download der CLI.
 
 ### Lokale Vorschau mit Structurizr Lite (Docker)
 
@@ -49,17 +51,20 @@ am DSL-File. Ideal für iterative Anpassungen.
 ### Lokales Rendern ohne Docker (Structurizr CLI)
 
 ```bash
-# Einmalig: Structurizr CLI installieren (Java 21 nötig)
+# Einmalig: Structurizr CLI installieren (braucht Java); dieselbe Version wie im Workflow
 curl -L -o /tmp/structurizr-cli.zip \
   https://github.com/structurizr/cli/releases/download/v2024.12.07/structurizr-cli.zip
 mkdir -p ~/.structurizr/cli
 unzip -q /tmp/structurizr-cli.zip -d ~/.structurizr/cli
 
-# Diagramme exportieren
-~/.structurizr/cli/structurizr.sh export \
-  -workspace docs/architektur/workspace.dsl \
-  -format mermaid \
-  -output docs/architektur/diagramme/
+# Prüfen und beide Formate exportieren (vom Repo-Root aus)
+~/.structurizr/cli/structurizr.sh validate -workspace docs/architektur/workspace.dsl
+for format in mermaid plantuml/structurizr; do
+  ~/.structurizr/cli/structurizr.sh export \
+    -workspace docs/architektur/workspace.dsl \
+    -format "$format" \
+    -output docs/architektur/diagramme/
+done
 ```
 
 ## Konventionen für `workspace.dsl`
