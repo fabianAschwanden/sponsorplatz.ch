@@ -29,13 +29,13 @@ public class ProdAdminSeedRunner implements CommandLineRunner {
     private final AppUserRepository userRepository;
     private final PasswordEncoder encoder;
 
-    @Value("${SPONSORPLATZ_ADMIN_EMAIL:}")
+    @Value("${sponsorplatz.admin.email:}")
     private String adminEmail;
 
-    @Value("${SPONSORPLATZ_ADMIN_PASSWORD:}")
+    @Value("${sponsorplatz.admin.passwort:}")
     private String adminPassword;
 
-    @Value("${SPONSORPLATZ_ADMIN_NAME:Plattform-Admin}")
+    @Value("${sponsorplatz.admin.name:Plattform-Admin}")
     private String adminName;
 
     public ProdAdminSeedRunner(AppUserRepository userRepository, PasswordEncoder encoder) {

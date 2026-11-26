@@ -17,112 +17,96 @@ skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.admin>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.anfrage>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.audit>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.aufgabe>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.backup>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.benachrichtigung>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.benutzer>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.dashboard>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.einladung>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.home>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.kontakt>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.ops>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.organisation>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.projekt>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.seed>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI.shared>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
   shadowing false
 }
 skinparam rectangle<<Sponsorplatz.WebAnwendungcloudfreeOCI>> {

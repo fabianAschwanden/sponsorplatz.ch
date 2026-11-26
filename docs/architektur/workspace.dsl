@@ -226,6 +226,5 @@ workspace "Sponsorplatz" "Schweizer Sponsoring-Plattform für Sport und Gesundhe
             }
         }
 
-        theme default
     }
 }

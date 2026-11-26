@@ -44,6 +44,9 @@ public class BackupRestoreService {
     @Value("${spring.datasource.username:}")
     private String datasourceUser;
 
+    @Value("${spring.datasource.password:}")
+    private String datasourcePasswort;
+
     public BackupRestoreService(DataSource dataSource, AuditService auditService) {
         this.dataSource = dataSource;
         this.auditService = auditService;
@@ -101,13 +104,8 @@ public class BackupRestoreService {
                     "--file=" + sqlDatei.toAbsolutePath(),
                     extractDbNameFromUrl()
             );
-            pb.environment().put("PGPASSWORD", System.getenv("DB_PASSWORD"));
-            pb.environment().put("PGUSER", datasourceUser);
-
-            String dbHost = extractHostFromUrl();
-            if (dbHost != null) {
-                pb.environment().put("PGHOST", dbHost);
-            }
+            // Zugangsdaten aus der Datenquelle (Secret-Datei), nicht aus der Prozessumgebung.
+            PgZugang.setze(pb.environment(), datasourcePasswort, datasourceUser, extractHostFromUrl());
 
             pb.redirectErrorStream(true);
             Process process = pb.start();
