@@ -1,52 +1,30 @@
 # Mitarbeit
 
-## Schnell-Einstieg
+Die Arbeitsweise steht in [`CLAUDE.md`](../CLAUDE.md). Sie gilt für Menschen und Agenten gleich.
+Hier nur der Einstieg.
 
-1. **Repo öffnen:** `code ~/git/sponsorplatz`
-2. **Extensions installieren** — VS Code schlägt sie automatisch vor (`Install All`)
-3. **Java SDK 21** sicherstellen — `Cmd+Shift+P` → *„Java: Configure Java Runtime"*
-4. **App starten:** `F5` → *„Sponsorplatz (dev)"*
+## Einrichten
 
-## TDD-Pflicht
+1. Java 25 und Maven 3.9+ installieren, dazu `gitleaks` und `jq` (`brew install gitleaks jq`).
+2. Nach dem Klonen die Git-Hooks einschalten: `git config core.hooksPath .githooks`.
+3. App starten: `mvn spring-boot:run`, dann http://localhost:8080.
 
-Jede Code-Änderung folgt:
+## Ablauf einer Aufgabe
 
-```
-1. SPEC   → in specs/ beschreiben
-2. TEST   → erst schreiben, muss rot sein
-3. IMPL   → minimaler Code für grün
-```
+1. Aufgabe in `.kiro/specs/<nr>-<name>/tasks.md` wählen; nur Specs umsetzen, die auf `main` liegen.
+2. Reservieren: Branch `<agent>/<spec>-<aufgabe>-<stichwort>` vom aktuellen `origin/main`, pushen,
+   Draft-PR «[<agent>] <spec> <aufgabe> <stichwort>» eröffnen.
+3. Zuerst der Test oder das Szenario mit `@req-x.y`, dann der Code.
+4. `mvn verify` lokal grün, auf `origin/main` rebasen, dann «Ready for review». Entwürfe bekommen
+   keine CI.
+5. Gemergt wird mit «Squash and merge». Wer merged, steht in `CLAUDE.md`.
 
-Details: [`.instructions.md`](../.instructions.md).
+Direkte Pushes auf `main` sperrt der Pre-Push-Hook.
 
-## Commit-Konvention
+## Vor dem PR
 
-```
-feat(bereich): kurze beschreibung
-fix(bereich): ...
-docs(bereich): ...
-test(bereich): ...
-refactor(bereich): ...
-chore(bereich): ...
-```
-
-Bereiche: `setup`, `organisation`, `iam`, `crm`, `marktplatz`, `anfragen`, `medien`, `security`, `ui`, `ci`, `infra`, `docs`.
-
-## Branches
-
-- `main` — immer deploybar
-- `feature/<thema>` — kurzlebig (max 5 Tage)
-- `fix/<thema>`, `chore/<thema>`
-
-## Pull-Request-Checkliste
-
-- [ ] Spec aktualisiert
-- [ ] Tests grün (`mvn test`)
-- [ ] Build grün (`mvn verify`)
-- [ ] Nichts in `target/` oder `data/` committed
-- [ ] Commit-Konvention eingehalten
-
-## Mit Claude / KI-Assistenten
-
-Diese Repo enthält [`CLAUDE.md`](../CLAUDE.md) als zentralen Kontext-Anker für KI-Tools.
-Vor jeder größeren Aktion: Spec/Test/Impl-Reihenfolge einhalten und Stand in `specs/` prüfen.
+- [ ] Akzeptanzkriterien im PR genannt, je mit Test oder Szenario
+- [ ] Checkbox in `tasks.md` abgehakt
+- [ ] `mvn verify` grün, `ArchitekturRegelnTest` grün
+- [ ] Migration additiv, bestehende Migrationen unverändert
+- [ ] Nichts aus `target/` oder `data/` im Commit, keine Geheimnisse, keine echten Personendaten

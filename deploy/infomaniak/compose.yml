@@ -1,0 +1,170 @@
+# Sponsorplatz auf der Infomaniak-VPS (Umsetzungsplan Kapitel 3; Spec 01).
+# Deploy nur über .github/workflows/infomaniak-deploy.yml: Das Bundle bringt
+# sponsorplatz:<sha> und sponsorplatz:db-<version>-<sha> mit, der Server setzt
+# daraus sponsorplatz:current und sponsorplatz:db-current und prüft diese Datei
+# gegen seine Compose-Policy, bevor sich etwas ändert.
+#
+# Regeln, die der Test DeployHaertungTest prüft:
+# - keine Ports, keine Bind-Mounts, jeder Dienst mit mem_limit und cpus
+# - Summe der Limits höchstens das Budget (1'024 MiB, 1.0 CPU)
+# - Geheimnisse nur als Dateien unter /run/secrets, je Dienst nur die eigenen
+# - die Router eines Hosts schliessen sich gegenseitig aus (die Policy erlaubt kein priority)
+# - nur /livez ist ohne Vorschau-Schutz erreichbar
+name: sponsorplatz
+
+services:
+  app:
+    image: sponsorplatz:current
+    restart: unless-stopped
+    user: "1001:1001"
+    read_only: true
+    # tmpfs zählt zum mem_limit: nur für Kleinkram der JVM und für Uploads im Durchlauf
+    tmpfs:
+      - /tmp:size=64m
+    volumes:
+      - type: volume
+        source: daten
+        target: /daten
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 0.7
+    init: true
+    stop_grace_period: 30s
+    environment:
+      # Keine Geheimnisse: nur Adressen, Pfade und Schalter
+      SPRING_PROFILES_ACTIVE: ${SPONSORPLATZ_PROFILE:-prod}
+      DB_URL: jdbc:postgresql://db:5432/sponsorplatz
+      DB_USER: sponsorplatz
+      BASIS_URL: ${BASIS_URL:-https://sponsorplatz.apps.urinet.ch}
+      STORAGE_PFAD: /daten/medien
+      SICHERUNG_PFAD: /daten/sicherung
+      SICHERUNG_TAGE: "3"
+      SPONSORPLATZ_ADMIN_EMAIL: ${SPONSORPLATZ_ADMIN_EMAIL:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_AUTH: ${SMTP_AUTH:-false}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      # Feste Grenzen statt eines Anteils am Limit: Heap, Metaspace, Codecache und
+      # Threads zusammen müssen unter mem_limit bleiben (Messung im PR)
+      JAVA_OPTS: >-
+        -Xmx320m -XX:MaxMetaspaceSize=192m -XX:ReservedCodeCacheSize=48m
+        -Xss512k -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError
+        -Djava.awt.headless=true -Djava.io.tmpdir=/tmp
+    secrets:
+      - db_password
+      - smtp_password
+      - admin_password
+    networks:
+      intern: {}
+      web: {}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # Liveness auf dem Anwendungs-Port; das Image hat weder curl noch wget
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /livez HTTP/1.0\r\nHost: localhost\r\n\r\n' >&3 && head -n1 <&3 | grep -q ' 200 '
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 120s
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: web
+      traefik.http.services.sponsorplatz.loadbalancer.server.port: "8080"
+      # Drosselung je Client-IP vor der Anwendung
+      traefik.http.middlewares.sponsorplatz-drossel.ratelimit.average: "20"
+      traefik.http.middlewares.sponsorplatz-drossel.ratelimit.period: 1s
+      traefik.http.middlewares.sponsorplatz-drossel.ratelimit.burst: "100"
+      traefik.http.middlewares.sponsorplatz-drossel-health.ratelimit.average: "2"
+      traefik.http.middlewares.sponsorplatz-drossel-health.ratelimit.period: 1s
+      traefik.http.middlewares.sponsorplatz-drossel-health.ratelimit.burst: "10"
+      # Vorschau-Schutz: Benutzer und Passwort-Hash kommen aus der .env des Bundles
+      # (der Workflow erzeugt den Hash aus einem Secret). Im Modus «oeffentlich»
+      # verweist der Router nicht mehr auf diese beiden Middlewares.
+      traefik.http.middlewares.sponsorplatz-vorschau.basicauth.users: ${VORSCHAU_BENUTZER:-}
+      traefik.http.middlewares.sponsorplatz-vorschau.basicauth.realm: Sponsorplatz Vorschau
+      # Der Vorschau-Zugang endet am Reverse-Proxy und erreicht die Anwendung nicht
+      traefik.http.middlewares.sponsorplatz-vorschau.basicauth.removeheader: "true"
+      traefik.http.middlewares.sponsorplatz-noindex.headers.customresponseheaders.X-Robots-Tag: noindex, nofollow
+      # Anwendung: alles ausser dem Prüfpfad
+      traefik.http.routers.sponsorplatz.rule: Host(`sponsorplatz.apps.urinet.ch`) && !Path(`/livez`)
+      traefik.http.routers.sponsorplatz.entrypoints: websecure
+      traefik.http.routers.sponsorplatz.tls.certresolver: le
+      traefik.http.routers.sponsorplatz.service: sponsorplatz
+      traefik.http.routers.sponsorplatz.middlewares: ${SPONSORPLATZ_MIDDLEWARES:-sponsorplatz-drossel,sponsorplatz-vorschau,sponsorplatz-noindex}
+      # Prüfpfad des Deploys: ohne Vorschau-Schutz, eigene Drosselung
+      traefik.http.routers.sponsorplatz-health.rule: Host(`sponsorplatz.apps.urinet.ch`) && Path(`/livez`)
+      traefik.http.routers.sponsorplatz-health.entrypoints: websecure
+      traefik.http.routers.sponsorplatz-health.tls.certresolver: le
+      traefik.http.routers.sponsorplatz-health.service: sponsorplatz
+      traefik.http.routers.sponsorplatz-health.middlewares: sponsorplatz-drossel-health
+
+  db:
+    image: sponsorplatz:db-current
+    restart: unless-stopped
+    user: "999:999"
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql:size=1m,uid=999,gid=999,mode=0775
+      - /tmp:size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.3
+    stop_grace_period: 60s
+    environment:
+      POSTGRES_DB: sponsorplatz
+      POSTGRES_USER: sponsorplatz
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=16MB
+      - -c
+      - max_connections=20
+      - -c
+      - effective_cache_size=96MB
+    secrets:
+      - db_password
+    volumes:
+      - type: volume
+        source: db
+        target: /var/lib/postgresql/data
+    networks:
+      intern: {}
+    healthcheck:
+      test: [CMD, pg_isready, -U, sponsorplatz, -d, sponsorplatz, -h, 127.0.0.1]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+secrets:
+  db_password:
+    file: ./secrets/db_password
+  smtp_password:
+    file: ./secrets/smtp_password
+  admin_password:
+    file: ./secrets/admin_password
+
+volumes:
+  # PostgreSQL-Daten
+  db: {}
+  # Medien und nächtlicher Dump: das Volume, das die zentrale Sicherung abholt
+  daten: {}
+
+networks:
+  web:
+    external: true
+  intern: {}

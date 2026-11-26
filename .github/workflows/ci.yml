@@ -1,130 +1,296 @@
+# CI für jeden PR und für main. Baut und prüft nur, deployt nichts und braucht kein Secret.
+#
+# Aufbau (Aufgabe 01 1.5, nach dem Muster des UriNet Archivs):
+#   art       bestimmt, ob die Änderung «nur Spec» ist (.github/scripts/nur-spec.py)
+#   spec      Tests der CI-Skripte und die Tests, die .kiro/ und docs/ lesen; läuft immer
+#   tests     Unit- und Integrationstests, verteilt auf parallele Jobs (.github/scripts/testgruppen.py)
+#   testzahl  jede Testklasse lief in genau einem Job (.github/scripts/pruefe-testaufteilung.py)
+#   e2e       Browser-Prüfungen: Smoke und Zugänglichkeit (Playwright, axe)
+#   docker    Image bauen und starten
+#   fertig    der eine Pflicht-Check für den Branch-Schutz
+# «tests», «e2e» und «docker» laufen nebeneinander; vorher warteten E2E und Docker auf den Testlauf.
 name: CI
 
 on:
+  # Entwürfe (Draft) bekommen keine CI: Agenten prüfen lokal vor «Ready for review». Ohne Filter auf den Ziel-Branch,
+  # damit auch gestapelte PRs (Basis ist ein anderer Branch) geprüft werden.
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-  # Manueller Re-Trigger ohne Code-Change (z.B. nach GitHub-Codeload-Outage,
-  # siehe Incident 2026-05-26 stspg.io/6gzfzr1dx684):
-  #   gh workflow run ci.yml --ref main
+  # Von Hand, ohne Code-Änderung: gh workflow run ci.yml --ref main
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  build-test:
-    name: Build & Test
-    runs-on: ubuntu-latest
-
+  # Reine Text- und Spec-Anpassungen ohne vollständigen Lauf: «art» prüft mit nur-spec.py, ob jede geänderte Datei eine
+  # .md-Datei unter .kiro/, docs/ oder in der Repo-Wurzel ist (strenge Positivliste; PR: alle Dateien zwischen Basis und
+  # Kopf, Push auf main: gegenüber «before»; neuer Branch, überschriebener Push und workflow_dispatch nie). Dann laufen
+  # nur «spec» und «fertig», alle anderen Jobs sind übersprungen.
+  # Die Regel kommt aus dem Basis-Stand (PR: Basis, Push: before), nicht aus dem geprüften Commit: Ein PR, der
+  # nur-spec.py fehlerhaft ändert, kann sich so nicht selbst als «nur Spec» einstufen. Fehlt die Regel im Basis-Stand,
+  # ist das Ergebnis «false».
+  art:
+    name: Änderungsart (nur Spec?)
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    outputs:
+      nur-spec: ${{ steps.art.outputs.nur-spec }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4.5.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: maven
+          # ganze Historie: Basis, Kopf und Vorgänger müssen für git diff vorhanden sein
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Nur Spec? (nur-spec.py)
+        id: art
+        env:
+          EREIGNIS: ${{ github.event_name }}
+          BASIS: ${{ github.event.pull_request.base.sha }}
+          KOPF: ${{ github.event.pull_request.head.sha }}
+          VORHER: ${{ github.event.before }}
+        run: |
+          case "$EREIGNIS" in
+            pull_request) stand=$BASIS von=$BASIS bis=$KOPF art=pr ;;
+            push) stand=$VORHER von=$VORHER bis=$GITHUB_SHA art=push ;;
+            *) stand= ;;
+          esac
+          regel="$RUNNER_TEMP/nur-spec.py"
+          if [ -n "$stand" ] && git show "$stand:.github/scripts/nur-spec.py" > "$regel" 2> /dev/null; then
+            ergebnis=$(python3 -I "$regel" "$art" "$von" "$bis")
+          else
+            echo "Keine Regel nur-spec.py im Basis-Stand ($EREIGNIS): voller Lauf"
+            ergebnis=false
+          fi
+          case "$ergebnis" in
+            true|false) ;;
+            *) echo "::error::nur-spec.py lieferte weder true noch false"; exit 1 ;;
+          esac
+          echo "nur-spec=$ergebnis" >> "$GITHUB_OUTPUT"
+          if [ "$ergebnis" = true ]; then
+            echo "Nur Spec: Es laufen nur die Spec-Prüfungen, die übrigen Jobs sind übersprungen." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      # Diagnose vor mvn-Run — hilft bei zukünftigen 'BlobNotFound'-Log-
-      # Aussetzern (2026-05-23: drei Runs in Folge mit unzugänglichen Logs).
-      - name: Runner-Environment
+  spec:
+    # Name gleich SPEC_JOB in nur-spec.py. Läuft in jedem Lauf (ausser Entwurf), nicht nur bei «nur Spec».
+    name: Spec-Prüfungen (nur Spec)
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Tests der CI-Skripte
+        run: python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      # Maven-Cache je Job statt des gemeinsamen von setup-java: Den gemeinsamen speichert der Job, der zuerst fertig
+      # ist; was die anderen Jobs brauchen, fehlte dann darin und käme bei jedem Lauf neu von Maven Central.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ github.job }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-${{ github.job }}-
+            maven-
+      # Jede Testklasse, die .kiro/ oder docs/ liest (Abdeckung @req, Rechtematrix, die Regel «nur Spec» selbst).
+      # Klassen, die es noch nicht gibt, werden übergangen: Die Liste steht hier, bevor Aufgabe 1.4 sie anlegt.
+      - name: Spec-Tests
+        env:
+          SPEC_TESTS: ReqAbdeckungTest,NurSpecTest,RechtematrixSpecTest
+        run: |
+          vorhanden=""
+          for klasse in ${SPEC_TESTS//,/ }; do
+            if [ -n "$(find src/test/java -name "$klasse.java" -print -quit)" ]; then
+              vorhanden="${vorhanden:+$vorhanden,}$klasse"
+            fi
+          done
+          if [ -z "$vorhanden" ]; then
+            echo "Noch keine Spec-Tests im Repo ($SPEC_TESTS): übergangen" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          mvn -B -ntp test -Dtest="$vorhanden"
+
+  # Die Tests laufen in parallelen Jobs: je Gruppe aus testgruppen.py einer, dazu «rest» für alles Übrige (auch für
+  # neue Pakete). «rest» baut zusätzlich das JAR (verify). Die Matrix muss dieselben Namen tragen wie testgruppen.py
+  # und die Argumente im Job «testzahl» (prüft test_testgruppen.py).
+  tests:
+    name: Tests (${{ matrix.gruppe }})
+    if: needs.art.outputs.nur-spec != 'true'
+    needs: art
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        gruppe: [gruppe-1, rest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ github.job }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-${{ github.job }}-
+            maven-
+      # Hilft, wenn die Logs eines Laufs später nicht mehr abrufbar sind
+      - name: Runner-Umgebung
         run: |
           echo "Java: $(java -version 2>&1 | head -1)"
           echo "Maven: $(mvn --version | head -1)"
-          echo "Free RAM: $(free -h | awk 'NR==2 {print $4}')"
-          echo "Free Disk: $(df -h / | awk 'NR==2 {print $4}')"
-
-      # -q (quiet) entfernt — ohne INFO-Output ist BUILD FAILURE oft
-      # nicht reproduzierbar wenn die GitHub-Storage-API später keine
-      # Logs ausliefert. Lieber etwas mehr Logoutput akzeptieren.
-      - name: Build with Maven
-        run: mvn -B clean verify
-
-      - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
+          echo "Freier Speicher: $(free -h | awk 'NR==2 {print $4}')"
+          echo "Freie Platte: $(df -h / | awk 'NR==2 {print $4}')"
+      - name: Tests (${{ matrix.gruppe }})
+        env:
+          GRUPPE: ${{ matrix.gruppe }}
+        run: |
+          if [ "$GRUPPE" = rest ]; then
+            python3 .github/scripts/testgruppen.py rest > "$RUNNER_TEMP/ohne.txt"
+            mvn -B -ntp verify -Dsurefire.excludesFile="$RUNNER_TEMP/ohne.txt"
+          else
+            muster=$(python3 .github/scripts/testgruppen.py "$GRUPPE")
+            mvn -B -ntp test -Dtest="$muster"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
         with:
-          name: jacoco-report
-          path: target/site/jacoco/
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
+          # Versuch im Namen: Nach «Re-run failed jobs» bleiben die Berichte früherer Versuche im Lauf; «testzahl»
+          # nimmt je Job nur den neuesten (pruefe-testaufteilung.py)
+          name: surefire-${{ matrix.gruppe }}-${{ github.run_attempt }}
+          path: target/surefire-reports/TEST-*.xml
+          retention-days: 3
+      # Abdeckung je Job; ein gemeinsamer Bericht entsteht lokal mit «mvn verify»
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
         with:
-          name: surefire-reports
-          path: target/surefire-reports/
+          name: jacoco-${{ matrix.gruppe }}-${{ github.run_attempt }}
+          path: target/jacoco.exec
+          if-no-files-found: ignore
+          retention-days: 3
 
-  e2e-tests:
-    name: E2E (Smoke + A11y)
-    runs-on: ubuntu-latest
-    needs: build-test
-    timeout-minutes: 15
-
+  testzahl:
+    name: Tests vollständig (jede Klasse genau einmal)
+    if: needs.art.outputs.nur-spec != 'true'
+    needs: [art, tests]
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4.5.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: maven
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: surefire-*
+          path: berichte
+      - run: |
+          python3 .github/scripts/pruefe-testaufteilung.py src/test/java \
+            gruppe-1=berichte/surefire-gruppe-1 rest=berichte/surefire-rest
 
-      # Playwright zieht beim ersten Page-Aufruf die Chromium-Binary automatisch.
-      # Wir setzen den Browser-Cache-Pfad explizit, damit Maven-Cache-Hits ihn
-      # nicht mit invalidiert und das Setup deterministisch bleibt.
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
+  e2e:
+    name: E2E (Smoke + A11y)
+    if: needs.art.outputs.nur-spec != 'true'
+    needs: art
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ github.job }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            maven-${{ github.job }}-
+            maven-
+      # Playwright lädt Chromium beim ersten Seitenaufruf. Eigener Cache, damit ein Treffer im Maven-Cache ihn nicht
+      # mit verwirft.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-1.49.0
-
-      - name: Run e2e + a11y smoke (Failsafe e2e-Profile)
-        run: mvn -B -q verify -P e2e -Dit.test='SmokeIT,A11ySmokeIT' -DfailIfNoTests=false
-
-      - name: Upload failsafe + a11y screenshots
+      # Nur die Browser-Prüfungen (Failsafe, -Dit.test). Die Unit-Tests laufen im Job «tests»: -Dtest nennt eine
+      # Klasse, die es nicht gibt, damit Surefire hier nichts ausführt.
+      - name: Smoke und Zugänglichkeit (Failsafe, Profil e2e)
+        run: |
+          mvn -B -ntp verify -P e2e -Dit.test='SmokeIT,A11ySmokeIT' -DfailIfNoTests=false \
+            -Dtest=KeinUnitTestImE2eJob -Dsurefire.failIfNoSpecifiedTests=false
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
-        uses: actions/upload-artifact@v4
         with:
-          name: e2e-artifacts
+          name: e2e-artefakte-${{ github.run_attempt }}
           path: |
             target/failsafe-reports/
             target/a11y-*.png
+          retention-days: 3
 
-  docker-build:
-    name: Docker Build (Smoke)
-    runs-on: ubuntu-latest
-    needs: build-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
+  docker:
+    name: Docker-Image (bauen und starten)
+    if: needs.art.outputs.nur-spec != 'true'
+    needs: art
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          context: .
-          file: docker/Dockerfile
-          push: false
-          load: true
-          tags: sponsorplatz:ci-${{ github.sha }}
-
-      - name: Smoke-Test Image
+          persist-credentials: false
+      - name: Image bauen
+        run: docker build -f docker/Dockerfile -t sponsorplatz:ci .
+      - name: Image starten und Health prüfen
         run: |
-          docker run --rm -d --name smoke -p 8080:8080 sponsorplatz:ci-${{ github.sha }}
-          for i in {1..30}; do
+          docker run --rm -d --name smoke -p 8080:8080 sponsorplatz:ci
+          for i in $(seq 1 30); do
             if curl -fs http://localhost:8080/actuator/health > /dev/null; then
-              echo "Healthcheck OK"; docker stop smoke; exit 0
+              echo "Health nach $((i * 2)) s erreichbar"; docker stop smoke; exit 0
             fi
             sleep 2
           done
-          echo "Healthcheck FAILED"; docker logs smoke; docker stop smoke; exit 1
+          echo "::error::Health nach 60 s nicht erreichbar"; docker logs smoke | tail -n 80; docker stop smoke; exit 1
+
+  # Der eine Check für den Branch-Schutz. Grün heisst: «art» und «spec» erfolgreich und, ausser bei «nur Spec», auch
+  # alle übrigen Jobs. Bei «nur Spec» müssen die übrigen übersprungen sein. Ein eigener Job, weil übersprungene Jobs
+  # im Branch-Schutz als bestanden gelten: Ohne ihn zählte auch ein Lauf, in dem «art» scheitert und alles andere
+  # deshalb ausfällt.
+  fertig:
+    name: CI (Pflicht-Check)
+    if: ${{ always() && (github.event_name != 'pull_request' || !github.event.pull_request.draft) }}
+    needs: [art, spec, tests, testzahl, e2e, docker]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ergebnisse aller Jobs
+        env:
+          ERGEBNISSE: ${{ toJSON(needs) }}
+          NUR_SPEC: ${{ needs.art.outputs.nur-spec }}
+        run: |
+          python3 - <<'PY'
+          import json, os, sys
+          ergebnisse = {job: daten["result"] for job, daten in json.loads(os.environ["ERGEBNISSE"]).items()}
+          nur_spec = os.environ.get("NUR_SPEC") == "true"
+          fehler = []
+          for job, ergebnis in sorted(ergebnisse.items()):
+            soll = "skipped" if nur_spec and job not in ("art", "spec") else "success"
+            print(f"{job}: {ergebnis} (erwartet {soll})")
+            if ergebnis != soll:
+              fehler.append(job)
+          if fehler:
+            print(f"::error::Nicht wie erwartet: {', '.join(fehler)}")
+            sys.exit(1)
+          print("Nur Spec: Spec-Prüfungen grün." if nur_spec else "Alle Jobs grün.")
+          PY

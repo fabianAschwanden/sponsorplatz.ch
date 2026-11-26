@@ -86,11 +86,11 @@ public class DemoSeedRunner implements CommandLineRunner {
 
         // 3 Sponsor-Orgs (Unternehmen)
         List<Organisation> sponsoren = new ArrayList<>();
-        sponsoren.add(erstelleSponsor("Muster Versicherung", "muster-versicherung", Branche.PRAEVENTION,
+        sponsoren.add(erstelleSponsor("Muster Versicherung", "muster-versicherung", SponsorBranche.VERSICHERUNG,
                 "Fiktive Krankenversicherung mit Fokus auf Prävention und Gesundheitsförderung."));
-        sponsoren.add(erstelleSponsor("TopPharm Apotheken", "toppharm-apotheken", Branche.WELLNESS,
+        sponsoren.add(erstelleSponsor("TopPharm Apotheken", "toppharm-apotheken", SponsorBranche.PHARMA,
                 "Schweizer Apothekenkette mit 100+ Standorten. Partner für Gesundheitsberatung und Prävention."));
-        sponsoren.add(erstelleSponsor("BioSuisse Foods", "biosuisse-foods", Branche.ERNAEHRUNG,
+        sponsoren.add(erstelleSponsor("BioSuisse Foods", "biosuisse-foods", SponsorBranche.LEBENSMITTEL,
                 "Nachhaltiger Lebensmittelhersteller mit Schwerpunkt auf biologischer Produktion."));
 
         // Mitgliedschaften (Demo-Admin ist überall Owner)
@@ -179,12 +179,14 @@ public class DemoSeedRunner implements CommandLineRunner {
         return orgRepository.save(org);
     }
 
-    private Organisation erstelleSponsor(String name, String slug, Branche branche, String beschreibung) {
+    // Ein Unternehmen trägt die Sponsor-Branche, nicht die Vereins-Branche
+    // (wie OrganisationService; die Datenbank verlangt es mit chk_branche_pro_typ).
+    private Organisation erstelleSponsor(String name, String slug, SponsorBranche sponsorBranche, String beschreibung) {
         Organisation org = new Organisation();
         org.setName(name);
         org.setSlug(slug);
         org.setTyp(OrgTyp.UNTERNEHMEN);
-        org.setBranche(branche);
+        org.setSponsorBranche(sponsorBranche);
         org.setBeschreibung(beschreibung);
         org.setStatus(OrgStatus.VERIFIED);
         return orgRepository.save(org);
