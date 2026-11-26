@@ -61,6 +61,14 @@ class MonitoringTest {
     }
 
     @Test
+    @DisplayName("MON-01d: GET /livez → 200 ohne Anmeldung (Prüfpfad des Deploys)")
+    void livezErreichbar() throws Exception {
+        mockMvc.perform(get("/livez"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
     @DisplayName("MON-01c: GET /actuator/health/readiness → 200")
     void readinessProbeErreichbar() throws Exception {
         mockMvc.perform(get("/actuator/health/readiness"))

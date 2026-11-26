@@ -58,6 +58,9 @@ public class BackupService {
     @Value("${spring.datasource.username:}")
     private String datasourceUser;
 
+    @Value("${spring.datasource.password:}")
+    private String datasourcePasswort;
+
     public BackupService(DataSource dataSource, AuditService auditService,
                          Optional<BackupCloudUploader> cloudUploader) {
         this.dataSource = dataSource;
@@ -208,18 +211,10 @@ public class BackupService {
                     "--no-privileges",
                     extractDbNameFromUrl()
             );
-            pb.environment().put("PGPASSWORD", System.getenv("DB_PASSWORD"));
-            // PGUSER explizit aus spring.datasource.username — sonst fällt
-            // pg_dump auf den OS-User des Prozesses zurück (im Container 'sponsor',
-            // was nicht der Postgres-User ist).
-            if (datasourceUser != null && !datasourceUser.isBlank()) {
-                pb.environment().put("PGUSER", datasourceUser);
-            }
-
-            String dbHost = extractHostFromUrl();
-            if (dbHost != null) {
-                pb.environment().put("PGHOST", dbHost);
-            }
+            // Zugangsdaten aus der Datenquelle (Secret-Datei), nicht aus der Prozessumgebung.
+            // PGUSER explizit — sonst fällt pg_dump auf den OS-User des Prozesses zurück
+            // (im Container 'sponsor', was nicht der Postgres-User ist).
+            PgZugang.setze(pb.environment(), datasourcePasswort, datasourceUser, extractHostFromUrl());
 
             pb.redirectErrorStream(true);
             Process process = pb.start();
