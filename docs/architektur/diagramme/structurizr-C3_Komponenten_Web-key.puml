@@ -20,7 +20,6 @@ skinparam rectangle<<1>> {
   BackgroundColor #85bbf0
   FontColor #000000
   BorderColor #5d82a8
-  roundCorner 20
 }
 rectangle "==Component" <<1>>
 
