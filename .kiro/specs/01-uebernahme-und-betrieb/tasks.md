@@ -9,24 +9,24 @@ Aufgabe liefert für ihre Anforderungen den Nachweis nach `tech.md` und hakt ihr
 - [ ] 0.1 Entscheide mit Frist «Welle 1» und «Gate 0» [Fabian]
   - E1, E2, E4, I1, U4, U5 (Tabelle in `requirements.md`).
 
-- [ ] 0.2 Plattform lokal als Container wie im Betrieb [Infra]
+- [x] 0.2 Plattform lokal als Container wie im Betrieb [Infra]
   - PostgreSQL 17, Profil `prod`, Secrets als Dateien, Dateisystem nur lesbar, nicht privilegierter Benutzer,
     ohne Capabilities. Alle Migrationen laufen durch, Login und ein Klickpfad gehen. Befunde als Liste.
   - _Anforderungen: 3.1, 5.2_
 
-- [ ] 0.3 Speicherbedarf messen, JVM-Grenzen festlegen [Infra]
+- [x] 0.3 Speicherbedarf messen, JVM-Grenzen festlegen [Infra]
   - Leerlauf und nach dem Klickpfad.
   - _Anforderungen: 5.3, 5.5_
   - _Abhängig von: 0.2_
 
-- [ ] 0.4 Verfügbaren Speicher und freie Platte des Servers ablesen [Fabian]
+- [x] 0.4 Verfügbaren Speicher und freie Platte des Servers ablesen [Fabian]
 
-- [ ] 0.5 Entwurf der Compose-Datei gegen die Policy des Servers prüfen [Infra]
+- [x] 0.5 Entwurf der Compose-Datei gegen die Policy des Servers prüfen [Infra]
   - Mit allen Routern und Middlewares.
   - _Anforderungen: 4.4_
   - _Abhängig von: 0.2_
 
-- [ ] 0.6 Profile, Demo-Seed und Mail klären [Backend]
+- [x] 0.6 Profile, Demo-Seed und Mail klären [Backend]
   - Starten `prod` und `demo` zusammen? Ist der Demo-Seed wiederholbar? Geht Mail vom Container zum Postfach?
   - _Abhängig von: 0.2_
 
@@ -49,7 +49,7 @@ Aufgabe liefert für ihre Anforderungen den Nachweis nach `tech.md` und hakt ihr
   - _Anforderungen: 1.1, 1.2, 2.1, 2.2, 2.3_
   - _Abhängig von: 1.3_
 
-- [ ] 1.5 CI teilen [Infra]
+- [x] 1.5 CI teilen [Infra]
   - Nebeneinander laufende Jobs, Abkürzung «nur Spec», Entwürfe ohne CI; den roten Workflow
     «Architektur-Diagramme» reparieren oder entfernen. Liefert `.github/scripts/nur-spec.py`; danach läuft
     `NurSpecTest`.
@@ -57,17 +57,17 @@ Aufgabe liefert für ihre Anforderungen den Nachweis nach `tech.md` und hakt ihr
   - _Abhängig von: 1.1_
 
 ### Betrieb
-- [ ] 1.6 Anpassungen an der Plattform [Backend]
+- [x] 1.6 Anpassungen an der Plattform [Backend]
   - Anpassungen 1 bis 6 und 8 aus `design.md`, je mit Test.
   - _Anforderungen: 3.1, 3.3, 4.1, 4.2, 4.3, 5.1, 5.3, 7.1, 8.4, 10.2_
   - _Abhängig von: 0.2, 0.3_
 
-- [ ] 1.7 Compose-Datei und Datenbank-Image [Infra]
+- [x] 1.7 Compose-Datei und Datenbank-Image [Infra]
   - `deploy/infomaniak/compose.yml`; Test, der Secrets, Netze, Router, Healthcheck, Härtung und Limits prüft.
   - _Anforderungen: 3.2, 4.4, 4.5, 5.2, 8.1, 8.2_
   - _Abhängig von: 0.5_
 
-- [ ] 1.8 Deploy-Workflow [Infra]
+- [x] 1.8 Deploy-Workflow [Infra]
   - CI-Nachweis, Secrets, Budget, Bundle, Prüfungen, Rollback.
   - _Anforderungen: 3.4, 5.4, 6.1, 6.2, 6.3, 6.4, 6.5, 8.3, 9.2_
   - _Abhängig von: 1.7_
