@@ -29,7 +29,7 @@ import java.io.IOException;
  * von {@code /login/2fa} wegnavigiert ist einfach wieder anonym (SecurityContext
  * leer) und kommt nirgendwo rein.
  *
- * <p>Spec: {@code specs/AUTH_2FA_TOTP.md} Slice B. Tests AUTH-2FA-10..11.
+ * <p>Spec: {@code docs/bestand/specs/AUTH_2FA_TOTP.md} Slice B. Tests AUTH-2FA-10..11.
  */
 public class TwoFaAuthenticationSuccessHandler extends LoginSuccessHandler {
 

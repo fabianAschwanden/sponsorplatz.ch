@@ -64,7 +64,7 @@ public class AppUser {
     /**
      * TOTP-Secret (Base32-encoded, RFC 6238). NULL = 2FA nicht aktiv.
      * Klartext gespeichert — DB-Vollkompromittierung wäre für Passwörter
-     * eh Game-Over (siehe specs/AUTH_2FA_TOTP.md Trade-offs).
+     * eh Game-Over (siehe docs/bestand/specs/AUTH_2FA_TOTP.md Trade-offs).
      */
     @Column(name = "totp_secret", length = 64)
     private String totpSecret;

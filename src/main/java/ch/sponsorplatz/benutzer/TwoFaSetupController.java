@@ -21,7 +21,7 @@ import java.util.Optional;
  * Alle 2FA-Operationen laufen über {@link TwoFaService} mit record-DTOs —
  * kein direkter Repository- oder Entity-Zugriff (ARCH-01 + ARCH-02).
  *
- * Spec: {@code specs/AUTH_2FA_TOTP.md}. Tests AUTH-2FA-06..09.
+ * Spec: {@code docs/bestand/specs/AUTH_2FA_TOTP.md}. Tests AUTH-2FA-06..09.
  */
 @Controller
 @RequestMapping("/einstellungen/2fa")

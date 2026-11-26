@@ -25,7 +25,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *       Redirect /login?error=2fa_locked.</li>
  * </ul>
  *
- * <p>Spec: {@code specs/AUTH_2FA_TOTP.md} Slice B. Tests AUTH-2FA-10..11.
+ * <p>Spec: {@code docs/bestand/specs/AUTH_2FA_TOTP.md} Slice B. Tests AUTH-2FA-10..11.
  */
 @Controller
 @RequestMapping("/login/2fa")

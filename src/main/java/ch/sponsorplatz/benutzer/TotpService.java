@@ -38,7 +38,7 @@ import java.util.List;
  *   <li>{@link #consumeBackupCode(String, String)} — einmaliger Code-Verbrauch (hard delete)</li>
  * </ul>
  *
- * <p>Spec: {@code specs/AUTH_2FA_TOTP.md}, Tests AUTH-2FA-01..05.
+ * <p>Spec: {@code docs/bestand/specs/AUTH_2FA_TOTP.md}, Tests AUTH-2FA-01..05.
  */
 @Service
 public class TotpService {
