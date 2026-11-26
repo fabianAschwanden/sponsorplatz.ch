@@ -20,7 +20,7 @@ public final class AuditAktion {
     public static final String DATEI_BACKUP_ERSTELLT = "DATEI_BACKUP_ERSTELLT";
     public static final String DATEI_BACKUP_RESTORED = "DATEI_BACKUP_RESTORED";
 
-    // 2-Faktor-Authentifizierung (Phase 13.2) — siehe specs/AUTH_2FA_TOTP.md
+    // 2-Faktor-Authentifizierung (Phase 13.2) — siehe docs/bestand/specs/AUTH_2FA_TOTP.md
     public static final String TOTP_AKTIVIERT = "TOTP_AKTIVIERT";
     public static final String TOTP_DEAKTIVIERT = "TOTP_DEAKTIVIERT";
     public static final String TOTP_BACKUP_CODES_NEU = "TOTP_BACKUP_CODES_NEU";

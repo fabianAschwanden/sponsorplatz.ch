@@ -15,8 +15,8 @@
 -- Drei separate ALTER-Statements (statt eines mit kommaseparierten
 -- ADD COLUMNs), damit H2 + Postgres beide schlucken.
 --
--- Spec: specs/AUTH_2FA_TOTP.md
--- Tests: AUTH-2FA-01..09 in specs/TESTSTRATEGIE.md
+-- Spec: docs/bestand/specs/AUTH_2FA_TOTP.md
+-- Tests: AUTH-2FA-01..09 in docs/bestand/specs/TESTSTRATEGIE.md
 
 ALTER TABLE app_user ADD COLUMN totp_secret VARCHAR(64);
 ALTER TABLE app_user ADD COLUMN totp_aktiviert_am TIMESTAMP WITH TIME ZONE;

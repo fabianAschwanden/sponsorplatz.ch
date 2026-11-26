@@ -47,11 +47,13 @@ class NurSpecTest {
                 "docs/betrieb/deploy.md")).isEqualTo("true");
         assertThat(pfade("docs/Grüne Übersicht mit Leerzeichen.md", ".kiro/specs/02 Abgleich/Ä ö ü – Notiz.md"))
                 .isEqualTo("true");
+        // Markdown direkt in der Repo-Wurzel zählt mit: Kein Build-Schritt übernimmt es in ein Artefakt
+        assertThat(pfade("README.md", "AGENTS.md", "CLAUDE.md")).isEqualTo("true");
     }
 
     @Test
     void allesAndereVerlangtDenVollenLauf() throws Exception {
-        for (String pfad : List.of("README.md", "AGENTS.md", "CLAUDE.md", "deploy/README.md", ".github/x.md",
+        for (String pfad : List.of("deploy/README.md", ".github/x.md",
                 "tools/README.md", "docs/schluessel.pub.pem", "docs/adr/bild.png", ".kiro/settings/mcp.json",
                 "docs/x.MD", "docs/x.md.txt", "docsx/a.md", "kiro/a.md", "x/docs/a.md", "docs/../src/a.md",
                 "docs/./a.md", "docs//a.md", "docs/a\nb.md", ".github/workflows/ci.yml",
