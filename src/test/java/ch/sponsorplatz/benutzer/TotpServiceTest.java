@@ -14,7 +14,7 @@ import dev.samstevens.totp.exceptions.CodeGenerationException;
 /**
  * Tests für {@link TotpService} — RFC 6238 TOTP + Backup-Codes.
  *
- * Test-IDs: AUTH-2FA-01..05 in {@code specs/AUTH_2FA_TOTP.md}.
+ * Test-IDs: AUTH-2FA-01..05 in {@code docs/bestand/specs/AUTH_2FA_TOTP.md}.
  */
 class TotpServiceTest {
 

@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
  * Unit-Tests für {@link OciStorageService} — mockt den ObjectStorage-Client,
  * prüft Request-Konstruktion und Fehler-Mapping.
  *
- * Test-IDs siehe {@code specs/TESTSTRATEGIE.md} (CLOUD-STO-01..06).
+ * Test-IDs siehe {@code docs/bestand/specs/TESTSTRATEGIE.md} (CLOUD-STO-01..06).
  */
 class OciStorageServiceTest {
 

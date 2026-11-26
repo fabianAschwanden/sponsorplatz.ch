@@ -8,7 +8,7 @@ Akzeptiert
 
 ## Kontext
 
-Die textbasierten Specs in `specs/` und ADRs in `docs/adr/` beschreiben
+Die textbasierten Specs in `docs/bestand/specs/` und ADRs in `docs/bestand/adr/` beschreiben
 Architektur präzise, aber nicht visuell. Stakeholder-Gespräche
 (Kickbox-Pitch, CSS-Sponsoring-Team-Review, Pilot-Verein-Onboarding) brauchen
 **Diagramme**, die System-Kontext, Container und Komponenten auf den ersten
@@ -92,9 +92,9 @@ OCI-Cloud-Config, nicht hier.
 
 ## Referenzen
 
-- [`docs/architektur/workspace.dsl`](../architektur/workspace.dsl) — Workspace-Definition
-- [`docs/architektur/README.md`](../architektur/README.md) — lokaler Workflow
-- [`.github/workflows/architektur-diagramme.yml`](../../.github/workflows/architektur-diagramme.yml) — CI-Pipeline
+- [`docs/architektur/workspace.dsl`](../../architektur/workspace.dsl) — Workspace-Definition
+- [`docs/architektur/README.md`](../../architektur/README.md) — lokaler Workflow
+- [`.github/workflows/architektur-diagramme.yml`](../../../.github/workflows/architektur-diagramme.yml) — CI-Pipeline
 - [Structurizr DSL Documentation](https://docs.structurizr.com/dsl)
 - [C4 Model](https://c4model.com/)
 - [Structurizr CLI Releases](https://github.com/structurizr/cli/releases)

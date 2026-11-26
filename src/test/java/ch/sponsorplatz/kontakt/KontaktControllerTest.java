@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Tests für {@link KontaktController} — öffentlicher Anfrage-Funnel.
- * Test-IDs: KONT-01..05 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: KONT-01..05 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @WebMvcTest(controllers = KontaktController.class)
 @Import(SecurityConfig.class)

@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests für {@link BackupRestoreService}.
  *
- * Test-IDs: RESTORE-01..03 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: RESTORE-01..03 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @ExtendWith(MockitoExtension.class)
 class BackupRestoreServiceTest {

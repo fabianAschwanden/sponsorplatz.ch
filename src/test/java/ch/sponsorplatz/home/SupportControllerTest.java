@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Tests für {@link SupportController}.
- * Test-IDs: SUP-01..03 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: SUP-01..03 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @WebMvcTest(SupportController.class)
 @Import(SecurityConfig.class)

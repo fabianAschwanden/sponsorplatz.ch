@@ -79,7 +79,7 @@ Innerhalb eines Feature-Folders alle Layer (`*Controller`, `*Service`,
 
 ## Referenzen
 
-- [`CLAUDE.md`](../../CLAUDE.md) — Verzeichnisstruktur
-- [`specs/TECHNISCHE_SPEZIFIKATION.md`](../../specs/TECHNISCHE_SPEZIFIKATION.md) — Paket-Mapping pro Feature
+- [`CLAUDE.md`](../../../CLAUDE.md) — Verzeichnisstruktur
+- [`docs/bestand/specs/TECHNISCHE_SPEZIFIKATION.md`](../specs/TECHNISCHE_SPEZIFIKATION.md) — Paket-Mapping pro Feature
 - ArchUnit-Regel ARCH-06 (Slices, keine Zyklen zwischen Feature-Foldern)
 - ArchUnit-Regel ARCH-07 (`shared/` kennt keine Features)

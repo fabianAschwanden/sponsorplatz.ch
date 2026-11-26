@@ -6,7 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests für {@link HilfeThema}.
- * Test-IDs: HILFE-06..07 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: HILFE-06..07 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 class HilfeThemaTest {
 

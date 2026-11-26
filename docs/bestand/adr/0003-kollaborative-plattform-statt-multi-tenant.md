@@ -66,8 +66,8 @@ Mitgliedschaft.
 
 ## Referenzen
 
-- [`specs/PROJEKT_INFO.md`](../../specs/PROJEKT_INFO.md) §Modell
-- [`specs/ROLLENKONZEPT.md`](../../specs/ROLLENKONZEPT.md) — vollständige Permission-Matrix
+- [`docs/bestand/specs/PROJEKT_INFO.md`](../specs/PROJEKT_INFO.md) §Modell
+- [`docs/bestand/specs/ROLLENKONZEPT.md`](../specs/ROLLENKONZEPT.md) — vollständige Permission-Matrix
 - `00_Konzept_v3_Kollaborative-Plattform.md` im Workspace
 - Test-IDs AC-01..08 (`AccessControlTest`) — durchsetzungsseitige Verifikation
-- Vergleichs-Tabelle Fairgate / fundoo / Sponsoo in [`specs/PROJEKT_INFO.md`](../../specs/PROJEKT_INFO.md)
+- Vergleichs-Tabelle Fairgate / fundoo / Sponsoo in [`docs/bestand/specs/PROJEKT_INFO.md`](../specs/PROJEKT_INFO.md)

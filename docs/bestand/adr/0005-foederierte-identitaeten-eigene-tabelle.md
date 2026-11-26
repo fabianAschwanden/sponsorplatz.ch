@@ -9,7 +9,7 @@ Akzeptiert
 ## Kontext
 
 Mit der Kickbox-Initiative „CSS Sponsoring-Hub" wird OIDC-SSO via Microsoft
-Entra ID zum Backlog-Feature (Phase 1.4, siehe [`AUTH_SSO_OIDC.md`](../../specs/AUTH_SSO_OIDC.md)).
+Entra ID zum Backlog-Feature (Phase 1.4, siehe [`AUTH_SSO_OIDC.md`](../specs/AUTH_SSO_OIDC.md)).
 Die Speicherung der Provider-Identität-Verknüpfung kann auf zwei Wegen erfolgen:
 
 - **A) Spalten am `app_user`:** `oidc_provider`, `oidc_subject`, `oidc_verbunden_am`.
@@ -77,8 +77,8 @@ Identity-Mapping-Logik im `SponsorplatzOidcUserService`:
 
 ## Referenzen
 
-- [`specs/AUTH_SSO_OIDC.md`](../../specs/AUTH_SSO_OIDC.md) §5 Datenmodell
-- [`specs/AUTH_SSO_OIDC.md`](../../specs/AUTH_SSO_OIDC.md) §6 Identity-Mapping
+- [`docs/bestand/specs/AUTH_SSO_OIDC.md`](../specs/AUTH_SSO_OIDC.md) §5 Datenmodell
+- [`docs/bestand/specs/AUTH_SSO_OIDC.md`](../specs/AUTH_SSO_OIDC.md) §6 Identity-Mapping
 - Migration V25 (TBD, Implementation Phase 1.4)
 - Test-IDs SSO-11/12 — Repository-Tests
 - Spring Security 6 OAuth2 Client — kompatibel mit eigener UserService-Lookup-Logik

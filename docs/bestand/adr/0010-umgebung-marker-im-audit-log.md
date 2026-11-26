@@ -29,7 +29,7 @@ andere, kein automatischer Filter "nur OCI-Events / nur Azure-Events".
 Jeder Audit-Eintrag und jedes Sentry-Event trägt einen **Umgebungs-Marker**.
 
 1. **Audit-Log:** neue Spalte `audit_log.umgebung VARCHAR(50) NOT NULL`
-   ([Migration V41](../../src/main/resources/db/migration/V41__audit_log_umgebung.sql)),
+   ([Migration V41](../../../src/main/resources/db/migration/V41__audit_log_umgebung.sql)),
    Index auf `(umgebung, zeitpunkt DESC)` für Filter.
 2. **Wert kommt aus Spring-Property** `sponsorplatz.umgebung` (Default
    `lokal`). `AuditService` liest sie via `@Value` und setzt sie pro
@@ -37,7 +37,7 @@ Jeder Audit-Eintrag und jedes Sentry-Event trägt einen **Umgebungs-Marker**.
    Compose-ENV `SPONSORPLATZ_UMGEBUNG` gesetzt — OCI:
    `oci-staging-free`, Azure: `azure-staging`.
 3. **Backfill** für historische Rows in
-   [V42](../../src/main/resources/db/migration/V42__audit_log_umgebung_backfill_oci.sql):
+   [V42](../../../src/main/resources/db/migration/V42__audit_log_umgebung_backfill_oci.sql):
    `unknown` → `oci-staging-free`, weil das vor Multi-Cloud das einzige
    produktive Deployment war.
 4. **Sentry:** `SentryConfig.sentryBeforeSendCallback` setzt
@@ -108,7 +108,7 @@ Jeder Audit-Eintrag und jedes Sentry-Event trägt einen **Umgebungs-Marker**.
 
 - [ADR-0009](0009-multi-cloud-azure-als-dr-zone.md) — Multi-Cloud-
   Entscheidung, die dieses Problem erst aufwirft
-- [`specs/DATENMODELL.md`](../../specs/DATENMODELL.md) — V41 + V42
+- [`docs/bestand/specs/DATENMODELL.md`](../specs/DATENMODELL.md) — V41 + V42
   Migrations-Eintrag, audit_log-Tabellen-Beschreibung
-- [`specs/TESTSTRATEGIE.md`](../../specs/TESTSTRATEGIE.md) — AUDIT-04,
+- [`docs/bestand/specs/TESTSTRATEGIE.md`](../specs/TESTSTRATEGIE.md) — AUDIT-04,
   AUDIT-05, VIEW-AUDIT-01

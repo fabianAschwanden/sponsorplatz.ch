@@ -1,11 +1,11 @@
 # Architecture Decision Records (ADR)
 
 Hier dokumentieren wir bewusste Architektur-Entscheidungen und das Warum.
-Code-Specs in `specs/` beschreiben **was** gilt — ADRs beschreiben **warum**
+Code-Specs in `docs/bestand/specs/` beschreiben **was** gilt — ADRs beschreiben **warum**
 wir uns so entschieden haben. Beide ergänzen sich:
 
-- `specs/` ist die lebende Vertrags-Schicht (Datenmodell, Tests, Roadmap).
-- `docs/adr/` ist das Entscheidungs-Gedächtnis (welche Alternative wurde verworfen, warum).
+- `docs/bestand/specs/` ist die lebende Vertrags-Schicht (Datenmodell, Tests, Roadmap).
+- `docs/bestand/adr/` ist das Entscheidungs-Gedächtnis (welche Alternative wurde verworfen, warum).
 
 ## Format
 

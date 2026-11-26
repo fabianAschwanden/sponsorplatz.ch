@@ -21,7 +21,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 /**
  * Tests für den IP-basierten Rate-Limit-Filter auf Public-POST-Endpoints.
  *
- * Test-IDs: RATE-01..04 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: RATE-01..04 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 class RateLimitFilterTest {
 

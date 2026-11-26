@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
  * Unit-Tests für {@link AzureBackupCloudUploader} — mockt das
  * {@link AzureBlobOperations}-Seam-Interface.
  *
- * Test-IDs siehe {@code specs/TESTSTRATEGIE.md} (CLOUD-BKP-AZ-01..04).
+ * Test-IDs siehe {@code docs/bestand/specs/TESTSTRATEGIE.md} (CLOUD-BKP-AZ-01..04).
  */
 class AzureBackupCloudUploaderTest {
 
