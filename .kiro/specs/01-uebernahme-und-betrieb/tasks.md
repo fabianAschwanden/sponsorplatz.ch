@@ -44,15 +44,17 @@ Aufgabe liefert für ihre Anforderungen den Nachweis nach `tech.md` und hakt ihr
     Dokumente des Bestands nach `docs/bestand/`.
   - _Abhängig von: 1.2_
 
-- [ ] 1.4 Rückverfolgung und Regeln [Backend]
-  - `ReqAbdeckungTest`, `NurSpecTest`, `RechtematrixSpecTest`, Hexagon-Regeln für neue Pakete.
-  - _Anforderungen: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3_
+- [x] 1.4 Rückverfolgung und Regeln [Backend]
+  - `ReqAbdeckungTest`, `NurSpecTest`, `RechtematrixSpecTest`, Hexagon-Regeln für neue Pakete. `NurSpecTest` wird
+    übersprungen, bis Aufgabe 1.5 das Skript liefert.
+  - _Anforderungen: 1.1, 1.2, 2.1, 2.2, 2.3_
   - _Abhängig von: 1.3_
 
 - [ ] 1.5 CI teilen [Infra]
   - Nebeneinander laufende Jobs, Abkürzung «nur Spec», Entwürfe ohne CI; den roten Workflow
-    «Architektur-Diagramme» reparieren oder entfernen.
-  - _Anforderungen: 1.5_
+    «Architektur-Diagramme» reparieren oder entfernen. Liefert `.github/scripts/nur-spec.py`; danach läuft
+    `NurSpecTest`.
+  - _Anforderungen: 1.3, 1.5_
   - _Abhängig von: 1.1_
 
 ### Betrieb
