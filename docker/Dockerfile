@@ -63,6 +63,12 @@ COPY --from=build /workspace/target/sponsorplatz.jar app.jar
 # das Erstellen unter WORKDIR /app
 RUN mkdir -p /app/uploads && chown -R sponsor:sponsor /app
 
+# Datenverzeichnis für den Betrieb: Medien und nächtlicher Dump liegen auf einem
+# benannten Volume unter /daten. Das Verzeichnis muss im Image existieren und
+# dem Laufzeit-User gehören, sonst legt Docker das Volume als root an und die
+# Anwendung (uid 1001) kann nicht schreiben.
+RUN mkdir -p /daten/medien /daten/sicherung && chown -R sponsor:sponsor /daten
+
 # Healthcheck nutzt /actuator/health auf dem Management-Port.
 # In prod laufen Actuator-Endpoints auf Port 9090 (loopback-bind via
 # application-prod.properties), in dev fallen sie auf 8080 zurück.
