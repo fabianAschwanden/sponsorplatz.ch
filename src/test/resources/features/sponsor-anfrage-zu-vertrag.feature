@@ -7,7 +7,7 @@ Funktionalität: Vom Verein zur Sponsoring-Vereinbarung mit einem Sponsor
   Button und lässt einen Vertrags-Entwurf entstehen — Snapshot der Betreff-
   und Org-Daten aus der Kontakt-Anfrage.
 
-  Fachliche Spec: specs/KONTAKT_ANFRAGE_VERTRAG.md
+  Fachliche Spec: docs/bestand/specs/KONTAKT_ANFRAGE_VERTRAG.md
 
   Hintergrund:
     Angenommen die Plattform läuft mit dem Test-Sponsor "Muster Versicherung"

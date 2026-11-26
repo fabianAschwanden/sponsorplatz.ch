@@ -97,7 +97,7 @@ infra/
 
 ## Roadmap
 
-Stand 26.05.2026. Detaillierte Plan-/Slice-Sicht in [`specs/ROADMAP.md`](specs/ROADMAP.md).
+Stand 26.05.2026. Detaillierte Plan-/Slice-Sicht in [`docs/bestand/specs/ROADMAP.md`](docs/bestand/specs/ROADMAP.md).
 
 | Phase | Inhalt | Status |
 |---|---|:---:|
@@ -117,8 +117,8 @@ Stand 26.05.2026. Detaillierte Plan-/Slice-Sicht in [`specs/ROADMAP.md`](specs/R
 | [`CLAUDE.md`](CLAUDE.md) | Arbeitsweise (Specs, Bestandsschutz, zwei Agenten, wer merged), Stack, Code-Regeln — Einstieg für Entwickler und Agenten |
 | [`AGENTS.md`](AGENTS.md) | Verweis auf `CLAUDE.md` für GitHub Copilot und andere Agenten |
 | [`docs/konzept.md`](docs/konzept.md) | High-Level-Konzept v3 mit Rollen, Datenmodell, Vision |
-| [`specs/`](specs/) | Specs (Datenmodell, Rollenkonzept, Teststrategie, ROADMAP, AUTH_*) |
-| [`docs/adr/`](docs/adr/) | Architecture Decision Records |
+| [`docs/bestand/specs/`](docs/bestand/specs/) | Specs (Datenmodell, Rollenkonzept, Teststrategie, ROADMAP, AUTH_*) |
+| [`docs/bestand/adr/`](docs/bestand/adr/) | Architecture Decision Records |
 | [`infra/staging-free/README.md`](infra/staging-free/README.md) | OCI-Setup, OIDC-Aktivierung, Rollback-Pfad |
 | [`infra/envs/azure-staging/README.md`](infra/envs/azure-staging/README.md) | Azure-Setup + Cloud-spezifische Unterschiede |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Pilot-Launch-Runbook |

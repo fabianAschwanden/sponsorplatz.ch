@@ -1,6 +1,6 @@
 # Infrastructure as Code — Sponsorplatz
 
-Multi-Cloud-Setup seit Phase 15.3 ([ADR-0009](../docs/adr/0009-multi-cloud-azure-als-dr-zone.md)) —
+Multi-Cloud-Setup seit Phase 15.3 ([ADR-0009](../docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md)) —
 zwei parallele Zonen mit eigenen Pipelines und eigenem State.
 
 ## Zonen
@@ -68,7 +68,7 @@ OCI bleibt Always-Free.
   agnostisch via `StorageService.speichereBytes(...)`.
 - **Audit-Trail-Schutz:** Jeder Audit-Eintrag trägt
   `audit_log.umgebung` (V41), nach Cross-Cloud-Restore bleibt sichtbar
-  wo der Eintrag ursprünglich entstand ([ADR-0010](../docs/adr/0010-umgebung-marker-im-audit-log.md)).
+  wo der Eintrag ursprünglich entstand ([ADR-0010](../docs/bestand/adr/0010-umgebung-marker-im-audit-log.md)).
 
 ## Konventionen
 

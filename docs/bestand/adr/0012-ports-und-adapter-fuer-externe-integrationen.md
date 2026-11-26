@@ -131,8 +131,8 @@ Port-Package bleibt sauber.
 
 ## Referenzen
 
-- [`specs/TESTSTRATEGIE.md`](../../specs/TESTSTRATEGIE.md) §Architektur-Verifikation (ARCH-20, ARCH-21, ARCH-22)
-- [`specs/TECHNISCHE_SPEZIFIKATION.md`](../../specs/TECHNISCHE_SPEZIFIKATION.md) §Ports-&-Adapter für externe Integrationen
+- [`docs/bestand/specs/TESTSTRATEGIE.md`](../specs/TESTSTRATEGIE.md) §Architektur-Verifikation (ARCH-20, ARCH-21, ARCH-22)
+- [`docs/bestand/specs/TECHNISCHE_SPEZIFIKATION.md`](../specs/TECHNISCHE_SPEZIFIKATION.md) §Ports-&-Adapter für externe Integrationen
 - `src/main/java/ch/sponsorplatz/shared/mail/` (Port) + `…/smtp/` (Adapter)
 - `src/test/java/ch/sponsorplatz/architektur/ArchitekturRegelnTest.java` (ARCH-20)
 - [ADR-0001](0001-feature-folder-statt-schichten.md) Feature-Folder, [ADR-0007](0007-archunit-fuer-statische-verifikation.md) ArchUnit

@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests für {@link RechnungsnummerGenerator}.
  *
- * Test-IDs: RECH-07..09 — siehe specs/SPONSORING_ZAHLUNGSFLUSS.md §5.
+ * Test-IDs: RECH-07..09 — siehe docs/bestand/specs/SPONSORING_ZAHLUNGSFLUSS.md §5.
  */
 @ExtendWith(MockitoExtension.class)
 class RechnungsnummerGeneratorTest {

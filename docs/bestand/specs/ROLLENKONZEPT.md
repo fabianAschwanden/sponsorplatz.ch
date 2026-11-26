@@ -1,6 +1,6 @@
 # Rollenkonzept
 
-> Dieses Dokument ist die implementierungs-nahe Spec. High-Level-Kontext + Hintergrund: [`docs/konzept.md`](../docs/konzept.md) §4. Stand 26.05.2026 — synchron mit dem aktuellen Code.
+> Dieses Dokument ist die implementierungs-nahe Spec. High-Level-Kontext + Hintergrund: [`docs/konzept.md`](../../konzept.md) §4. Stand 26.05.2026 — synchron mit dem aktuellen Code.
 
 ## Modell: Kollaborativ
 

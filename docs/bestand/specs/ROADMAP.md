@@ -679,7 +679,7 @@ Der ursprüngliche „Pilot-Launch"-Block lebt jetzt als **Phase 14 (Produktivsc
 > Heutiges OCI Always-Free ist Single-Point-of-Failure (eine VM, eine Region,
 > ein Provider). Azure wird als zweite Zone vorbereitet — initial als
 > **Warm-DR** (Promote per DNS-Switch), später als Aktiv-Aktiv-Split.
-> Entscheidung dokumentiert in [`docs/adr/0009-multi-cloud-azure-als-dr-zone.md`](../docs/adr/0009-multi-cloud-azure-als-dr-zone.md).
+> Entscheidung dokumentiert in [`docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md`](../adr/0009-multi-cloud-azure-als-dr-zone.md).
 
 **Slices in TDD-Reihenfolge** — Slice 1+2 laufen App-seitig, der Rest ist Ops.
 

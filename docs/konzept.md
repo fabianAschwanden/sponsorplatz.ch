@@ -447,7 +447,7 @@ Sponsorplatz hat **zwei Login-Pfade nebeneinander**, beide landen am gleichen `A
 - `SENTRY_DSN`, `SENTRY_RELEASE` für Error-Tracking
 - `DB_PASSWORD`, `SMTP_*`, `ADMIN_*` bleiben in der manuell gepflegten VM-`.env` (nicht rotations-getrieben)
 
-Vollständige Spec: [`specs/AUTH_SSO_OIDC.md`](../specs/AUTH_SSO_OIDC.md), [`specs/AUTH_2FA_TOTP.md`](../specs/AUTH_2FA_TOTP.md).
+Vollständige Spec: [`docs/bestand/specs/AUTH_SSO_OIDC.md`](bestand/specs/AUTH_SSO_OIDC.md), [`docs/bestand/specs/AUTH_2FA_TOTP.md`](bestand/specs/AUTH_2FA_TOTP.md).
 
 ### 7.5 Multi-Cloud Warm-DR (umgesetzt)
 
@@ -477,7 +477,7 @@ Heute laufen zwei unabhängige Cloud-Zonen mit eigener CD-Pipeline:
 - `umgebung`-Marker (Audit-Log + Sentry-Tag) — jedes Ereignis hat seine Cloud-Quelle, damit nach DB-Sync klar bleibt wo's entstand
 - Helper-Skript `infra/scripts/patch-vm-compose-envs.sh` synct nachträglich Sentry/Google/API-Key-Env-Refs in laufende VMs (Indent-auto-detect, Backup+Rollback)
 
-**Noch offen** (Phase 15.3 Slices 5–7): automatischer DNS-Failover via Cloudflare, kontinuierliche Cross-Replication, beidseitiger Smoke. Vollständige Architektur-Entscheidung: [`docs/adr/0009-multi-cloud-azure-als-dr-zone.md`](adr/0009-multi-cloud-azure-als-dr-zone.md).
+**Noch offen** (Phase 15.3 Slices 5–7): automatischer DNS-Failover via Cloudflare, kontinuierliche Cross-Replication, beidseitiger Smoke. Vollständige Architektur-Entscheidung: [`docs/bestand/adr/0009-multi-cloud-azure-als-dr-zone.md`](bestand/adr/0009-multi-cloud-azure-als-dr-zone.md).
 
 ---
 
@@ -584,7 +584,7 @@ Priorisierung **M**ust · **S**hould · **C**ould · **W**on't. Status: ✓ vorh
 
 ## 10. Roadmap
 
-> Detaillierte Plan- und Spec-Sicht: [`specs/ROADMAP.md`](../specs/ROADMAP.md). Hier nur die kuratierte Konzept-Sicht mit Status.
+> Detaillierte Plan- und Spec-Sicht: [`docs/bestand/specs/ROADMAP.md`](bestand/specs/ROADMAP.md). Hier nur die kuratierte Konzept-Sicht mit Status.
 
 ### Phasen 0–9 ✅ — Foundation + CRM + Marktplatz + Anfrage-Lifecycle
 
@@ -703,7 +703,7 @@ Das Konzept ist eine kuratierte Zusammenfassung. Maßgeblich für Umsetzung + En
 | `adr/` | Architecture Decision Records (numeriert, ADR-0009 = Multi-Cloud) |
 | `a11y-bekannt.md` | A11y-Baseline-Findings, die der Smoke nicht als Failure zählt |
 
-**Specs** (`specs/`, **maßgeblich für Code-Disziplin**):
+**Specs** (`docs/bestand/specs/`, **maßgeblich für Code-Disziplin**):
 | Datei | Inhalt |
 |---|---|
 | `ROADMAP.md` | aktiv gepflegte Phase-/Slice-Sicht mit Status |

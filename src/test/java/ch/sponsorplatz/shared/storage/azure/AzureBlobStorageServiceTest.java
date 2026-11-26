@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
  * Seam-Interface (die finalen Azure-SDK-Klassen, inkl. {@code BlobStorageException},
  * lassen sich mit dem projektweiten subclass-MockMaker nicht stubben).
  *
- * Test-IDs siehe {@code specs/TESTSTRATEGIE.md} (CLOUD-STO-AZ-01..06).
+ * Test-IDs siehe {@code docs/bestand/specs/TESTSTRATEGIE.md} (CLOUD-STO-AZ-01..06).
  */
 class AzureBlobStorageServiceTest {
 

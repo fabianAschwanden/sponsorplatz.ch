@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 /**
  * Unit-Tests für {@link DateiBackupRestoreService}.
  *
- * Test-IDs: DATEI-RESTORE-01..04 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: DATEI-RESTORE-01..04 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @ExtendWith(MockitoExtension.class)
 class DateiBackupRestoreServiceTest {

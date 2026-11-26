@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Tests für {@link RecentErrorsAppender} + {@link RecentErrorsService}.
  *
- * Test-IDs: OPS-01..03 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: OPS-01..03 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 class RecentErrorsServiceTest {
 

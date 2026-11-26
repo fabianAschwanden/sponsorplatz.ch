@@ -207,7 +207,7 @@ mvn verify -P e2e -Dit.test=SmokeIT
 5 SMOKE-Checks: Home, Login, Kontakt, Marktplatz-Auth-Gate, Actuator-Health.
 Wenn ein Check rot ist → Deploy zurückrollen.
 
-**Manuelle Pilot-Tests:** [`specs/BETA_TESTPLAN.md`](../specs/BETA_TESTPLAN.md)
+**Manuelle Pilot-Tests:** [`docs/bestand/specs/BETA_TESTPLAN.md`](bestand/specs/BETA_TESTPLAN.md)
 enthält die Akzeptanz-Test-Checkliste für Verein, Sponsor und Admin.
 
 ---
@@ -232,7 +232,7 @@ Erst NACHDEM §§1–9 grün sind:
 - Blog-Post auf `sponsorplatz.ch/blog` (existiert noch nicht — anlegen oder
   via [Substack/Medium](https://substack.com) abdecken)
 - LinkedIn-Post: Founders-Story, Health-Fokus, CH-Hosting, DSG-Compliance
-- E-Mail an die lokalen Sport-/Health-Verbände (Liste in `specs/PILOT_KONTAKTE.md`
+- E-Mail an die lokalen Sport-/Health-Verbände (Liste in `docs/bestand/specs/PILOT_KONTAKTE.md`
   — anlegen, sobald Kontakte recherchiert)
 - Twitter/X optional, Reddit `r/Switzerland` als Zweitkanal
 

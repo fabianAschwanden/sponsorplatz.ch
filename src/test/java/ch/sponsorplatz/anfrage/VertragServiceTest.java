@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests für {@link VertragService}.
  *
- * Test-IDs: VTR-01..06 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: VTR-01..06 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

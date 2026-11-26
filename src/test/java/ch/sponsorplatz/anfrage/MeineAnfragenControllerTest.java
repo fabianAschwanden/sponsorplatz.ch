@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Tests für {@link MeineAnfragenController}.
- * Test-IDs: MANF-01..07 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: MANF-01..07 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @WebMvcTest(MeineAnfragenController.class)
 @Import(SecurityConfig.class)

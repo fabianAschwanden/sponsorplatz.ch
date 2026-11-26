@@ -34,7 +34,7 @@ import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
  * wird damit verhindert, nicht nur erkannt.
  *
  * <p>
- * Verbindliche Test-IDs siehe {@code specs/TESTSTRATEGIE.md} unter
+ * Verbindliche Test-IDs siehe {@code docs/bestand/specs/TESTSTRATEGIE.md} unter
  * {@code Architektur-Verifikation (ARCH)}.
  *
  * <p>

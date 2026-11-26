@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Steps für den vom User definierten E2E-Flow (siehe
- * specs/KONTAKT_ANFRAGE_VERTRAG.md):
+ * docs/bestand/specs/KONTAKT_ANFRAGE_VERTRAG.md):
  * Verein-Registrierung → Verein anlegen → Kontakt-Anfrage an den Sponsor →
  * Sponsor nimmt an → Verein erstellt Vertrag.
  *

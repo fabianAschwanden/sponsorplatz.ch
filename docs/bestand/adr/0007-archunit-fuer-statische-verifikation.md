@@ -15,7 +15,7 @@ AccessControl-Pflicht für Admin-Routen. Diese Regeln stehen heute in:
 
 - `CLAUDE.md` (als Konvention)
 - `.instructions.md` (als TDD-Pflicht)
-- `specs/TESTSTRATEGIE.md` (als Test-Erwartung)
+- `docs/bestand/specs/TESTSTRATEGIE.md` (als Test-Erwartung)
 
 Aber: **Dokumentation alleine durchsetzt keine Regel.** Jeder neue Feature-PR
 kann unbeabsichtigt einen `model.addAttribute(entity)` einführen, einen
@@ -91,7 +91,7 @@ ArchUnit verändert das Review-Verhalten:
 
 ## Referenzen
 
-- [`specs/TESTSTRATEGIE.md`](../../specs/TESTSTRATEGIE.md) §Architektur-Verifikation (ARCH-01..13)
+- [`docs/bestand/specs/TESTSTRATEGIE.md`](../specs/TESTSTRATEGIE.md) §Architektur-Verifikation (ARCH-01..13)
 - `src/test/java/ch/sponsorplatz/architektur/ArchitekturRegelnTest.java`
 - [ArchUnit User Guide](https://www.archunit.org/userguide/html/000_Index.html)
 - [Spring Modulith](https://docs.spring.io/spring-modulith/reference/) (Schicht 2, später)

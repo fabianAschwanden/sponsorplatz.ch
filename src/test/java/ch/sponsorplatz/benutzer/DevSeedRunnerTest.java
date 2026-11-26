@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
  * Tests für {@link DevSeedRunner} — verifiziert Property-Override und
  * Idempotenz (kein erneutes Anlegen wenn User existiert).
  *
- * Test-IDs: DEV-SEED-01..03 in {@code specs/TESTSTRATEGIE.md}.
+ * Test-IDs: DEV-SEED-01..03 in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
  */
 @ExtendWith(MockitoExtension.class)
 class DevSeedRunnerTest {
