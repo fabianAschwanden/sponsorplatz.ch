@@ -12,7 +12,7 @@ Nachweis wie in Spec 01, `tasks.md`.
   - _Anforderungen: 16.1, 16.2, 16.4, 16.5_
   - _Abhängig von: 2.3_
 
-- [ ] 2.5 Pilot-Anfrage [Backend]
+- [x] 2.5 Pilot-Anfrage [Backend]
   - Formular unter `/pilot`, Speicherung, Einwilligung, Drosselung (auch für das Kontaktformular),
     Benachrichtigung der Verwaltung ohne Personendaten.
   - _Anforderungen: 1.1, 1.2, 1.3, 1.4, 13.1, 13.2, 14.1, 14.2, 15.2_

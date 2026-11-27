@@ -1,7 +1,13 @@
 package ch.sponsorplatz.kontakt;
 
 import ch.sponsorplatz.shared.config.ModelAttributeNames;
+import ch.sponsorplatz.shared.config.Formular;
+import ch.sponsorplatz.shared.config.FormularDrosselungService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,9 +29,11 @@ import java.util.Locale;
 public class KontaktController {
 
     private final KontaktService kontaktService;
+    private final FormularDrosselungService formularDrosselung;
 
-    public KontaktController(KontaktService kontaktService) {
+    public KontaktController(KontaktService kontaktService, FormularDrosselungService formularDrosselung) {
         this.kontaktService = kontaktService;
+        this.formularDrosselung = formularDrosselung;
     }
 
     @GetMapping
@@ -40,7 +48,14 @@ public class KontaktController {
     public String absenden(@Valid @ModelAttribute("kontaktForm") KontaktFormDto form,
                            BindingResult binding,
                            Locale locale,
-                           RedirectAttributes redirect) {
+                           RedirectAttributes redirect,
+                           HttpServletRequest request,
+                           HttpServletResponse response) {
+        if (!formularDrosselung.erfasseEingabe(Formular.KONTAKT, request.getRemoteAddr())) {
+            LocaleContextHolder.setLocale(Locale.forLanguageTag("de-CH"));
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            return "shared/formular-drosselung";
+        }
         // Honeypot zuerst — bevor Validierung berücksichtigt wird. Bots
         // bekommen Silent-Success, kein Hinweis dass wir gefiltert haben.
         if (form.getHomepage() != null && !form.getHomepage().isBlank()) {

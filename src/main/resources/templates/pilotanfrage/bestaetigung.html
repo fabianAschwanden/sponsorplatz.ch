@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/oeffentlich :: kopf(#{pilot.bestaetigung.titel})}"></head>
+<body>
+<a th:replace="~{fragments/oeffentlich :: sprungmarke}"></a>
+<header th:replace="~{fragments/oeffentlich :: kopfzeile}"></header>
+<main class="wrap" id="inhalt">
+    <section class="section" aria-labelledby="bestaetigung-titel">
+        <h1 id="bestaetigung-titel" th:text="#{pilot.bestaetigung.titel}">Danke für eure Anfrage</h1>
+        <p class="lead" th:text="#{pilot.bestaetigung.pruefung}">
+            Wir prüfen eure Angaben auf den Bezug zu Sport oder Gesundheit, den Bezug zur Schweiz und die Plausibilität.
+        </p>
+        <p th:text="#{pilot.bestaetigung.zugang}">
+            Die Kontaktperson erfährt das Ergebnis per E-Mail. Bei einer Zusage kommt der Zugang ebenfalls per E-Mail.
+        </p>
+        <p th:text="#{pilot.bestaetigung.sichtbarkeit}">
+            Mit der Anfrage entsteht noch keine Organisation und nichts wird öffentlich sichtbar.
+        </p>
+        <a class="btn btn-primary" th:href="@{/}" th:text="#{pilot.zurStartseite}">Zur Startseite</a>
+    </section>
+</main>
+<footer th:replace="~{fragments/oeffentlich :: fuss}"></footer>
+</body>
+</html>

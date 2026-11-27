@@ -71,6 +71,7 @@ public class E2EFixtures {
     public void bereinige() {
         em.createNativeQuery("""
                 TRUNCATE TABLE
+                  formular_drosselung, pilot_anfrage, einwilligung,
                   nachricht, vertrag, rechnung,
                   sponsoring_anfrage, sponsoring_paket, projekt,
                   einladung, mitgliedschaft,

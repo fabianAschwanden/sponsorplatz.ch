@@ -4,6 +4,7 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.options.ColorScheme;
 import com.microsoft.playwright.options.ScreenshotType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>{@code /} — Home/Marketing</li>
  *   <li>{@code /login} — Authentifizierungs-Einstieg</li>
  *   <li>{@code /kontakt} — Anfrage-Funnel</li>
+ *   <li>{@code /pilot} und {@code /pilot/bestaetigung} — Pilot-Anfrage</li>
  *   <li>{@code /impressum}, {@code /datenschutz}, {@code /agb} — Legal-Pages</li>
  * </ul>
  *
@@ -64,7 +66,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>Liegt im {@code e2e}-Paket, läuft via {@code mvn verify -P e2e -Dit.test=A11ySmokeIT}.
  *
- * <p>Test-IDs: A11Y-01..06 (public) + A11Y-07..10 (auth) in {@code docs/bestand/specs/TESTSTRATEGIE.md}.
+ * <p>Test-IDs: A11Y-01..11 (existing pages) + A11Y-12..13 (pilot pages).
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = "server.port=18086")
@@ -159,6 +161,30 @@ class A11ySmokeIT {
     }
 
     @Test
+    @DisplayName("A11Y-12: /pilot hat keine kritischen WCAG-Verstösse")
+    void pilot() {
+        pruefeSeite("/pilot");
+    }
+
+    @Test
+    @DisplayName("A11Y-13: /pilot/bestaetigung hat keine kritischen WCAG-Verstösse")
+    void pilotBestaetigung() {
+        pruefeSeite("/pilot/bestaetigung");
+    }
+
+    @Test
+    @DisplayName("A11Y-14: /pilot am Handy im hellen Farbschema ist zugänglich")
+    void pilotHandyHell() {
+        pruefePilotAmHandy(ColorScheme.LIGHT);
+    }
+
+    @Test
+    @DisplayName("A11Y-15: /pilot am Handy im dunklen Farbschema ist zugänglich")
+    void pilotHandyDunkel() {
+        pruefePilotAmHandy(ColorScheme.DARK);
+    }
+
+    @Test
     @DisplayName("A11Y-04: /impressum hat keine kritischen WCAG-Verstösse")
     void impressum() {
         pruefeSeite("/impressum");
@@ -214,6 +240,14 @@ class A11ySmokeIT {
 
     private void pruefeAuthSeite(String pfad) {
         pruefeMitContext(pfad, authContext);
+    }
+
+    private void pruefePilotAmHandy(ColorScheme farbschema) {
+        try (BrowserContext handy = browser.newContext(new Browser.NewContextOptions()
+                .setViewportSize(360, 800)
+                .setColorScheme(farbschema))) {
+            pruefeMitContext("/pilot", handy);
+        }
     }
 
     @SuppressWarnings("unchecked")

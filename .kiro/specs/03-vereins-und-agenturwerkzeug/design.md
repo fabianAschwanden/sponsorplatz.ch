@@ -64,12 +64,17 @@ Ein Zähler je Formular und Prüfwert der IP-Adresse (IPv4 ganz, IPv6 auf /64 ge
 Gesamtzähler je Formular. Einträge älter als ein Tag werden entfernt. Die Drosselung am Reverse Proxy
 (Spec 01) bleibt die äussere Schicht.
 
+Die Pilot-Anfrage und das Kontaktformular teilen die Tabelle `formular_drosselung`. Gespeichert wird ein
+HMAC-SHA256 der Client-Adresse; eine Zeilensperre je Formular serialisiert Zählung und Eintrag, damit parallele
+Anfragen das Limit nicht überschreiten. Für die Benachrichtigung dient der zweistellige PLZ-Präfix als PLZ-Kreis.
+Der HMAC-Aufruf liegt in `shared.crypto`; ARCH-23 beschränkt `javax.crypto` auf dieses Paket und den Payment-Adapter.
+
 ## Data Models
 | Tabelle | Stand | Spalten (Auszug) |
 | --- | --- | --- |
-| `pilot_anfrage` | neu | Rolle, Organisation, Bereich bzw. Sponsor-Art, PLZ, Ort, Kontaktperson, E-Mail, freiwillige Angaben, Probepaket, Status (`NEU`, `ZUGESAGT`, `ABGELEHNT`, `VORGEMERKT`), Grund, eingeladen von (Sponsor) |
-| `einwilligung` | neu | Bezug (Art und ID), Zweck, Wortlaut, Zeitpunkt |
-| `formular_drosselung` | neu | Formular, Prüfwert, Zeitpunkt |
+| `pilot_anfrage` | neu | ID (`UUID`), Rolle, Organisation, Bereich bzw. Sponsor-Art, PLZ, Ort, Kontaktperson, E-Mail, freiwillige Angaben, Probepaket, Status (`NEU`, `ZUGESAGT`, `ABGELEHNT`, `VORGEMERKT`), Grund, eingeladen von (Sponsor), Einwilligungs-ID (`UUID`) |
+| `einwilligung` | neu | ID (`UUID`), Bezug (Art und ID `UUID`), Zweck, Wortlaut, Zeitpunkt |
+| `formular_drosselung` | neu | ID (`UUID`), Formular, Prüfwert, Zeitpunkt |
 | `gegenleistung_typ` | neu | Code, Name, `aktiv` |
 | `gegenleistung` | neu | Paket, Typ, Reichweite, Verfügbarkeit, Position |
 | `engagement` | neu | Verein, Sponsor, Paket, Laufzeit von und bis, Betrag, Status, veröffentlicht |
