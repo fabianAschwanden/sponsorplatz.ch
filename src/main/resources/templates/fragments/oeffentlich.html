@@ -10,29 +10,55 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
 </head>
 <body>
-<a class="oeffentlich-sprungmarke" th:fragment="sprungmarke" href="#inhalt">Zum Inhalt</a>
+<a class="skip" th:fragment="sprungmarke" href="#inhalt">Zum Inhalt springen</a>
 
-<header class="oeffentlich-kopf" th:fragment="kopfzeile">
-    <div class="oeffentlich-container oeffentlich-kopf__innen">
-        <a class="oeffentlich-logo" th:href="@{/}" aria-label="Sponsorplatz – Startseite">
-            <img th:src="@{/images/logo/icon-ringe.svg}" alt="">
-            <span>Sponsorplatz</span>
+<header class="site-header" th:fragment="kopfzeile" id="top">
+    <div class="wrap header-inner">
+        <a class="brand" th:href="@{/}">
+            <svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M1 15.5 23 12.5" style="stroke:var(--verein)" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M6.5 1 9.5 23" style="stroke:var(--sponsor)" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M19 1 14.5 23" style="stroke:var(--mitglieder)" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="12" cy="11" r="7" fill="none" style="stroke:var(--ink)" stroke-width="2"/>
+                <circle cx="12" cy="11" r="1.8" style="fill:var(--ink)"/>
+            </svg>
+            <span class="wordmark"><span class="wm-main">sponsorplatz</span><span class="wm-sub">GESUNDHEIT</span></span>
         </a>
-        <button class="oeffentlich-farbschema" type="button" data-farbschema-knopf
-                aria-label="Farbschema umschalten" title="Farbschema umschalten">
-            <span aria-hidden="true">◐</span>
-            <span>Farbschema</span>
+        <button class="theme-btn" id="theme-toggle" type="button" data-state="auto" title="Farbschema: Automatisch">
+            <svg class="ico t-ico t-auto" viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="10" r="7"/><path d="M10 3a7 7 0 0 1 0 14z" fill="currentColor"/>
+            </svg>
+            <svg class="ico t-ico t-light" viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="10" r="3.5"/>
+                <path d="M10 1.5v2.2M10 16.3v2.2M1.5 10h2.2M16.3 10h2.2M4 4l1.6 1.6M14.4 14.4 16 16M4 16l1.6-1.6M14.4 5.6 16 4"/>
+            </svg>
+            <svg class="ico t-ico t-dark" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M16.5 12.5A7 7 0 0 1 7.5 3.5a7 7 0 1 0 9 9z"/>
+            </svg>
+            <span class="t-text">Farbschema: </span><span class="t-text" id="theme-state">Automatisch</span>
         </button>
     </div>
 </header>
 
-<footer class="oeffentlich-fuss" th:fragment="fuss">
-    <div class="oeffentlich-container oeffentlich-fuss__innen">
-        <span>© Sponsorplatz</span>
-        <nav aria-label="Rechtliche Informationen">
-            <a th:href="@{/datenschutz}">Datenschutz</a>
-            <a th:href="@{/impressum}">Impressum</a>
-        </nav>
+<footer class="site-footer" th:fragment="fuss">
+    <div class="wrap">
+        <div class="footer-top">
+            <a class="brand" th:href="@{/}">
+                <svg class="mark" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M1 15.5 23 12.5" style="stroke:var(--verein)" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M6.5 1 9.5 23" style="stroke:var(--sponsor)" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M19 1 14.5 23" style="stroke:var(--mitglieder)" stroke-width="2.2" stroke-linecap="round"/>
+                    <circle cx="12" cy="11" r="7" fill="none" style="stroke:var(--ink)" stroke-width="2"/>
+                    <circle cx="12" cy="11" r="1.8" style="fill:var(--ink)"/>
+                </svg>
+                <span class="wordmark"><span class="wm-main">sponsorplatz</span><span class="wm-sub">GESUNDHEIT</span></span>
+            </a>
+            <p>Der Sponsoring-Marktplatz für Sport und Gesundheit.</p>
+        </div>
+        <ul class="footer-links">
+            <li><a th:href="@{/datenschutz}">Datenschutz</a></li>
+            <li><a th:href="@{/impressum}">Impressum</a></li>
+        </ul>
     </div>
 </footer>
 </body>
