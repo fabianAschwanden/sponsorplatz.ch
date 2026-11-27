@@ -57,13 +57,10 @@
                     </td>
                     <td th:text="${org.registriertAm != null ? #temporals.format(org.registriertAm, 'dd.MM.yyyy') : '—'}">01.01.2026</td>
                     <td style="white-space:nowrap;">
-                        <form th:if="${org.status.name() == 'PENDING'}"
-                              th:action="@{/admin/organisationen/{id}/verifizieren(id=${org.id})}" method="post"
-                              style="display:inline; margin:0;">
-                            <button type="submit" class="app-btn app-btn-sm"
-                                    th:text="#{admin.organisationen.verifizieren}">✓ Verifizieren</button>
-                        </form>
-                        <form th:if="${org.status.name() != 'SUSPENDED'}"
+                        <a th:if="${org.status.name() == 'PENDING'}"
+                           th:href="@{/admin/verifizierungen}" class="app-btn app-btn-sm"
+                           th:text="#{admin.organisationen.verifizieren}">Prüfung öffnen</a>
+                        <form th:if="${org.status.name() != 'SUSPENDED' and org.status.name() != 'PENDING'}"
                               th:action="@{/admin/organisationen/{id}/suspendieren(id=${org.id})}" method="post"
                               style="display:inline; margin:0;"
                               onsubmit="return confirm(this.querySelector('.confirm-msg').textContent);">

@@ -64,7 +64,7 @@ class OrganisationStatistikTest {
         em.clear();
 
         List<Object[]> rows = organisationRepository.zaehleVereineNachBranche(
-                Set.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+                OrgStatus.SICHTBAR);
 
         var byBranche = rows.stream()
                 .collect(Collectors.toMap(r -> (Branche) r[0], r -> (Long) r[1]));

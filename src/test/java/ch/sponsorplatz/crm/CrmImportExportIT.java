@@ -40,6 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CrmImportExportIT {
 
     @Autowired private CrmImportExportService service;
+    @Autowired private SponsorAccountService accountService;
     @Autowired private SponsorAccountRepository accountRepository;
     @Autowired private OrganisationRepository organisationRepository;
     @Autowired private AppUserRepository appUserRepository;
@@ -125,6 +126,28 @@ class CrmImportExportIT {
                 .getBytes(StandardCharsets.UTF_8);
         assertThatThrownBy(() -> service.importiere(sponsorId, csv, authFremd))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("ungeprüfte Vereine fehlen im CRM-Export und werden nicht importiert")
+    void ungepruefteVereineSindImCrmUnsichtbar() {
+        verein2.setStatus(OrgStatus.PENDING);
+        SponsorAccount pendingAccount = new SponsorAccount();
+        pendingAccount.setBesitzerSponsorOrgId(sponsorId);
+        pendingAccount.setVerein(verein2);
+        accountRepository.save(pendingAccount);
+
+        String export = new String(service.exportiere(sponsorId, authMitglied), StandardCharsets.UTF_8);
+        assertThat(export).doesNotContain("fc-io-2", "FC Zwei");
+        assertThat(accountService.findePortfolio(sponsorId, authMitglied))
+                .extracting(SponsorAccountView::vereinName)
+                .doesNotContain("FC Zwei");
+
+        String csv = CrmImportExportService.HEADER + "\r\nfc-io-2;FC Zwei;LEAD;;LEAD;;\r\n";
+        var ergebnis = service.importiere(sponsorId, csv.getBytes(StandardCharsets.UTF_8), authMitglied);
+        assertThat(ergebnis.erstellt()).isZero();
+        assertThat(ergebnis.aktualisiert()).isZero();
+        assertThat(ergebnis.fehler()).anySatisfy(fehler -> assertThat(fehler).contains("fc-io-2"));
     }
 
     // --- Fixtures ---

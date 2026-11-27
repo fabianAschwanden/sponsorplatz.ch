@@ -2,6 +2,7 @@ package ch.sponsorplatz.projekt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -47,7 +48,8 @@ class StatistikServiceTest {
     /** MARK-02b: Statistik liefert Gesamtzahl aktiver Projekte (COUNT-Query). */
     @Test
     void aktiveProjekteZaehltKorrekt() {
-        when(projektRepository.countBySichtbarkeit(Sichtbarkeit.OEFFENTLICH)).thenReturn(0L);
+        when(projektRepository.countOeffentlicheNachSichtbarkeit(
+                eq(Sichtbarkeit.OEFFENTLICH), any())).thenReturn(0L);
 
         long ergebnis = statistikService.anzahlAktiveProjekte();
 

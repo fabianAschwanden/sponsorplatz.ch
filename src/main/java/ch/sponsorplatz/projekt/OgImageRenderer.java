@@ -2,9 +2,13 @@ package ch.sponsorplatz.projekt;
 
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.organisation.OrgStatus;
+import ch.sponsorplatz.organisation.OrgStatusGewechseltEvent;
 import ch.sponsorplatz.shared.config.CacheConfig;
 import ch.sponsorplatz.shared.exception.NotFoundException;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -17,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
 
 /**
  * Rendert Open-Graph-Preview-Bilder (1200×630 PNG) und cached das Ergebnis
@@ -47,7 +52,8 @@ public class OgImageRenderer {
 
     @Cacheable(value = CacheConfig.OG_IMAGES, key = "'verein:' + #slug")
     public byte[] rendereVerein(String slug) {
-        Organisation org = orgRepository.findBySlug(slug)
+        Organisation org = orgRepository.findeOeffentlicheNachSlug(
+                        slug, OrgStatus.SICHTBAR)
                 .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + slug));
         // Menschen-lesbares Label statt Enum-Name (z.B. „Mentale Gesundheit"
         // statt „MENTAL_HEALTH"). Aktivieren via Branche.anzeige.
@@ -57,7 +63,8 @@ public class OgImageRenderer {
 
     @Cacheable(value = CacheConfig.OG_IMAGES, key = "'projekt:' + #slug")
     public byte[] rendereProjekt(String slug) {
-        Projekt projekt = projektRepository.findBySlug(slug)
+        Projekt projekt = projektRepository.findeOeffentlichNachSlug(
+                        slug, Sichtbarkeit.OEFFENTLICH, OrgStatus.SICHTBAR)
                 .orElseThrow(() -> new NotFoundException("Projekt nicht gefunden: " + slug));
         // Branche aus der Org (visueller Tag oben rechts) + projekt-spezifische
         // Kategorie als Untertitel. Das ist der „Branche-Tag im OG-Image", der
@@ -68,6 +75,11 @@ public class OgImageRenderer {
                 : null;
         String untertitel = projekt.getKategorie();
         return erzeugeBild(projekt.getName(), untertitel, brancheTag, "Projekt auf Sponsorplatz");
+    }
+
+    @EventListener
+    @CacheEvict(value = CacheConfig.OG_IMAGES, allEntries = true)
+    public void loescheVorschaubilderBeiStatuswechsel(OrgStatusGewechseltEvent event) {
     }
 
     /**

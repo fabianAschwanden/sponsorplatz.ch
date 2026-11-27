@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import ch.sponsorplatz.organisation.Organisation;
+import ch.sponsorplatz.organisation.OrgStatus;
 
 class ProjektServiceTest {
 
@@ -62,6 +63,9 @@ class ProjektServiceTest {
         Projekt projekt = new Projekt();
         projekt.setId(UUID.randomUUID());
         projekt.setSichtbarkeit(Sichtbarkeit.ENTWURF);
+        Organisation org = new Organisation();
+        org.setStatus(OrgStatus.ACTIVE);
+        projekt.setOrg(org);
         when(repository.findById(projekt.getId())).thenReturn(Optional.of(projekt));
         when(repository.save(any(Projekt.class))).thenAnswer(inv -> inv.getArgument(0));
 

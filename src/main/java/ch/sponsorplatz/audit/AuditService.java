@@ -118,5 +118,20 @@ public class AuditService {
         repository.save(eintrag);
         log.debug("Audit: {} {} {} ({}) [{}]", aktion, bereich, zielId, eintrag.getBenutzerEmail(), umgebung);
     }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void protokolliereInLaufenderTransaktion(String aktion, String bereich, UUID benutzerId,
+                                                     UUID zielId, String zielTyp, String details) {
+        AuditLog eintrag = new AuditLog();
+        eintrag.setAktion(aktion);
+        eintrag.setBereich(bereich);
+        eintrag.setBenutzerId(benutzerId);
+        eintrag.setZielId(zielId);
+        eintrag.setZielTyp(zielTyp);
+        eintrag.setDetails(details);
+        eintrag.setUmgebung(umgebung);
+        repository.save(eintrag);
+        log.debug("Audit: {} {} {} [{}]", aktion, bereich, zielId, umgebung);
+    }
 }
 

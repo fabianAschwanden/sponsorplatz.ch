@@ -51,7 +51,8 @@ class MatchingServiceTest {
         Projekt p = new Projekt();
         p.setId(UUID.randomUUID());
         p.setName("Lauftreff Zürich");
-        when(projektRepository.findePassende(any(), eq(List.of(eigeneOrgId)), eq(Sichtbarkeit.OEFFENTLICH)))
+        when(projektRepository.findePassende(any(), eq(List.of(eigeneOrgId)),
+                eq(Sichtbarkeit.OEFFENTLICH), any()))
                 .thenReturn(List.of(p));
 
         List<Projekt> result = service.findeEmpfehlungen(userId);
@@ -69,7 +70,7 @@ class MatchingServiceTest {
         List<Projekt> result = service.findeEmpfehlungen(userId);
 
         assertThat(result).isEmpty();
-        verify(projektRepository, never()).findePassende(any(), any(), any());
+        verify(projektRepository, never()).findePassende(any(), any(), any(), any());
     }
 
     @Test
@@ -111,7 +112,7 @@ class MatchingServiceTest {
             p.setName("Projekt " + i);
             viele.add(p);
         }
-        when(projektRepository.findePassende(any(), any(), any())).thenReturn(viele);
+        when(projektRepository.findePassende(any(), any(), any(), any())).thenReturn(viele);
 
         List<Projekt> result = service.findeEmpfehlungen(userId);
 

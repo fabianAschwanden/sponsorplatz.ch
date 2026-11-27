@@ -120,17 +120,11 @@ public class AdminBenutzerController {
         return "admin/organisationen";
     }
 
-    @PostMapping("/organisationen/{id}/verifizieren")
-    public String orgVerifizieren(@PathVariable UUID id, RedirectAttributes redirect) {
-        OrganisationView v = OrganisationView.von(organisationService.verifiziere(id));
-        auditService.protokolliere(AuditAktion.VERIFIZIERT, "ORGANISATION", id, "Organisation", v.name());
-        redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,
-                "Organisation «" + v.name() + "» verifiziert.");
-        return "redirect:/admin/organisationen";
-    }
-
     @PostMapping("/organisationen/{id}/suspendieren")
     public String orgSuspendieren(@PathVariable UUID id, RedirectAttributes redirect) {
+        if (organisationService.istPending(id)) {
+            return "redirect:/admin/verifizierungen";
+        }
         OrganisationView v = OrganisationView.von(organisationService.suspendiere(id));
         auditService.protokolliere(AuditAktion.SUSPENDIERT, "ORGANISATION", id, "Organisation", v.name());
         redirect.addFlashAttribute(ModelAttributeNames.ERFOLGS_MELDUNG,

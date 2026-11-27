@@ -40,7 +40,7 @@ class SitemapControllerTest {
     @Test
     void sitemapIstPublicUndLiefertXml() throws Exception {
         when(projektService.findeOeffentliche()).thenReturn(List.of());
-        when(organisationService.alle()).thenReturn(List.of());
+        when(organisationService.alleOeffentlicheSlugs()).thenReturn(List.of());
 
         mockMvc.perform(get("/sitemap.xml"))
                 .andExpect(status().isOk())

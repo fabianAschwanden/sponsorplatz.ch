@@ -1,5 +1,6 @@
 package ch.sponsorplatz.crm;
 
+import ch.sponsorplatz.organisation.OrgStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,7 +22,15 @@ import java.util.UUID;
 @Repository
 public interface SponsorAccountRepository extends JpaRepository<SponsorAccount, UUID> {
 
-    List<SponsorAccount> findByBesitzerSponsorOrgIdOrderByErstelltAmDesc(UUID besitzerSponsorOrgId);
+    @Query("""
+            SELECT a FROM SponsorAccount a JOIN FETCH a.verein v
+            WHERE a.besitzerSponsorOrgId = :sponsorOrgId
+              AND v.status IN :stati
+            ORDER BY a.erstelltAm DESC
+            """)
+    List<SponsorAccount> findeOeffentlicheFuerSponsor(
+            @Param("sponsorOrgId") UUID sponsorOrgId,
+            @Param("stati") Collection<OrgStatus> stati);
 
     Optional<SponsorAccount> findByBesitzerSponsorOrgIdAndVereinId(UUID besitzerSponsorOrgId, UUID vereinId);
 

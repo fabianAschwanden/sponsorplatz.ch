@@ -52,8 +52,8 @@ class MedienControllerTest {
         UUID id = UUID.randomUUID();
         when(medienAssetService.findeAuslieferungsSnapshot(id))
                 .thenReturn(new MedienAssetService.AuslieferungsSnapshot(
-                        "projekt/123/bild.png", "image/png", "bild.png"));
-        when(storageService.ladeAlsResource("projekt/123/bild.png"))
+                        "user/123/bild.png", "image/png", "bild.png", EntityTyp.USER, UUID.randomUUID()));
+        when(storageService.ladeAlsResource("user/123/bild.png"))
                 .thenReturn(new ByteArrayResource(new byte[] { 1, 2, 3 }));
 
         mockMvc.perform(get("/medien/{id}", id))
@@ -77,8 +77,8 @@ class MedienControllerTest {
         UUID id = UUID.randomUUID();
         when(medienAssetService.findeAuslieferungsSnapshot(id))
                 .thenReturn(new MedienAssetService.AuslieferungsSnapshot(
-                        "organisation/9/logo.svg", "image/svg+xml", "logo.svg"));
-        when(storageService.ladeAlsResource("organisation/9/logo.svg"))
+                        "user/9/logo.svg", "image/svg+xml", "logo.svg", EntityTyp.USER, UUID.randomUUID()));
+        when(storageService.ladeAlsResource("user/9/logo.svg"))
                 .thenReturn(new ByteArrayResource(new byte[] { 1, 2, 3 }));
 
         mockMvc.perform(get("/medien/{id}", id))
@@ -110,9 +110,24 @@ class MedienControllerTest {
         UUID id = UUID.randomUUID();
         when(medienAssetService.findeAuslieferungsSnapshot(id))
                 .thenReturn(new MedienAssetService.AuslieferungsSnapshot(
-                        "user/abc/orphan.png", "image/png", "orphan.png"));
+                        "user/abc/orphan.png", "image/png", "orphan.png", EntityTyp.USER, UUID.randomUUID()));
         when(storageService.ladeAlsResource("user/abc/orphan.png"))
                 .thenThrow(new StorageObjectNotFoundException("user/abc/orphan.png"));
+
+        mockMvc.perform(get("/medien/{id}", id))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void ungeprueftesOrganisationslogoIstFuerFremdeNichtSichtbar() throws Exception {
+        UUID id = UUID.randomUUID();
+        UUID orgId = UUID.randomUUID();
+        when(medienAssetService.findeAuslieferungsSnapshot(id))
+                .thenReturn(new MedienAssetService.AuslieferungsSnapshot(
+                        "organisation/" + orgId + "/logo.png", "image/png", "logo.png",
+                        EntityTyp.ORGANISATION, orgId));
+        when(organisationService.findeSlugNachId(orgId)).thenReturn(java.util.Optional.of("pending-org"));
+        when(accessControl.kannOrgSehenNachSlug("pending-org", null)).thenReturn(false);
 
         mockMvc.perform(get("/medien/{id}", id))
                 .andExpect(status().isNotFound());

@@ -2,6 +2,10 @@ package ch.sponsorplatz.e2e;
 
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.organisation.OrganisationService;
+import ch.sponsorplatz.organisation.MitgliedschaftRepository;
+import ch.sponsorplatz.organisation.Pruefpunkte;
+import ch.sponsorplatz.organisation.Rolle;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import io.cucumber.java.de.Angenommen;
@@ -41,6 +45,8 @@ public class SponsorAnfrageZuVertragSteps {
     @Autowired private E2EContext ctx;
     @Autowired private E2EFixtures fixtures;
     @Autowired private OrganisationRepository orgRepository;
+    @Autowired private OrganisationService orgService;
+    @Autowired private MitgliedschaftRepository mitgliedschaftRepository;
     @PersistenceContext private EntityManager em;
 
     // -------- Background --------
@@ -101,6 +107,16 @@ public class SponsorAnfrageZuVertragSteps {
 
         ctx.getDaten().put("vereinName", vereinName);
         ctx.getDaten().put("vereinSlug", vereinName.toLowerCase().replace(' ', '-'));
+    }
+
+    @Und("der Verein geprüft ist")
+    public void vereinGeprueft() {
+        Organisation verein = orgRepository.findBySlug(ctx.daten("vereinSlug"))
+                .orElseThrow(() -> new AssertionError("Verein wurde nicht angelegt"));
+        UUID benutzerId = mitgliedschaftRepository
+                .findeEigentuemerNachOrg(verein.getId(), Rolle.ORG_OWNER)
+                .getFirst().getUser().getId();
+        orgService.verifiziere(verein.getId(), new Pruefpunkte(true, true, true), benutzerId);
     }
 
     // -------- Verein stellt Kontakt-Anfrage --------

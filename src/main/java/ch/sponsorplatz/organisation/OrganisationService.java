@@ -58,16 +58,36 @@ public class OrganisationService {
         return OrganisationView.von(repository.findAllByOrderByNameAsc());
     }
 
+    @Transactional(readOnly = true)
+    public List<OrganisationView> alleOeffentlicheViews() {
+        return OrganisationView.von(repository.findByStatusInOrderByNameAsc(
+                OrgStatus.SICHTBAR));
+    }
+
     /** Slugs aller Orgs — für Sitemap, ohne Entity-Touch (ARCH-02). */
     @Transactional(readOnly = true)
     public List<String> alleSlugs() {
         return repository.findAllByOrderByNameAsc().stream().map(Organisation::getSlug).toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<String> alleOeffentlicheSlugs() {
+        return repository.findByStatusInOrderByNameAsc(
+                OrgStatus.SICHTBAR).stream()
+                .map(Organisation::getSlug)
+                .toList();
+    }
+
     /** Untergeordnete Orgs als View — für Detail-Seite (ARCH-02). */
     @Transactional(readOnly = true)
     public List<OrganisationView> findeUntergeordneteViews(UUID elternId) {
         return OrganisationView.von(repository.findByUebergeordneteOrgIdOrderByNameAsc(elternId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrganisationView> findeOeffentlicheUntergeordneteViews(UUID elternId) {
+        return OrganisationView.von(repository.findByUebergeordneteOrgIdAndStatusInOrderByNameAsc(
+                elternId, OrgStatus.SICHTBAR));
     }
 
     /** View-Variante des Lookup-Mitgliedschaft-Pfads (Controller-Sortierung). */
@@ -94,7 +114,7 @@ public class OrganisationService {
     public List<Organisation> findeAktiveSponsoren() {
         return repository.findByTypAndStatusInOrderByNameAsc(
                 OrgTyp.UNTERNEHMEN,
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE));
+                OrgStatus.SICHTBAR);
     }
 
     /** View-Variante — Controller braucht keine Entity-Liste (ARCH-02). */
@@ -110,12 +130,19 @@ public class OrganisationService {
     public List<OrganisationView> findeAktiveVereineAlsViews() {
         return OrganisationView.von(repository.findByTypAndStatusInOrderByNameAsc(
                 OrgTyp.VEREIN,
-                List.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE)));
+                OrgStatus.SICHTBAR));
     }
 
     @Transactional(readOnly = true)
     public Optional<Organisation> findeNachId(UUID id) {
         return repository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean istPending(UUID id) {
+        return repository.findById(id)
+                .map(org -> org.getStatus() == OrgStatus.PENDING)
+                .orElse(false);
     }
 
     /** View-Variante — Controller braucht keine Entity (ARCH-02). */
@@ -457,17 +484,52 @@ public class OrganisationService {
      * @throws NotFoundException     wenn ID nicht existiert
      * @throws IllegalStateException wenn Status nicht PENDING
      */
-    public Organisation verifiziere(UUID id) {
+    public Organisation verifiziere(UUID id, Pruefpunkte pruefpunkte, UUID benutzerId) {
+        if (pruefpunkte == null) {
+            throw new IllegalArgumentException("Bitte alle drei Prüfpunkte festhalten.");
+        }
+        if (!pruefpunkte.sindAlleBestaetigt()) {
+            throw new IllegalArgumentException("Für eine Freigabe müssen alle drei Prüfpunkte bestätigt sein.");
+        }
         Organisation org = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + id));
         if (org.getStatus() != OrgStatus.PENDING) {
             throw new IllegalStateException(
                     "Nur PENDING-Organisationen können verifiziert werden (aktuell: " + org.getStatus() + ")");
         }
+        String empfaengerEmail = findeKontaktEmail(org);
         org.setStatus(OrgStatus.VERIFIED);
         org.setVerifiziertAm(Instant.now(clock));
         Organisation gespeichert = repository.save(org);
+        eventPublisher.publishEvent(new OrganisationPruefprotokollEvent(
+                benutzerId, id, true, pruefpunkte.protokollText()));
         eventPublisher.publishEvent(new OrgStatusGewechseltEvent(gespeichert));
+        eventPublisher.publishEvent(new OrganisationPruefentscheidEvent(
+                gespeichert.getId(), gespeichert.getName(), empfaengerEmail, true, null));
+        return gespeichert;
+    }
+
+    public Organisation lehnePruefungAb(UUID id, String grund, Pruefpunkte pruefpunkte, UUID benutzerId) {
+        if (pruefpunkte == null) {
+            throw new IllegalArgumentException("Bitte alle drei Prüfpunkte festhalten.");
+        }
+        if (grund == null || grund.isBlank()) {
+            throw new IllegalArgumentException("Für eine Ablehnung braucht es einen Grund.");
+        }
+        Organisation org = repository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + id));
+        if (org.getStatus() != OrgStatus.PENDING) {
+            throw new IllegalStateException("Nur PENDING-Organisationen können abgelehnt werden.");
+        }
+        String empfaengerEmail = findeKontaktEmail(org);
+        org.setStatus(OrgStatus.SUSPENDED);
+        Organisation gespeichert = repository.save(org);
+        eventPublisher.publishEvent(new OrganisationPruefprotokollEvent(
+                benutzerId, id, false,
+                pruefpunkte.protokollText() + "; Ablehnungsgrund: " + grund.trim()));
+        eventPublisher.publishEvent(new OrgStatusGewechseltEvent(gespeichert));
+        eventPublisher.publishEvent(new OrganisationPruefentscheidEvent(
+                gespeichert.getId(), gespeichert.getName(), empfaengerEmail, false, grund.trim()));
         return gespeichert;
     }
 
@@ -479,9 +541,21 @@ public class OrganisationService {
     public Organisation suspendiere(UUID id) {
         Organisation org = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + id));
+        if (org.getStatus() == OrgStatus.PENDING) {
+            throw new IllegalStateException("Eine ausstehende Organisation muss über die Prüfung abgelehnt werden.");
+        }
         org.setStatus(OrgStatus.SUSPENDED);
         Organisation gespeichert = repository.save(org);
         eventPublisher.publishEvent(new OrgStatusGewechseltEvent(gespeichert));
         return gespeichert;
+    }
+
+    private String findeKontaktEmail(Organisation org) {
+        return mitgliedschaftRepository.findeEigentuemerNachOrg(org.getId(), Rolle.ORG_OWNER).stream()
+                .map(m -> m.getUser().getEmail())
+                .filter(email -> email != null && !email.isBlank())
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Für diese Organisation ist keine Kontaktperson hinterlegt."));
     }
 }

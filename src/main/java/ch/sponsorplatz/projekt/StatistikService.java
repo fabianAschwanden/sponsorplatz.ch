@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Statistik-Service für die Marken-Landing-Page.
@@ -22,9 +21,6 @@ import java.util.Set;
  */
 @Service
 public class StatistikService {
-
-    /** Stati, die als „aktive Vereine" zählen — PENDING/SUSPENDED bewusst draussen. */
-    private static final Set<OrgStatus> AKTIVE_STATI = Set.of(OrgStatus.VERIFIED, OrgStatus.ACTIVE);
 
     private final OrganisationRepository orgRepository;
     private final ProjektRepository projektRepository;
@@ -41,7 +37,7 @@ public class StatistikService {
     @Cacheable(CacheConfig.STATISTIK_VEREINE_PRO_BRANCHE)
     public Map<Branche, Long> vereineProBranche() {
         Map<Branche, Long> ergebnis = new EnumMap<>(Branche.class);
-        List<Object[]> zeilen = orgRepository.zaehleVereineNachBranche(AKTIVE_STATI);
+        List<Object[]> zeilen = orgRepository.zaehleVereineNachBranche(OrgStatus.SICHTBAR);
         for (Object[] zeile : zeilen) {
             ergebnis.put((Branche) zeile[0], (Long) zeile[1]);
         }
@@ -53,7 +49,8 @@ public class StatistikService {
      */
     @Cacheable(CacheConfig.STATISTIK_ANZAHL_PROJEKTE)
     public long anzahlAktiveProjekte() {
-        return projektRepository.countBySichtbarkeit(Sichtbarkeit.OEFFENTLICH);
+        return projektRepository.countOeffentlicheNachSichtbarkeit(
+                Sichtbarkeit.OEFFENTLICH, OrgStatus.SICHTBAR);
     }
 }
 

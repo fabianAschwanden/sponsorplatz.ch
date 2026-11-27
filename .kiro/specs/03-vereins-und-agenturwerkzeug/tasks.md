@@ -18,7 +18,7 @@ Nachweis wie in Spec 01, `tasks.md`.
   - _Anforderungen: 1.1, 1.2, 1.3, 1.4, 13.1, 13.2, 14.1, 14.2, 15.2_
   - _Abhängig von: 2.3_
 
-- [ ] 2.6 Prüfung [Backend]
+- [x] 2.6 Prüfung [Backend]
   - Ablehnungsgrund, Protokoll, nichts Ungeprüftes ist sichtbar; Mail mit dem Ergebnis.
   - _Anforderungen: 2.1, 2.2, 2.3, 2.4, 2.5, 15.1_
 

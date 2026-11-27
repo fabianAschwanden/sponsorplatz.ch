@@ -132,7 +132,10 @@ public class OrganisationController {
     private List<OrganisationView> ladeListeViews(Authentication auth) {
         boolean eingeloggt = auth != null && auth.isAuthenticated()
                 && !"anonymousUser".equals(auth.getPrincipal());
-        if (!eingeloggt || istPlattformAdmin(auth)) {
+        if (!eingeloggt) {
+            return service.alleOeffentlicheViews();
+        }
+        if (istPlattformAdmin(auth)) {
             return service.alleViews();
         }
         return appUserService.findeOptionalIdNachEmail(auth.getName())
@@ -239,17 +242,20 @@ public class OrganisationController {
 
     @GetMapping("/{slug}")
     public String detail(@PathVariable String slug, Authentication auth, Model model) {
+        if (!accessControl.kannOrgSehenNachSlug(slug, auth)) {
+            throw new NotFoundException("Organisation nicht gefunden: " + slug);
+        }
         OrganisationView org = service.findeViewNachSlug(slug)
             .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + slug));
         org = org.mitLogoUrl(logoLookup.findeLogoUrl(org.id()).orElse(null));
         model.addAttribute(ModelAttributeNames.AKTIVE_SEITE, "organisationen");
         model.addAttribute("org", org);
-        model.addAttribute("statusOk", org.status() == OrgStatus.ACTIVE || org.status() == OrgStatus.VERIFIED);
+        model.addAttribute("statusOk", org.status() != null && org.status().istSichtbar());
         model.addAttribute("kannEditieren", accessControl.kannOrgEditierenNachSlug(slug, auth));
         // CRM-Einstieg nur für Sponsor-Orgs (UNTERNEHMEN) und nur für Team-Mitglieder.
         model.addAttribute("kannCrmSehen",
                 org.typ() == OrgTyp.UNTERNEHMEN && accessControl.kannSponsorDatenSehen(org.id(), auth));
-        model.addAttribute("untergeordneteOrgs", service.findeUntergeordneteViews(org.id()));
+        model.addAttribute("untergeordneteOrgs", service.findeOeffentlicheUntergeordneteViews(org.id()));
         model.addAttribute("elternkette", hierarchieService.findeElternketteNachSlug(slug));
         return "organisation/organisation-detail";
     }

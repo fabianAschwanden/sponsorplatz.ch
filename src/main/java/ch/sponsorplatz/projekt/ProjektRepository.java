@@ -1,6 +1,7 @@
 package ch.sponsorplatz.projekt;
 
 import ch.sponsorplatz.organisation.Branche;
+import ch.sponsorplatz.organisation.OrgStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -28,6 +29,17 @@ public interface ProjektRepository extends JpaRepository<Projekt, UUID> {
     @Query("SELECT p FROM Projekt p JOIN FETCH p.org WHERE p.slug = :slug")
     Optional<Projekt> findBySlug(@Param("slug") String slug);
 
+    @Query("""
+            SELECT p FROM Projekt p JOIN FETCH p.org o
+            WHERE p.slug = :slug
+              AND p.sichtbarkeit = :sichtbarkeit
+              AND o.status IN :stati
+            """)
+    Optional<Projekt> findeOeffentlichNachSlug(
+            @Param("slug") String slug,
+            @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit,
+            @Param("stati") Collection<OrgStatus> stati);
+
     @Query("SELECT p FROM Projekt p JOIN FETCH p.org WHERE p.org.id = :orgId ORDER BY p.createdAt DESC")
     List<Projekt> findByOrgIdOrderByCreatedAtDesc(@Param("orgId") UUID orgId);
 
@@ -38,8 +50,25 @@ public interface ProjektRepository extends JpaRepository<Projekt, UUID> {
     @Query("SELECT p FROM Projekt p JOIN FETCH p.org WHERE p.org.id IN :orgIds ORDER BY p.createdAt DESC")
     List<Projekt> findByOrgIdInOrderByCreatedAtDesc(@Param("orgIds") Collection<UUID> orgIds);
 
-    @Query("SELECT p FROM Projekt p JOIN FETCH p.org WHERE p.sichtbarkeit = :sichtbarkeit ORDER BY p.veroeffentlichtAm DESC")
-    List<Projekt> findBySichtbarkeitOrderByVeroeffentlichtAmDesc(@Param("sichtbarkeit") Sichtbarkeit sichtbarkeit);
+    @Query("""
+            SELECT p FROM Projekt p JOIN FETCH p.org o
+            WHERE p.sichtbarkeit = :sichtbarkeit AND o.status IN :stati
+            ORDER BY p.veroeffentlichtAm DESC
+            """)
+    List<Projekt> findBySichtbarkeitOrderByVeroeffentlichtAmDesc(
+            @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit, @Param("stati") Collection<OrgStatus> stati);
+
+    @Query("""
+            SELECT p FROM Projekt p JOIN FETCH p.org o
+            WHERE p.org.id = :orgId
+              AND p.sichtbarkeit = :sichtbarkeit
+              AND o.status IN :stati
+            ORDER BY p.veroeffentlichtAm DESC
+            """)
+    List<Projekt> findeOeffentlicheNachOrgId(
+            @Param("orgId") UUID orgId,
+            @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit,
+            @Param("stati") Collection<OrgStatus> stati);
 
     boolean existsBySlug(String slug);
 
@@ -49,7 +78,27 @@ public interface ProjektRepository extends JpaRepository<Projekt, UUID> {
      * Zählt direkt auf DB-Ebene — Marken-Landing braucht nur die Anzahl, nicht
      * die Liste. Spart das Laden + Mappen aller Projekte für eine Statistik.
      */
+    @Query("""
+            SELECT COUNT(p) FROM Projekt p
+            WHERE p.sichtbarkeit = :sichtbarkeit
+              AND p.org.status IN :stati
+            """)
+    long countOeffentlicheNachSichtbarkeit(
+            @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit, @Param("stati") Collection<OrgStatus> stati);
+
     long countBySichtbarkeit(Sichtbarkeit sichtbarkeit);
+
+    @Query("""
+            SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END
+            FROM Projekt p
+            WHERE p.id = :projektId
+              AND p.sichtbarkeit = :sichtbarkeit
+              AND p.org.status IN :stati
+            """)
+    boolean existsOeffentlichNachId(
+            @Param("projektId") UUID projektId,
+            @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit,
+            @Param("stati") Collection<OrgStatus> stati);
 
     /**
      * Volltextsuche: durchsucht Name, Beschreibung, Kategorie, Ort und Org-Name.
@@ -59,6 +108,7 @@ public interface ProjektRepository extends JpaRepository<Projekt, UUID> {
             SELECT p FROM Projekt p
               JOIN FETCH p.org o
             WHERE p.sichtbarkeit = :sichtbarkeit
+            AND o.status IN :stati
             AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :suchbegriff, '%'))
                  OR LOWER(p.beschreibung) LIKE LOWER(CONCAT('%', :suchbegriff, '%'))
                  OR LOWER(p.kategorie) LIKE LOWER(CONCAT('%', :suchbegriff, '%'))
@@ -67,7 +117,8 @@ public interface ProjektRepository extends JpaRepository<Projekt, UUID> {
             ORDER BY p.veroeffentlichtAm DESC
             """)
     List<Projekt> sucheOeffentliche(@Param("suchbegriff") String suchbegriff,
-                                     @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit);
+                                     @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit,
+                                     @Param("stati") Collection<OrgStatus> stati);
 
     /**
      * Matching-Query: Findet öffentliche Projekte, deren Org eine der gegebenen Branchen hat,
@@ -79,9 +130,11 @@ public interface ProjektRepository extends JpaRepository<Projekt, UUID> {
             WHERE p.sichtbarkeit = :sichtbarkeit
             AND o.branche IN :branchen
             AND o.id NOT IN :eigeneOrgIds
+            AND o.status IN :stati
             ORDER BY p.veroeffentlichtAm DESC
             """)
     List<Projekt> findePassende(@Param("branchen") Collection<Branche> branchen,
                                 @Param("eigeneOrgIds") Collection<UUID> eigeneOrgIds,
-                                @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit);
+                                @Param("sichtbarkeit") Sichtbarkeit sichtbarkeit,
+                                @Param("stati") Collection<OrgStatus> stati);
 }

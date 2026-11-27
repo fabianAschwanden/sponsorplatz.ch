@@ -5,6 +5,7 @@ import ch.sponsorplatz.anfrage.SponsoringAnfrage;
 import ch.sponsorplatz.anfrage.SponsoringAnfrageRepository;
 import ch.sponsorplatz.organisation.Branche;
 import ch.sponsorplatz.organisation.OrgTyp;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
 import ch.sponsorplatz.projekt.Projekt;
@@ -42,7 +43,7 @@ class EngagementServiceTest {
         Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
         when(orgRepository.findBySlug("muster-versicherung")).thenReturn(Optional.of(sponsor));
         when(anfrageRepository.findByAnfragenderOrgIdAndStatusOrderByCreatedAtDesc(
-                sponsor.getId(), AnfrageStatus.ANGENOMMEN))
+                eq(sponsor.getId()), eq(AnfrageStatus.ANGENOMMEN), any()))
                 .thenReturn(List.of(erstelleAnfrageMitOrt(sponsor, "Zürich", "8001"),
                         erstelleAnfrageMitOrt(sponsor, "Bern", "3011")));
         // lenient: mitLogos schlägt zusätzlich die Verein-Logos nach (andere IDs) —
@@ -64,7 +65,7 @@ class EngagementServiceTest {
     @DisplayName("ENG-05: findeStartseitenEngagements mappt ANGENOMMEN-Anfragen + liefert verfügbare Kantone")
     void startseitenEngagements() {
         Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
-        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any(), any()))
                 .thenReturn(List.of(erstelleAnfrageMitOrt(sponsor, "Zürich", "8001")));
 
         StartseitenTeaser teaser = service.findeStartseitenEngagements(null, 6);
@@ -80,7 +81,7 @@ class EngagementServiceTest {
     @DisplayName("ENG-08: findeStartseitenEngagements filtert nach Kanton")
     void startseitenEngagementsKantonFilter() {
         Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
-        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any(), any()))
                 .thenReturn(List.of(erstelleAnfrageMitOrt(sponsor, "Zürich", "8001"),
                         erstelleAnfrageMitOrt(sponsor, "Bern", "3011")));
 
@@ -103,7 +104,7 @@ class EngagementServiceTest {
         kontaktOhnePaket.setEmpfaengerOrg(erstelleOrg("verein-kontakt", Branche.SPORT));
         kontaktOhnePaket.setStatus(AnfrageStatus.ANGENOMMEN);
         // paket bleibt null (Kontakt-Anfrage)
-        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any(), any()))
                 .thenReturn(List.of(kontaktOhnePaket, erstelleAnfrage(sponsor)));
 
         List<EngagementView> result = service.findeStartseitenEngagements(null, 6).engagements();
@@ -120,7 +121,7 @@ class EngagementServiceTest {
         Organisation sponsor = erstelleOrg("muster-versicherung", Branche.PRAEVENTION);
         SponsoringAnfrage anfrage = erstelleAnfrage(sponsor);
         UUID vereinId = anfrage.getEmpfaengerOrg().getId();
-        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any()))
+        when(anfrageRepository.findNeuesteNachStatus(eq(AnfrageStatus.ANGENOMMEN), any(), any()))
                 .thenReturn(List.of(anfrage));
         when(logoLookup.findeLogoUrl(vereinId)).thenReturn(Optional.of("/medien/v"));
 
@@ -139,6 +140,7 @@ class EngagementServiceTest {
         // Org-Typ steuert die Rollen-Auflösung in EngagementView.von:
         // Vereins-Slugs → VEREIN, Marken (Sponsoren) → UNTERNEHMEN.
         org.setTyp(slug.startsWith("verein") ? OrgTyp.VEREIN : OrgTyp.UNTERNEHMEN);
+        org.setStatus(OrgStatus.ACTIVE);
         return org;
     }
 

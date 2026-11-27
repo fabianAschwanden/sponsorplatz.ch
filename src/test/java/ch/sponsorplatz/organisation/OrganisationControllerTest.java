@@ -139,6 +139,7 @@ class OrganisationControllerTest {
     @WithMockUser
     void detailWirdAngezeigt() throws Exception {
         Organisation org = testOrg();
+        when(accessControl.kannOrgSehenNachSlug(eq("fc-test"), any())).thenReturn(true);
         when(service.findeViewNachSlug("fc-test")).thenReturn(Optional.of(OrganisationView.von(org)));
 
         mockMvc.perform(get("/organisationen/fc-test"))
@@ -308,7 +309,9 @@ class OrganisationControllerTest {
         sub.setRegistriertAm(Instant.now());
 
         when(service.findeViewNachSlug("tochter")).thenReturn(Optional.of(OrganisationView.von(tochter)));
-        when(service.findeUntergeordneteViews(tochter.getId())).thenReturn(List.of(OrganisationView.von(sub)));
+        when(accessControl.kannOrgSehenNachSlug(eq("tochter"), any())).thenReturn(true);
+        when(service.findeOeffentlicheUntergeordneteViews(tochter.getId()))
+                .thenReturn(List.of(OrganisationView.von(sub)));
         when(hierarchieService.findeElternketteNachSlug("tochter")).thenReturn(List.of(
                 new OrgHierarchieService.BrotkrumenEintrag("Konzern AG", "konzern-ag"),
                 new OrgHierarchieService.BrotkrumenEintrag("Tochter GmbH", "tochter")

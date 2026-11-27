@@ -181,7 +181,7 @@ class MarktplatzControllerTest {
     @Test
     void detailSeite() throws Exception {
         ProjektView view = testProjektView();
-        when(projektService.findeViewNachSlugOderWirf("sommerfest")).thenReturn(view);
+        when(projektService.findeOeffentlicheViewNachSlugOderWirf("sommerfest")).thenReturn(view);
         when(paketService.findeAktiveViewsNachProjekt(view.id())).thenReturn(List.of());
         when(medienAssetService.findeAnhaengeViews(EntityTyp.PROJEKT, view.id())).thenReturn(List.of());
         when(medienAssetService.findeGalerieViews(EntityTyp.PROJEKT, view.id())).thenReturn(List.of());
@@ -204,7 +204,7 @@ class MarktplatzControllerTest {
         UUID galerieId = UUID.randomUUID();
         UUID anhangId = UUID.randomUUID();
 
-        when(projektService.findeViewNachSlugOderWirf("sommerfest")).thenReturn(view);
+        when(projektService.findeOeffentlicheViewNachSlugOderWirf("sommerfest")).thenReturn(view);
         when(paketService.findeAktiveViewsNachProjekt(view.id())).thenReturn(List.of());
         when(medienAssetService.findeCoverUrl(EntityTyp.PROJEKT, view.id()))
                 .thenReturn(Optional.of("/medien/" + coverId));

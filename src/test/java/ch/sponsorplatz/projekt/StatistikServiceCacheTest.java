@@ -2,6 +2,7 @@ package ch.sponsorplatz.projekt;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,14 +71,16 @@ class StatistikServiceCacheTest {
     @Test
     @DisplayName("MARK-07b: zweiter Aufruf anzahlAktiveProjekte trifft Repo nicht")
     void anzahlAktiveProjekteCachedZweitenAufruf() {
-        when(projektRepository.countBySichtbarkeit(Sichtbarkeit.OEFFENTLICH)).thenReturn(7L);
+        when(projektRepository.countOeffentlicheNachSichtbarkeit(
+                eq(Sichtbarkeit.OEFFENTLICH), any())).thenReturn(7L);
 
         long erst = statistikService.anzahlAktiveProjekte();
         long zweit = statistikService.anzahlAktiveProjekte();
 
         assertThat(erst).isEqualTo(7L);
         assertThat(zweit).isEqualTo(7L);
-        verify(projektRepository, times(1)).countBySichtbarkeit(Sichtbarkeit.OEFFENTLICH);
+        verify(projektRepository, times(1)).countOeffentlicheNachSichtbarkeit(
+                eq(Sichtbarkeit.OEFFENTLICH), any());
     }
 
     @Test

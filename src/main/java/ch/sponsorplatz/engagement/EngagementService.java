@@ -7,6 +7,7 @@ import ch.sponsorplatz.organisation.Branche;
 import ch.sponsorplatz.organisation.Kanton;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.shared.exception.NotFoundException;
 import ch.sponsorplatz.shared.medien.OrganisationLogoLookup;
 import org.springframework.data.domain.PageRequest;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -51,7 +53,7 @@ public class EngagementService {
      */
     public StartseitenTeaser findeStartseitenEngagements(String kantonCode, int anzahl) {
         List<EngagementView> kandidaten = mitLogos(anfrageRepository.findNeuesteNachStatus(
-                AnfrageStatus.ANGENOMMEN, PageRequest.of(0, TEASER_KANDIDATEN)));
+                AnfrageStatus.ANGENOMMEN, oeffentlicheOrgStati(), PageRequest.of(0, TEASER_KANDIDATEN)));
 
         List<Kanton> verfuegbareKantone = kandidaten.stream()
                 .map(EngagementView::kanton)
@@ -101,10 +103,17 @@ public class EngagementService {
     public SchaufensterAnsicht findeSchaufenster(String slug, String kantonCode, Branche branche) {
         Organisation org = orgRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Organisation nicht gefunden: " + slug));
+        if (!org.getStatus().istSichtbar()) {
+            throw new NotFoundException("Organisation nicht gefunden: " + slug);
+        }
         List<EngagementView> alle = mitLogos(
                 anfrageRepository.findByAnfragenderOrgIdAndStatusOrderByCreatedAtDesc(
-                        org.getId(), AnfrageStatus.ANGENOMMEN));
+                        org.getId(), AnfrageStatus.ANGENOMMEN, oeffentlicheOrgStati()));
         String logoUrl = logoLookup.findeLogoUrl(org.getId()).orElse(null);
         return SchaufensterAnsicht.erstelle(org.getName(), slug, logoUrl, alle, kantonCode, branche);
+    }
+
+    private Set<OrgStatus> oeffentlicheOrgStati() {
+        return OrgStatus.SICHTBAR;
     }
 }

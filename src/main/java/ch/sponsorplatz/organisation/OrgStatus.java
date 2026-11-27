@@ -1,5 +1,7 @@
 package ch.sponsorplatz.organisation;
 
+import java.util.Set;
+
 /**
  * Status einer Organisation im Plattform-Lebenszyklus.
  *
@@ -16,5 +18,11 @@ public enum OrgStatus {
     /** Aktiv genutzt, im Marktplatz sichtbar. */
     ACTIVE,
     /** Temporär gesperrt durch Plattform-Admin / Moderator. */
-    SUSPENDED
+    SUSPENDED;
+
+    public static final Set<OrgStatus> SICHTBAR = Set.of(VERIFIED, ACTIVE);
+
+    public boolean istSichtbar() {
+        return SICHTBAR.contains(this);
+    }
 }

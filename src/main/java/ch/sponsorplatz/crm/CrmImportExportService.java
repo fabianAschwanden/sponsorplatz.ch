@@ -1,6 +1,7 @@
 package ch.sponsorplatz.crm;
 
 import ch.sponsorplatz.organisation.AccessControl;
+import ch.sponsorplatz.organisation.OrgStatus;
 import ch.sponsorplatz.organisation.OrgTyp;
 import ch.sponsorplatz.organisation.Organisation;
 import ch.sponsorplatz.organisation.OrganisationRepository;
@@ -31,7 +32,6 @@ public class CrmImportExportService {
 
     static final String HEADER = "verein_slug;verein_name;status;tier;pipeline_stage;forecast_chf;notiz";
     private static final String BOM = "﻿";
-
     /** Ergebnis eines Imports — Anzahl erstellt/aktualisiert + Fehlermeldungen je Zeile. */
     public record ImportErgebnis(int erstellt, int aktualisiert, List<String> fehler) {
         public int total() {
@@ -59,7 +59,8 @@ public class CrmImportExportService {
     public byte[] exportiere(UUID sponsorOrgId, Authentication auth) {
         pruefeZugriff(sponsorOrgId, auth);
         StringBuilder sb = new StringBuilder(BOM).append(HEADER).append("\r\n");
-        for (SponsorAccount a : accountRepository.findByBesitzerSponsorOrgIdOrderByErstelltAmDesc(sponsorOrgId)) {
+        for (SponsorAccount a : accountRepository.findeOeffentlicheFuerSponsor(
+                sponsorOrgId, OrgStatus.SICHTBAR)) {
             sb.append(Csv.zeile(List.of(
                     a.getVerein().getSlug(),
                     a.getVerein().getName(),
@@ -120,6 +121,9 @@ public class CrmImportExportService {
                 .orElseThrow(() -> new ImportZeilenFehler("Verein nicht gefunden: " + slug));
         if (verein.getTyp() != OrgTyp.VEREIN) {
             throw new ImportZeilenFehler("Organisation ist kein Verein: " + slug);
+        }
+        if (verein.getStatus() == null || !verein.getStatus().istSichtbar()) {
+            throw new ImportZeilenFehler("Verein nicht gefunden: " + slug);
         }
 
         Optional<SponsorAccount> bestehend =
