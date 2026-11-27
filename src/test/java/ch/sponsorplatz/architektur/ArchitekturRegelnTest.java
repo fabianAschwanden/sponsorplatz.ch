@@ -113,6 +113,7 @@ class ArchitekturRegelnTest {
                     "ch.sponsorplatz.organisation..",
                     "ch.sponsorplatz.pilotanfrage..",
                     "ch.sponsorplatz.projekt..",
+                    "ch.sponsorplatz.region..",
                     "ch.sponsorplatz.seed..",
                     "ch.sponsorplatz.shared..")
             .because("ARCH-04: @Service-Klassen gehören in einen Feature-Folder oder nach shared/");
@@ -167,7 +168,8 @@ class ArchitekturRegelnTest {
                     "ch.sponsorplatz.ops..",
                     "ch.sponsorplatz.organisation..",
                     "ch.sponsorplatz.pilotanfrage..",
-                    "ch.sponsorplatz.projekt..")
+                    "ch.sponsorplatz.projekt..",
+                    "ch.sponsorplatz.region..")
             .because("ARCH-07: shared/ ist Querschnitt — kennt Features NIE, Features kennen shared/ JA");
 
     // =========================================================================

@@ -10,7 +10,6 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("dev")
 class PlatformApplicationTests {
-
     @Test
     void contextLaedt() {
         // Wenn diese Methode ohne Exception durchläuft, ist der Context oben.

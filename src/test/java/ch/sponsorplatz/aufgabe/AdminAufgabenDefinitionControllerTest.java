@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(controllers = AdminAufgabenDefinitionController.class)
 @Import(SecurityConfig.class)
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 class AdminAufgabenDefinitionControllerTest {
 
     @Autowired private MockMvc mockMvc;

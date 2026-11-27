@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 class MeineAnfragenRenderTest {
 
     @Autowired private MockMvc mockMvc;

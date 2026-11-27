@@ -64,7 +64,8 @@
                   th:if="${badgeAnfragen != null and badgeAnfragen > 0}"
                   th:text="${badgeAnfragen}">3</span>
         </a>
-        <a sec:authorize="isAuthenticated()" th:href="@{/vertraege-rechnungen}" class="dash-nav-item"
+        <a sec:authorize="isAuthenticated()" th:if="${vertragAktiv and rechnungAktiv}"
+           th:href="@{/vertraege-rechnungen}" class="dash-nav-item"
            th:classappend="${aktiv == 'vertraege-rechnungen'} ? 'aktiv'">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
@@ -99,7 +100,8 @@
             </svg>
             <span th:text="#{sidebar.statistiken}">Statistiken</span>
         </a>
-        <a sec:authorize="isAuthenticated()" th:href="@{/aufgaben}" class="dash-nav-item"
+        <a sec:authorize="isAuthenticated()" th:if="${aufgabenAktiv}"
+           th:href="@{/aufgaben}" class="dash-nav-item"
            th:classappend="${aktiv == 'aufgaben'} ? 'aktiv'">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9 11 12 14 22 4"/>
@@ -140,7 +142,11 @@
                 </svg>
                 <span th:text="#{sidebar.adminBacklog}">Backlog</span>
             </a>
-            <a th:href="@{/admin/aufgaben-definitionen}" class="dash-nav-item"
+            <a th:href="@{/admin/regionen}" class="dash-nav-item"
+               th:classappend="${aktiv == 'admin-regionen'} ? 'aktiv'">
+                <span th:text="#{sidebar.adminRegionen}">Regionen</span>
+            </a>
+            <a th:if="${aufgabenAktiv}" th:href="@{/admin/aufgaben-definitionen}" class="dash-nav-item"
                th:classappend="${aktiv == 'admin-aufgaben'} ? 'aktiv'">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 4h6v6"/>
@@ -159,7 +165,7 @@
                 </svg>
                 <span th:text="#{sidebar.adminStyle}">Plattform-Style</span>
             </a>
-            <a th:href="@{/admin/payment-einstellungen}" class="dash-nav-item"
+            <a th:if="${zahlungAktiv}" th:href="@{/admin/payment-einstellungen}" class="dash-nav-item"
                th:classappend="${aktiv == 'admin-payment'} ? 'aktiv'">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="2" y="5" width="20" height="14" rx="2"/>

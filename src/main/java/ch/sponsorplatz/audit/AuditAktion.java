@@ -45,6 +45,11 @@ public final class AuditAktion {
     public static final String RECHNUNG_STORNIERT = "RECHNUNG_STORNIERT";
     public static final String RECHNUNG_MAHNUNG_VERSENDET = "RECHNUNG_MAHNUNG_VERSENDET";
     public static final String RECHNUNG_PDF_HERUNTERGELADEN = "RECHNUNG_PDF_HERUNTERGELADEN";
+    public static final String REGION_ANGELEGT = "REGION_ANGELEGT";
+    public static final String REGION_UMBENANNT = "REGION_UMBENANNT";
+    public static final String REGION_PLZ_GEAENDERT = "REGION_PLZ_GEAENDERT";
+    public static final String REGION_STUFE_FREIGESCHALTET = "REGION_STUFE_FREIGESCHALTET";
+    public static final String REGION_STUFE_ABGESCHALTET = "REGION_STUFE_ABGESCHALTET";
 
     private AuditAktion() {}
 }

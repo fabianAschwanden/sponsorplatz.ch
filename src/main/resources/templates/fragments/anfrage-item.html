@@ -34,7 +34,7 @@
         <span th:text="${a.antwort}">Antwort</span>
     </div>
     <!-- Angenommene Kontakt-Anfrage: Vertrag-Folgeschritt weiterhin möglich -->
-    <div th:if="${a.status.name() == 'ANGENOMMEN' and !a.istPaketAnfrage()}" class="anf-aktionen">
+    <div th:if="${a.status.name() == 'ANGENOMMEN' and !a.istPaketAnfrage() and vertragAktiv}" class="anf-aktionen">
         <form th:action="@{'/organisationen/' + ${a.vereinSlug()} + '/anfragen/' + ${a.id} + '/vertrag/erstellen'}"
               method="post" style="display:inline;">
             <button type="submit" class="btn anf-action-btn"

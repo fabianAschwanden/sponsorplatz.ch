@@ -37,7 +37,7 @@ import ch.sponsorplatz.shared.exception.NotFoundException;
  */
 @WebMvcTest(controllers = PaymentWebhookController.class)
 @Import(SecurityConfig.class)
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 class PaymentWebhookControllerTest {
 
     @Autowired
@@ -69,6 +69,21 @@ class PaymentWebhookControllerTest {
                 .content("{\"transaktionsId\":\"x\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("error"));
+    }
+
+    @Test
+    @DisplayName("Kodierter Pfad erreicht den Controller bei aktiviertem Schalter")
+    void kodierterPfadErreichtControllerBeiAktiviertemSchalter() throws Exception {
+        when(paymentService.findeProviderOrNull("stub")).thenReturn(stubProvider(false));
+
+        mockMvc.perform(post("/payment/webhook/stub")
+                .with(request -> {
+                    request.setRequestURI("/p%61yment/webhook/stub");
+                    return request;
+                })
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"transaktionsId\":\"x\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

@@ -11,6 +11,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -80,17 +81,42 @@ public class SecurityConfig {
     }
 
     @Bean
+    public FunktionSchalter funktionSchalter(
+            @Value("${sponsorplatz.funktion.zahlung:false}") boolean zahlung,
+            @Value("${sponsorplatz.funktion.vertrag:false}") boolean vertrag,
+            @Value("${sponsorplatz.funktion.rechnung:false}") boolean rechnung,
+            @Value("${sponsorplatz.funktion.aufgaben:false}") boolean aufgaben,
+            @Value("${sponsorplatz.funktion.matching:false}") boolean matching) {
+        return new FunktionSchalter(zahlung, vertrag, rechnung, aufgaben, matching);
+    }
+
+    @Bean
+    public FunktionSchalterInterceptor funktionSchalterInterceptor(FunktionSchalter schalter) {
+        return new FunktionSchalterInterceptor(schalter);
+    }
+
+    @Bean
+    public WebSecurityCustomizer doppelteSchraegstricheVerbergen() {
+        return web -> web.requestRejectedHandler((request, response, exception) ->
+                response.sendError(request.getRequestURI().contains("//")
+                        ? jakarta.servlet.http.HttpServletResponse.SC_NOT_FOUND
+                        : jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST));
+    }
+
+    @Bean
     @Profile("dev")
     public SecurityFilterChain devFilterChain(HttpSecurity http,
             RateLimitFilter rateLimitFilter,
             LoginSperreFilter loginSperreFilter,
             LoginFailureHandler loginFailureHandler,
+            FunktionSchalter funktionSchalter,
             AuthenticationSuccessHandler loginSuccessHandler,
             ApiKeyFilter apiKeyFilter,
             ObjectProvider<ClientRegistrationRepository> oauth2Clients,
             ObjectProvider<OAuth2UserService<OidcUserRequest, OidcUser>> oidcUserService) throws Exception {
         http
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
+                    auth
                         // Öffentlich für anonyme Besucher: Home, Pilot-/Kontakt-Formular + Auth-Flows.
                         // Marktplatz, Vereine, Marken-Landing, Org-Listing, Sponsor-Self-Reg
                         // erfordern jetzt Login — die /kontakt-Seite ist der einzige Anfrage-Funnel.
@@ -120,8 +146,28 @@ public class SecurityConfig {
                         // hier nicht permitAll wäre, würde die Security-Chain den Forward
                         // wieder umleiten — Validierungsfehler (400) auf der API würden
                         // als 302 → /login auftauchen statt sauberer 400-Status.
-                        .requestMatchers("/error").permitAll()
-                        .anyRequest().authenticated())
+                        .requestMatchers("/error").permitAll();
+                    if (!funktionSchalter.zahlung()) {
+                        auth.requestMatchers("/admin/payment-einstellungen", "/admin/payment-einstellungen/**",
+                                "/organisationen/*/rechnungen/*/checkout").permitAll();
+                    }
+                    if (!funktionSchalter.vertrag()) {
+                        auth.requestMatchers("/organisationen/*/vertraege/**",
+                                "/organisationen/*/anfragen/*/vertrag/**").permitAll();
+                    }
+                    if (!funktionSchalter.rechnung()) {
+                        auth.requestMatchers("/organisationen/*/rechnungen/**",
+                                "/organisationen/*/vertraege/*/rechnung/**").permitAll();
+                    }
+                    if (!funktionSchalter.vertrag() || !funktionSchalter.rechnung()) {
+                        auth.requestMatchers("/vertraege-rechnungen").permitAll();
+                    }
+                    if (!funktionSchalter.aufgaben()) {
+                        auth.requestMatchers("/aufgaben", "/aufgaben/**",
+                                "/admin/aufgaben-definitionen", "/admin/aufgaben-definitionen/**").permitAll();
+                    }
+                    auth.anyRequest().authenticated();
+                })
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler(loginSuccessHandler)
@@ -176,12 +222,14 @@ public class SecurityConfig {
             RateLimitFilter rateLimitFilter,
             LoginSperreFilter loginSperreFilter,
             LoginFailureHandler loginFailureHandler,
+            FunktionSchalter funktionSchalter,
             AuthenticationSuccessHandler loginSuccessHandler,
             ApiKeyFilter apiKeyFilter,
             ObjectProvider<ClientRegistrationRepository> oauth2Clients,
             ObjectProvider<OAuth2UserService<OidcUserRequest, OidcUser>> oidcUserService) throws Exception {
         http
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
+                    auth
                         // Öffentlich für anonyme Besucher: Home, Pilot-/Kontakt-Formular + Auth-Flows.
                         // Marktplatz, Vereine, Marken-Landing, Org-Listing, Sponsor-Self-Reg
                         // erfordern jetzt Login — die /kontakt-Seite ist der einzige Anfrage-Funnel.
@@ -220,8 +268,28 @@ public class SecurityConfig {
                         // REST-API: permitAll auf HTTP-Ebene, ApiKeyFilter prüft X-API-Key
                         .requestMatchers("/api/**").permitAll()
                         // Spring-Boot-Error-Dispatch — siehe dev-Chain für die Begründung.
-                        .requestMatchers("/error").permitAll()
-                        .anyRequest().authenticated())
+                        .requestMatchers("/error").permitAll();
+                    if (!funktionSchalter.zahlung()) {
+                        auth.requestMatchers("/admin/payment-einstellungen", "/admin/payment-einstellungen/**",
+                                "/organisationen/*/rechnungen/*/checkout").permitAll();
+                    }
+                    if (!funktionSchalter.vertrag()) {
+                        auth.requestMatchers("/organisationen/*/vertraege/**",
+                                "/organisationen/*/anfragen/*/vertrag/**").permitAll();
+                    }
+                    if (!funktionSchalter.rechnung()) {
+                        auth.requestMatchers("/organisationen/*/rechnungen/**",
+                                "/organisationen/*/vertraege/*/rechnung/**").permitAll();
+                    }
+                    if (!funktionSchalter.vertrag() || !funktionSchalter.rechnung()) {
+                        auth.requestMatchers("/vertraege-rechnungen").permitAll();
+                    }
+                    if (!funktionSchalter.aufgaben()) {
+                        auth.requestMatchers("/aufgaben", "/aufgaben/**",
+                                "/admin/aufgaben-definitionen", "/admin/aufgaben-definitionen/**").permitAll();
+                    }
+                    auth.anyRequest().authenticated();
+                })
                 .formLogin(form -> form
                         .loginPage("/login")
                         .successHandler(loginSuccessHandler)

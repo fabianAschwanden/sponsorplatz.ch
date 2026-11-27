@@ -2,6 +2,8 @@ package ch.sponsorplatz.anfrage.payment;
 
 import ch.sponsorplatz.anfrage.RechnungService;
 
+import ch.sponsorplatz.shared.config.Funktion;
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import ch.sponsorplatz.shared.exception.NotFoundException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +36,7 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/payment/webhook")
+@Funktion(FunktionSchalter.Bereich.ZAHLUNG)
 public class PaymentWebhookController {
 
     private static final Logger log = LoggerFactory.getLogger(PaymentWebhookController.class);

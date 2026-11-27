@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Test-IDs: AUFG-BADGE-INT-01..02.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 class AufgabenBadgeAdviceIntegrationTest {
 
     @Autowired

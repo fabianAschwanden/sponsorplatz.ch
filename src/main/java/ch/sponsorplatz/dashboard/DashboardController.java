@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import ch.sponsorplatz.shared.config.ModelAttributeNames;
 import ch.sponsorplatz.aufgabe.AufgabenService;
 import ch.sponsorplatz.benutzer.AppUserService;
@@ -45,6 +46,7 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
     private final DashboardChartService dashboardChartService;
+    private final FunktionSchalter funktionSchalter;
     private final MatchingService matchingService;
     private final ProjektService projektService;
     private final AppUserService appUserService;
@@ -54,6 +56,7 @@ public class DashboardController {
 
     public DashboardController(DashboardService dashboardService,
             DashboardChartService dashboardChartService,
+            FunktionSchalter funktionSchalter,
             MatchingService matchingService,
             ProjektService projektService,
             AppUserService appUserService,
@@ -62,6 +65,7 @@ public class DashboardController {
             AufgabenService aufgabenService) {
         this.dashboardService = dashboardService;
         this.dashboardChartService = dashboardChartService;
+        this.funktionSchalter = funktionSchalter;
         this.matchingService = matchingService;
         this.projektService = projektService;
         this.appUserService = appUserService;
@@ -120,9 +124,10 @@ public class DashboardController {
         model.addAttribute("meineProjekte", meineProjekte);
 
         // Matching-Empfehlungen
-        List<ProjektView> empfehlungen = snapshot
-                .map(s -> matchingService.findeEmpfehlungenAlsViews(s.userId()))
-                .orElse(List.of());
+        List<ProjektView> empfehlungen = List.of();
+        if (funktionSchalter.matching() && snapshot.isPresent()) {
+            empfehlungen = matchingService.findeEmpfehlungenAlsViews(snapshot.get().userId());
+        }
         model.addAttribute("empfehlungen", empfehlungen);
 
         // Offene Einladungen für die angemeldete E-Mail — frisch registrierte

@@ -78,6 +78,23 @@ public class E2EFixtures {
                   organisation, app_user
                 RESTART IDENTITY CASCADE
                 """).executeUpdate();
+        em.createNativeQuery("""
+                INSERT INTO region (id, code, name)
+                VALUES ('00000000-0000-4000-8000-000000000001', 'pilot', 'Pilot')
+                ON CONFLICT (id) DO NOTHING
+                """).executeUpdate();
+        em.createNativeQuery("""
+                INSERT INTO region_plz (id, region_id, plz_von, plz_bis)
+                VALUES ('00000000-0000-4000-8000-000000000002',
+                        '00000000-0000-4000-8000-000000000001', 1000, 9999)
+                ON CONFLICT (id) DO NOTHING
+                """).executeUpdate();
+        em.createNativeQuery("""
+                INSERT INTO region_freischaltung (region_id, stufe, freigeschaltet_am)
+                VALUES ('00000000-0000-4000-8000-000000000001',
+                        'ANGEBOT_UND_VORTEILE', CURRENT_TIMESTAMP)
+                ON CONFLICT (region_id, stufe) DO NOTHING
+                """).executeUpdate();
     }
 
     /**

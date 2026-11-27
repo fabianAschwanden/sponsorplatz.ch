@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Verifiziert AUFG-BADGE-INT-04..05.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 @Transactional
 class AufgabenBadgeAdviceRealDataTest {
 
