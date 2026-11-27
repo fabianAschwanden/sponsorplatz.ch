@@ -10,7 +10,7 @@ Stand: vor dem ersten Deploy. Abschnitte mit dem Vermerk «noch offen» beschrei
 | --- | --- |
 | Dienste | `app` (Spring Boot, uid 1001, nur lesbar) und `db` (PostgreSQL 17, nur im internen Netz) |
 | Volumes | `db` (Daten von PostgreSQL), `daten` (unter `/daten`: `medien/` und `sicherung/`) |
-| Geheimnisse | je eine Datei unter `/run/secrets/`: `db_password`, `smtp_password`, `admin_password` |
+| Geheimnisse | je eine Datei unter `/run/secrets/`: `db_password`, `smtp_password`, `admin_password`, `drossel_schluessel` |
 | Prüfpfad | `/livez` auf dem Anwendungs-Port, ohne Anmeldung. Actuator liegt auf Port 9090 und ist von aussen nicht erreichbar |
 | Speicherbudget | `app` 768 MiB, `db` 256 MiB, zusammen 1.0 CPU |
 | Vorschau | Basic-Auth und `noindex` am Reverse-Proxy, solange `SITE_MODE` nicht `oeffentlich` ist |
@@ -68,6 +68,7 @@ Der Workflow prüft die Form jedes Werts, bevor er etwas an den Server schickt (
 | Secret | `DB_PASSWORD` | 24 bis 128 Zeichen aus Buchstaben, Ziffern, Unterstrich, Punkt und Bindestrich |
 | Secret | `PREVIEW_PASSWORD` | mindestens 12 Zeichen, ohne Anführungszeichen und Rückstrich |
 | Secret | `ADMIN_PASSWORD` | mindestens 16 Zeichen; nötig, sobald `SPONSORPLATZ_ADMIN_EMAIL` gesetzt ist |
+| Secret | `DROSSEL_SCHLUESSEL` | Pflicht, 32 bis 128 Zeichen aus Buchstaben und Ziffern (`openssl rand -hex 32`); Schlüssel für den Prüfwert der Client-Adresse in der Drosselung der öffentlichen Formulare |
 | Secret | `SMTP_PASSWORD` | nötig, sobald `SMTP_HOST` gesetzt ist |
 
 | Geheimnis | Wechsel |
@@ -75,6 +76,7 @@ Der Workflow prüft die Form jedes Werts, bevor er etwas an den Server schickt (
 | `PREVIEW_PASSWORD` | Secret neu setzen, Deploy auslösen. Wirkt sofort |
 | `SMTP_PASSWORD` | zuerst im Postfach ändern, dann Secret setzen und deployen |
 | `ADMIN_PASSWORD` | wirkt nur beim ersten Start ohne Verwaltungszugang. Später ändert die Person ihr Passwort in der Anwendung |
+| `DROSSEL_SCHLUESSEL` | jederzeit: Secret setzen, deployen. Die Zähler der laufenden Stunde beginnen dann neu |
 | `DB_PASSWORD` | **nicht allein über das Secret.** PostgreSQL übernimmt das Passwort nur beim Anlegen der Datenbank. Wechsel: Passwort in der Datenbank ändern (`ALTER ROLE`), dann Secret setzen und deployen. Noch offen: als erprobter Ablauf beschreiben |
 | Deploy-Key | neuen Key im Infra-Repo eintragen und ausrollen, dann `INFOMANIAK_SSH_KEY` setzen |
 

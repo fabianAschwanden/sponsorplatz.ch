@@ -56,6 +56,8 @@ services:
       - db_password
       - smtp_password
       - admin_password
+      # HMAC-Schlüssel der Formular-Drosselung (Spec 03, 14.2); ohne ihn startet prod nicht
+      - drossel_schluessel
     networks:
       intern: {}
       web: {}
@@ -157,6 +159,8 @@ secrets:
     file: ./secrets/smtp_password
   admin_password:
     file: ./secrets/admin_password
+  drossel_schluessel:
+    file: ./secrets/drossel_schluessel
 
 volumes:
   # PostgreSQL-Daten
