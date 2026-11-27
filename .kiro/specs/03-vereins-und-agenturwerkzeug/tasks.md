@@ -3,7 +3,7 @@ Aufgaben und Nummern aus dem «Umsetzungsplan Plattform auf Infomaniak (v1)», K
 Nachweis wie in Spec 01, `tasks.md`.
 
 ## Welle 2 — Webseite in die Plattform (Anteil dieser Spec)
-- [ ] 2.3 Stylesheet, Schrift und Fragment der öffentlichen Seiten [Frontend]
+- [x] 2.3 Stylesheet, Schrift und Fragment der öffentlichen Seiten [Frontend]
   - Gemeinsames Stylesheet, Schrift lokal, Fragment mit Kopf, Fuss und Farbschema.
   - _Anforderungen: 16.3_
 
