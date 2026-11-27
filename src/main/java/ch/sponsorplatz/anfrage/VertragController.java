@@ -29,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import ch.sponsorplatz.organisation.AccessControl;
+import ch.sponsorplatz.shared.config.Funktion;
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import ch.sponsorplatz.shared.exception.NotFoundException;
 import ch.sponsorplatz.shared.pdf.PdfGeneratorService;
 import ch.sponsorplatz.shared.storage.StorageObjectNotFoundException;
@@ -39,6 +41,7 @@ import ch.sponsorplatz.shared.storage.StorageService;
  */
 @Controller
 @RequestMapping("/organisationen/{slug}")
+@Funktion(FunktionSchalter.Bereich.VERTRAG)
 public class VertragController {
 
     private static final DateTimeFormatter DATEINAME_TS = DateTimeFormatter.ofPattern("yyyy-MM-dd");

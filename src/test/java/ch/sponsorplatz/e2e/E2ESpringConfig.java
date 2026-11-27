@@ -29,7 +29,7 @@ import ch.sponsorplatz.home.OeffentlicheTestSecurityConfig;
  */
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles({"dev", "e2e"})
+@ActiveProfiles({"dev", "e2e", "funktionen-an"})
 @Testcontainers
 @AutoConfigureMockMvc
 @Import({E2EPlaywrightConfig.class, E2EMailCaptureConfig.class,

@@ -1,5 +1,7 @@
 package ch.sponsorplatz.aufgabe;
 
+import ch.sponsorplatz.shared.config.Funktion;
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import ch.sponsorplatz.shared.config.ModelAttributeNames;
 import ch.sponsorplatz.shared.util.ListenSeite;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +25,7 @@ import java.util.UUID;
  * separat über {@link AufgabenEngine}.
  */
 @Controller
+@Funktion(FunktionSchalter.Bereich.AUFGABEN)
 public class AufgabenController {
 
     private final AufgabenService aufgabenService;

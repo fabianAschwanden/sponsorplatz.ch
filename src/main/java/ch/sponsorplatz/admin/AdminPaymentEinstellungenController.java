@@ -2,6 +2,8 @@ package ch.sponsorplatz.admin;
 
 import ch.sponsorplatz.shared.einstellungen.PaymentModus;
 import ch.sponsorplatz.shared.einstellungen.PlattformEinstellungenService;
+import ch.sponsorplatz.shared.config.Funktion;
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,6 +22,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/admin/payment-einstellungen")
 @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+@Funktion(FunktionSchalter.Bereich.ZAHLUNG)
 public class AdminPaymentEinstellungenController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminPaymentEinstellungenController.class);

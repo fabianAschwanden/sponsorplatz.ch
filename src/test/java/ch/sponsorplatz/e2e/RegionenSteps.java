@@ -8,11 +8,15 @@ import ch.sponsorplatz.region.application.RegionVerwaltung;
 import ch.sponsorplatz.region.application.StufenPruefung;
 import ch.sponsorplatz.region.domain.Stufe;
 import ch.sponsorplatz.shared.config.FunktionSchalter;
-import ch.sponsorplatz.shared.config.FunktionSchalterFilter;
+import ch.sponsorplatz.shared.config.FunktionSchalterInterceptor;
 import io.cucumber.java.de.Angenommen;
 import io.cucumber.java.de.Dann;
 import io.cucumber.java.de.Wenn;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.util.List;
 import java.util.UUID;
@@ -43,6 +47,9 @@ public class RegionenSteps {
     private StufenPruefung stufenPruefung;
     @Autowired
     private AppUserRepository benutzer;
+    @Autowired
+    @Qualifier("requestMappingHandlerMapping")
+    private RequestMappingHandlerMapping handlerMapping;
 
     private UUID adminId;
     private UUID regionId;
@@ -117,12 +124,12 @@ public class RegionenSteps {
 
     @Wenn("ich alle Zahlungsrouten bei ausgeschalteter Zahlung prüfe")
     public void pruefeZahlungsrouten() throws Exception {
-        routenStatus = pruefeRouten(ZAHLUNGSROUTEN, new FunktionSchalter(false, false, false, false, false));
+        routenStatus = pruefeRouten(ZAHLUNGSROUTEN);
     }
 
     @Wenn("ich Routen für Zahlung Vertrag Rechnung Aufgaben und Matching prüfe")
     public void pruefeFunktionsrouten() throws Exception {
-        routenStatus = pruefeRouten(FUNKTIONSROUTEN, new FunktionSchalter(false, false, false, false, false));
+        routenStatus = pruefeRouten(FUNKTIONSROUTEN);
     }
 
     @Dann("antworten alle Zahlungsrouten mit 404")
@@ -142,15 +149,22 @@ public class RegionenSteps {
         return adminId;
     }
 
-    private List<Integer> pruefeRouten(List<String> routen, FunktionSchalter schalter) throws Exception {
-        FunktionSchalterFilter filter = new FunktionSchalterFilter(schalter);
+    private List<Integer> pruefeRouten(List<String> routen) {
+        FunktionSchalterInterceptor interceptor = new FunktionSchalterInterceptor(
+                new FunktionSchalter(false, false, false, false, false));
         return routen.stream().map(pfad -> {
             try {
-                var request = new org.springframework.mock.web.MockHttpServletRequest("GET", pfad);
-                request.setRequestURI(pfad);
-                var response = new org.springframework.mock.web.MockHttpServletResponse();
-                filter.doFilter(request, response, new org.springframework.mock.web.MockFilterChain());
-                return response.getStatus();
+                String methode = pfad.contains("/payment/webhook/")
+                        || pfad.contains("/rechnung/erstellen") ? "POST" : "GET";
+                MockHttpServletRequest request = new MockHttpServletRequest(methode, pfad);
+                var handler = handlerMapping.getHandler(request);
+                if (handler == null) {
+                    return 404;
+                }
+                MockHttpServletResponse response = new MockHttpServletResponse();
+                return interceptor.preHandle(request, response, handler.getHandler())
+                        ? 200
+                        : response.getStatus();
             } catch (Exception ex) {
                 throw new IllegalStateException("Funktionsroute konnte nicht geprüft werden.", ex);
             }

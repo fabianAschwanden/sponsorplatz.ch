@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -115,13 +116,67 @@ class RegionPostgresIT {
     }
 
     @Test
-    void abgeschalteteFunktionsroutenAntwortenVorDerAnmeldungMit404() throws Exception {
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/payment/webhook/provider"))
+    void abgeschalteteFunktionsroutenAntwortenAuchOhneAnmeldungMit404() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/payment/webhook/provider").content("{}"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/aufgaben"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/vertraege-rechnungen"))
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/admin/aufgaben-definitionen"))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/admin/payment-einstellungen"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/vertraege-rechnungen"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/organisationen/fc-test/vertraege/00000000-0000-4000-8000-000000000001"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/organisationen/fc-test/rechnungen/00000000-0000-4000-8000-000000000001"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "PLATFORM_ADMIN")
+    void kodierteUndAbweichendePfadeZuAbgeschaltetenBereichenSindNichtErreichbar() throws Exception {
+        pruefe404(
+                "/p%61yment/erfolg",
+                "//payment/erfolg",
+                "/payment/erfolg/",
+                "/PAYMENT/erfolg");
+        pruefe404(
+                "/organisationen/fc-test/ver%74raege/00000000-0000-4000-8000-000000000001",
+                "/organisationen//fc-test/vertraege/00000000-0000-4000-8000-000000000001",
+                "/organisationen/fc-test/vertraege/00000000-0000-4000-8000-000000000001/",
+                "/ORGANISATIONEN/fc-test/vertraege/00000000-0000-4000-8000-000000000001");
+        pruefe404(
+                "/organisationen/fc-test/rechn%75ngen/00000000-0000-4000-8000-000000000001",
+                "/organisationen//fc-test/rechnungen/00000000-0000-4000-8000-000000000001",
+                "/organisationen/fc-test/rechnungen/00000000-0000-4000-8000-000000000001/",
+                "/ORGANISATIONEN/fc-test/rechnungen/00000000-0000-4000-8000-000000000001");
+        pruefe404(
+                "/auf%67aben",
+                "//aufgaben",
+                "/aufgaben/",
+                "/AUFGABEN");
+    }
+
+    private void pruefe404(String... pfade) throws Exception {
+        for (String pfad : pfade) {
+            String decodedPath = java.net.URLDecoder.decode(pfad, java.nio.charset.StandardCharsets.UTF_8);
+            mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(decodedPath)
+                            .with(request -> {
+                                request.setRequestURI(pfad);
+                                return request;
+                            })
+                            .with(SecurityMockMvcRequestPostProcessors.user("test")
+                                    .roles("PLATFORM_ADMIN")))
+                    .andExpect(result -> assertThat(result.getResponse().getStatus())
+                            .as(pfad)
+                            .isEqualTo(404));
+        }
     }
 
     @Test

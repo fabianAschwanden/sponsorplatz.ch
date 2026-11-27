@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(VertraegeRechnungenController.class)
 @Import(SecurityConfig.class)
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 class VertraegeRechnungenControllerTest {
 
     @Autowired private MockMvc mockMvc;

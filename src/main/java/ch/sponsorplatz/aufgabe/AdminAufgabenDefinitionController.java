@@ -1,5 +1,7 @@
 package ch.sponsorplatz.aufgabe;
 
+import ch.sponsorplatz.shared.config.Funktion;
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import ch.sponsorplatz.shared.config.ModelAttributeNames;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,6 +32,7 @@ import java.util.UUID;
 @Controller
 @RequestMapping("/admin/aufgaben-definitionen")
 @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+@Funktion(FunktionSchalter.Bereich.AUFGABEN)
 public class AdminAufgabenDefinitionController {
 
     private final AufgabenDefinitionService service;

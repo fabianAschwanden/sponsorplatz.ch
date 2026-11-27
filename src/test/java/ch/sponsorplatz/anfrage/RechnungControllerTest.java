@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @WebMvcTest(controllers = RechnungController.class)
 @Import({SecurityConfig.class, GlobalExceptionHandler.class})
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 class RechnungControllerTest {
 
     @Autowired

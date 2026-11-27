@@ -71,7 +71,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
         properties = "server.port=18086")
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.DisplayName.class)
 class A11ySmokeIT {

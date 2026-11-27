@@ -40,7 +40,7 @@ import ch.sponsorplatz.shared.config.SecurityConfig;
 
 @WebMvcTest(controllers = DashboardController.class)
 @Import(SecurityConfig.class)
-@ActiveProfiles("dev")
+@ActiveProfiles({"dev", "funktionen-an"})
 class DashboardControllerTest {
 
     @Autowired

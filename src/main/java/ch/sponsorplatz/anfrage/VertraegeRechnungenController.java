@@ -4,6 +4,8 @@ import ch.sponsorplatz.benutzer.AppUserService;
 import ch.sponsorplatz.organisation.MitgliedschaftService;
 import ch.sponsorplatz.organisation.Rolle;
 import ch.sponsorplatz.shared.config.ModelAttributeNames;
+import ch.sponsorplatz.shared.config.Funktion;
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import ch.sponsorplatz.shared.util.ListenSeite;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -30,6 +32,7 @@ import java.util.UUID;
  */
 @Controller
 @PreAuthorize("isAuthenticated()")
+@Funktion({FunktionSchalter.Bereich.VERTRAG, FunktionSchalter.Bereich.RECHNUNG})
 public class VertraegeRechnungenController {
 
     /** Rollen mit Bearbeitungsrecht — nur diese Orgs werden aggregiert. */

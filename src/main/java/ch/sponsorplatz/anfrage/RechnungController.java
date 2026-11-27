@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import ch.sponsorplatz.organisation.AccessControl;
+import ch.sponsorplatz.shared.config.Funktion;
+import ch.sponsorplatz.shared.config.FunktionSchalter;
 import ch.sponsorplatz.shared.einstellungen.PlattformEinstellungenService;
 import ch.sponsorplatz.shared.exception.NotFoundException;
 import ch.sponsorplatz.shared.pdf.PdfGeneratorService;
@@ -43,6 +45,7 @@ import ch.sponsorplatz.shared.pdf.PdfGeneratorService;
  */
 @Controller
 @RequestMapping("/organisationen/{slug}")
+@Funktion(FunktionSchalter.Bereich.RECHNUNG)
 public class RechnungController {
 
     private final RechnungService rechnungService;
@@ -67,6 +70,7 @@ public class RechnungController {
     }
 
     @PostMapping("/vertraege/{vertragId}/rechnung/erstellen")
+    @Funktion({FunktionSchalter.Bereich.VERTRAG, FunktionSchalter.Bereich.RECHNUNG})
     public String erstellen(@PathVariable String slug,
             @PathVariable UUID vertragId,
             Authentication auth,
@@ -158,6 +162,7 @@ public class RechnungController {
      * Erstellt (oder wiederverwendet) eine Checkout-Session beim Provider.
      */
     @GetMapping("/rechnungen/{id}/checkout")
+    @Funktion({FunktionSchalter.Bereich.ZAHLUNG, FunktionSchalter.Bereich.RECHNUNG})
     public String checkout(@PathVariable String slug,
             @PathVariable UUID id,
             Authentication auth,
