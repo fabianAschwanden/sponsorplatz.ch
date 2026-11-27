@@ -64,6 +64,11 @@ Ein Zähler je Formular und Prüfwert der IP-Adresse (IPv4 ganz, IPv6 auf /64 ge
 Gesamtzähler je Formular. Einträge älter als ein Tag werden entfernt. Die Drosselung am Reverse Proxy
 (Spec 01) bleibt die äussere Schicht.
 
+Die Pilot-Anfrage und das Kontaktformular teilen die Tabelle `formular_drosselung`. Gespeichert wird ein
+HMAC-SHA256 der Client-Adresse; eine Zeilensperre je Formular serialisiert Zählung und Eintrag, damit parallele
+Anfragen das Limit nicht überschreiten. Für die Benachrichtigung dient der zweistellige PLZ-Präfix als PLZ-Kreis.
+Der HMAC-Aufruf liegt in `shared.crypto`; ARCH-23 beschränkt `javax.crypto` auf dieses Paket und den Payment-Adapter.
+
 ## Data Models
 | Tabelle | Stand | Spalten (Auszug) |
 | --- | --- | --- |

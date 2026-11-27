@@ -69,6 +69,13 @@ class ProdBetriebIT {
     }
 
     @Test
+    @DisplayName("Der Drosselungsschlüssel kommt aus der Secret-Datei")
+    void drosselungsschluesselAusDatei() {
+        assertThat(environment.getProperty("sponsorplatz.drosselung.schluessel"))
+                .isEqualTo(BetriebsUmgebung.DROSSELUNG_SCHLUESSEL);
+    }
+
+    @Test
     @DisplayName("Alle Migrationen laufen gegen PostgreSQL 17 durch")
     void migrationenLaufenDurch() {
         Integer fehlgeschlagen = jdbc.queryForObject(

@@ -49,6 +49,7 @@ class I18nLintTest {
     /** Pfade (relativ zu templates/), die das Lint NICHT prüft. */
     private static final List<String> ALLOWLIST = List.of(
             "admin/",                  // Admin-Backend deutschsprachig per Konvention
+            "pilotanfrage/",           // U3, 26.11.2026: öffentliche Pilot-Anfrage nur auf Deutsch
             "home/datenschutz.html",   // Legal-Text, juristische DE-Pflege
             "home/impressum.html",     // Legal-Text
             "fragments/oeffentlich.html", // U3, 26.11.2026: öffentliche Seiten vorerst nur deutsch

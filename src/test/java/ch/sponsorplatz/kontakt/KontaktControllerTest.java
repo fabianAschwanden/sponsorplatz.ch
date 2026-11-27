@@ -1,8 +1,10 @@
 package ch.sponsorplatz.kontakt;
 
 import ch.sponsorplatz.benutzer.SponsorplatzUserDetailsService;
+import ch.sponsorplatz.shared.config.FormularDrosselungService;
 import ch.sponsorplatz.shared.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -12,6 +14,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -36,6 +40,15 @@ class KontaktControllerTest {
 
     @MockitoBean
     private SponsorplatzUserDetailsService userDetailsService;
+
+    @MockitoBean
+    private FormularDrosselungService formularDrosselung;
+
+    @BeforeEach
+    void drosselungErlaubtEingaben() {
+        org.mockito.Mockito.when(formularDrosselung.erfasseEingabe(eq("KONTAKT"), anyString()))
+                .thenReturn(true);
+    }
 
     @Test
     @DisplayName("KONT-01: GET /kontakt ist anonym erreichbar und rendert Formular")
@@ -105,5 +118,23 @@ class KontaktControllerTest {
                         .param("betreff", "Hi")
                         .param("nachricht", "Test"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("KONT-06: Drosselung zeigt bei Überschreitung eine verständliche 429-Seite")
+    void drosselungZeigt429() throws Exception {
+        org.mockito.Mockito.when(formularDrosselung.erfasseEingabe(eq("KONTAKT"), anyString()))
+                .thenReturn(false);
+
+        mockMvc.perform(post("/kontakt")
+                        .param("name", "Max Muster")
+                        .param("email", "max@example.com")
+                        .param("betreff", "Sponsoring-Interesse")
+                        .param("nachricht", "Wir möchten mehr erfahren.")
+                        .with(csrf()))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(view().name("shared/formular-drosselung"));
+
+        verify(kontaktService, never()).verarbeite(any());
     }
 }

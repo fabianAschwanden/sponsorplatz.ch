@@ -91,13 +91,13 @@ public class SecurityConfig {
             ObjectProvider<OAuth2UserService<OidcUserRequest, OidcUser>> oidcUserService) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Öffentlich für anonyme Besucher: Home + Kontakt-Formular + Auth-Flows.
+                        // Öffentlich für anonyme Besucher: Home, Pilot-/Kontakt-Formular + Auth-Flows.
                         // Marktplatz, Vereine, Marken-Landing, Org-Listing, Sponsor-Self-Reg
                         // erfordern jetzt Login — die /kontakt-Seite ist der einzige Anfrage-Funnel.
                         .requestMatchers("/", "/css/**", "/fonts/**", "/images/**", "/js/**", "/favicon.ico", "/sitemap.xml").permitAll()
                         .requestMatchers("/plz/**").permitAll()
                         .requestMatchers("/impressum", "/datenschutz", "/agb").permitAll()
-                        .requestMatchers("/kontakt").permitAll()
+                        .requestMatchers("/kontakt", "/pilot", "/pilot/**").permitAll()
                         .requestMatchers("/login", "/login/2fa", "/registrieren", "/verifizieren").permitAll()
                         .requestMatchers("/passwort-vergessen", "/passwort-reset").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
@@ -182,13 +182,13 @@ public class SecurityConfig {
             ObjectProvider<OAuth2UserService<OidcUserRequest, OidcUser>> oidcUserService) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Öffentlich für anonyme Besucher: Home + Kontakt-Formular + Auth-Flows.
+                        // Öffentlich für anonyme Besucher: Home, Pilot-/Kontakt-Formular + Auth-Flows.
                         // Marktplatz, Vereine, Marken-Landing, Org-Listing, Sponsor-Self-Reg
                         // erfordern jetzt Login — die /kontakt-Seite ist der einzige Anfrage-Funnel.
                         .requestMatchers("/", "/css/**", "/fonts/**", "/images/**", "/js/**", "/favicon.ico", "/sitemap.xml").permitAll()
                         .requestMatchers("/plz/**").permitAll()
                         .requestMatchers("/impressum", "/datenschutz", "/agb").permitAll()
-                        .requestMatchers("/kontakt").permitAll()
+                        .requestMatchers("/kontakt", "/pilot", "/pilot/**").permitAll()
                         .requestMatchers("/login", "/login/2fa", "/registrieren", "/verifizieren").permitAll()
                         .requestMatchers("/passwort-vergessen", "/passwort-reset").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()

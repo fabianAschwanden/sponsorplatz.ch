@@ -23,6 +23,7 @@ public final class BetriebsUmgebung {
     public static final String DB_PASSWORT = "nur-in-der-datei-db";
     public static final String ADMIN_PASSWORT = "nur-in-der-datei-admin";
     public static final String ADMIN_EMAIL = "betrieb@muster.test";
+    public static final String DROSSELUNG_SCHLUESSEL = "nur-in-der-datei-drosselungsschluessel";
 
     @SuppressWarnings("resource")
     private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
@@ -38,6 +39,7 @@ public final class BetriebsUmgebung {
             DATEN = Files.createTempDirectory("sponsorplatz-daten");
             Files.writeString(secrets.resolve("db_password"), DB_PASSWORT);
             Files.writeString(secrets.resolve("admin_password"), ADMIN_PASSWORT);
+            Files.writeString(secrets.resolve("drossel_schluessel"), DROSSELUNG_SCHLUESSEL);
             System.setProperty("SECRETS_VERZEICHNIS", secrets.toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);

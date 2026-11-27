@@ -111,6 +111,7 @@ class ArchitekturRegelnTest {
                     "ch.sponsorplatz.kontakt..",
                     "ch.sponsorplatz.ops..",
                     "ch.sponsorplatz.organisation..",
+                    "ch.sponsorplatz.pilotanfrage..",
                     "ch.sponsorplatz.projekt..",
                     "ch.sponsorplatz.seed..",
                     "ch.sponsorplatz.shared..")
@@ -165,6 +166,7 @@ class ArchitekturRegelnTest {
                     "ch.sponsorplatz.kontakt..",
                     "ch.sponsorplatz.ops..",
                     "ch.sponsorplatz.organisation..",
+                    "ch.sponsorplatz.pilotanfrage..",
                     "ch.sponsorplatz.projekt..")
             .because("ARCH-07: shared/ ist Querschnitt — kennt Features NIE, Features kennen shared/ JA");
 
@@ -271,23 +273,27 @@ class ArchitekturRegelnTest {
                     + "nutzen ausschliesslich den MailVersand-Port");
 
     // =========================================================================
-    // ARCH-21 — Payment-Port: Provider-spezifische HTTP-/Krypto-Details bleiben
+    // ARCH-21 — Payment-Port: Provider-spezifische HTTP-Details bleiben
     //           im jeweiligen Adapter-Package
     //
     // Der PaymentProvider-Port (anfrage) ist framework-frei; die Anbieter-
-    // Anbindung (RestClient-HTTP-Calls, HMAC-Signaturprüfung) lebt ausschliesslich
-    // im Datatrans-Adapter anfrage.payment.datatrans. RestClient + javax.crypto
-    // werden heute NUR dort genutzt — die Regel sperrt sie dort ein.
+    // Anbindung (RestClient-HTTP-Calls) lebt ausschliesslich im Adapter.
     // =========================================================================
     @ArchTest
     static final ArchRule ARCH_21_payment_provider_details_im_adapter = noClasses()
             .that().resideOutsideOfPackage("ch.sponsorplatz.anfrage.payment.datatrans..")
-            .should().dependOnClassesThat().resideInAnyPackage(
-                    "org.springframework.web.client..",
-                    "javax.crypto..")
-            .because("ARCH-21: Datatrans-Transport-/Krypto-Details (RestClient, HMAC) "
-                    + "gehören in den Datatrans-Adapter (anfrage.payment.datatrans); "
+            .should().dependOnClassesThat().resideInAnyPackage("org.springframework.web.client..")
+            .because("ARCH-21: Provider-spezifische HTTP-Details gehören in den Payment-Adapter; "
                     + "Aufrufer nutzen den PaymentProvider-Port");
+
+    // HMAC ist zusätzlich für die datensparsame Drosselung öffentlicher Formulare nötig.
+    @ArchTest
+    static final ArchRule ARCH_23_hmac_details_in_dedicated_packages = noClasses()
+            .that().resideOutsideOfPackage("ch.sponsorplatz.anfrage.payment.datatrans..")
+            .and().resideOutsideOfPackage("ch.sponsorplatz.shared.crypto..")
+            .should().dependOnClassesThat().resideInAnyPackage("javax.crypto..")
+            .because("ARCH-23: HMAC-Details bleiben auf den Payment-Adapter und den "
+                    + "dedizierten shared.crypto-Paketbereich begrenzt");
 
     // =========================================================================
     // ARCH-22 — Storage-Port: Azure-Blob-SDK bleibt im Azure-Adapter-Package

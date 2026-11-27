@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/oeffentlich :: kopf(#{pilot.titel})}"></head>
+<body>
+<a th:replace="~{fragments/oeffentlich :: sprungmarke}"></a>
+<header th:replace="~{fragments/oeffentlich :: kopfzeile}"></header>
+
+<main class="wrap" id="inhalt">
+    <section class="section" aria-labelledby="pilot-titel">
+        <p class="kicker" th:text="#{pilot.kicker}">Pilot-Anfrage</p>
+        <h1 id="pilot-titel" th:text="#{pilot.titel}">Pilotplatz anfragen</h1>
+        <p class="lead" th:text="#{pilot.intro}">
+            Füllt die Pflichtangaben aus. Alles Weitere ist freiwillig.
+        </p>
+
+        <form th:action="@{/pilot}" th:object="${pilotForm}" method="post">
+            <div class="error-summary" th:if="${#fields.hasGlobalErrors() or #fields.hasErrors('*')}" role="alert">
+                <p th:text="#{pilot.fehler}">Bitte prüft eure Angaben.</p>
+                <ul>
+                    <li th:each="fehler : ${#fields.globalErrors()}" th:text="${fehler}"></li>
+                    <li th:each="fehler : ${#fields.allErrors()}" th:text="${fehler}"></li>
+                </ul>
+            </div>
+
+            <fieldset class="step">
+                <legend th:text="#{pilot.rolle}">Wer fragt an?</legend>
+                <label><input type="radio" th:field="*{rolle}" value="VEREIN">
+                    <span th:text="#{pilot.rolle.verein}">Wir sind ein Verein</span></label>
+                <label><input type="radio" th:field="*{rolle}" value="SPONSOR">
+                    <span th:text="#{pilot.rolle.sponsor}">Wir sind ein Sponsor</span></label>
+                <p class="error" th:if="${#fields.hasErrors('rolle')}" th:errors="*{rolle}"></p>
+            </fieldset>
+
+            <fieldset class="step">
+                <legend th:text="#{pilot.organisation}">Eure Organisation</legend>
+                <label for="organisationsName" th:text="#{pilot.organisationsName}">Name der Organisation</label>
+                <input id="organisationsName" type="text" th:field="*{organisationsName}" maxlength="150" required>
+                <p class="error" th:if="${#fields.hasErrors('organisationsName')}" th:errors="*{organisationsName}"></p>
+
+                <label for="bereich" th:text="#{pilot.bereich}">Sportart oder Gesundheitsbereich (für Vereine)</label>
+                <select id="bereich" th:field="*{bereich}">
+                    <option value="" th:text="#{pilot.bitteWaehlen}">Bitte wählen</option>
+                    <option th:each="bereich : ${bereiche}" th:value="${bereich}"
+                            th:text="${#messages.msg('pilot.bereich.' + bereich.name())}"></option>
+                </select>
+
+                <label for="sponsorArt" th:text="#{pilot.sponsorArt}">Sponsor-Art (für Sponsoren)</label>
+                <select id="sponsorArt" th:field="*{sponsorArt}">
+                    <option value="" th:text="#{pilot.bitteWaehlen}">Bitte wählen</option>
+                    <option th:each="art : ${sponsorArten}" th:value="${art}"
+                            th:text="${#messages.msg('pilot.sponsorArt.' + art.name())}"></option>
+                </select>
+                <p class="error" th:if="${#fields.hasErrors('bereichOderSponsorArtGueltig')}"
+                   th:errors="*{bereichOderSponsorArtGueltig}"></p>
+
+                <label for="plz" th:text="#{pilot.plz}">PLZ</label>
+                <input id="plz" type="text" th:field="*{plz}" inputmode="numeric" autocomplete="postal-code"
+                       maxlength="4" required>
+                <p class="error" th:if="${#fields.hasErrors('plz')}" th:errors="*{plz}"></p>
+
+                <label for="ort" th:text="#{pilot.ort}">Ort</label>
+                <input id="ort" type="text" th:field="*{ort}" autocomplete="address-level2" maxlength="100" required>
+                <p class="error" th:if="${#fields.hasErrors('ort')}" th:errors="*{ort}"></p>
+            </fieldset>
+
+            <fieldset class="step">
+                <legend th:text="#{pilot.freiwilligeAngaben}">Freiwillige Angaben</legend>
+                <label for="paketname" th:text="#{pilot.paketname}">Name des Pakets</label>
+                <input id="paketname" type="text" th:field="*{paketname}" maxlength="120">
+                <p th:text="#{pilot.gegenleistungen}">Gewünschte Gegenleistungen</p>
+                <div class="chips">
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="stand">
+                        <span th:text="#{pilot.gegenleistung.stand}">Standaktion am Turnier oder Anlass</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="newsletter">
+                        <span th:text="#{pilot.gegenleistung.newsletter}">Newsletter an die Mitglieder</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="schnuppertraining">
+                        <span th:text="#{pilot.gegenleistung.schnuppertraining}">Schnuppertraining mit dem Sponsor</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="qr-wettbewerb">
+                        <span th:text="#{pilot.gegenleistung.qr}">Wettbewerb mit QR-Code</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="kurzauftritt">
+                        <span th:text="#{pilot.gegenleistung.kurzauftritt}">Kurzauftritt am Clubabend</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="mitgliedervorteil">
+                        <span th:text="#{pilot.gegenleistung.mitgliedervorteil}">Vorteil für Mitglieder beim Vereinsausrüster</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="trikot">
+                        <span th:text="#{pilot.gegenleistung.trikot}">Logo auf dem Trikot</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="bande">
+                        <span th:text="#{pilot.gegenleistung.bande}">Hallenbande oder Banner am Platz</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="website">
+                        <span th:text="#{pilot.gegenleistung.website}">Logo auf Website und Social Media</span></label>
+                    <label><input type="checkbox" th:field="*{gegenleistungen}" value="mitgliederversammlung">
+                        <span th:text="#{pilot.gegenleistung.mitgliederversammlung}">Dank an der Mitgliederversammlung</span></label>
+                </div>
+                <p class="error" th:if="${#fields.hasErrors('gegenleistungen')}" th:errors="*{gegenleistungen}"></p>
+
+                <label for="mitgliederzahl" th:text="#{pilot.mitgliederzahl}">Anzahl Mitglieder</label>
+                <input id="mitgliederzahl" type="text" th:field="*{mitgliederzahl}" inputmode="numeric">
+                <p class="error" th:if="${#fields.hasErrors('mitgliederzahl')}" th:errors="*{mitgliederzahl}"></p>
+
+                <label for="naechsterAnlass" th:text="#{pilot.naechsterAnlass}">Nächster Anlass</label>
+                <input id="naechsterAnlass" type="text" th:field="*{naechsterAnlass}" maxlength="200">
+
+                <p th:text="#{pilot.interessen}">Interessen</p>
+                <div class="chips">
+                    <label><input type="checkbox" th:field="*{interessen}" value="standaktionen">
+                        <span th:text="#{pilot.interesse.standaktionen}">Standaktionen</span></label>
+                    <label><input type="checkbox" th:field="*{interessen}" value="qr-kampagnen">
+                        <span th:text="#{pilot.interesse.qr}">QR-Kampagnen und Wettbewerbe</span></label>
+                    <label><input type="checkbox" th:field="*{interessen}" value="newsletter">
+                        <span th:text="#{pilot.interesse.newsletter}">Präsenz im Vereins-Newsletter</span></label>
+                    <label><input type="checkbox" th:field="*{interessen}" value="sichtbarkeit">
+                        <span th:text="#{pilot.interesse.sichtbarkeit}">Trikot und Hallenbande</span></label>
+                    <label><input type="checkbox" th:field="*{interessen}" value="vorteile">
+                        <span th:text="#{pilot.interesse.vorteile}">Vorteile für Vereinsmitglieder</span></label>
+                    <label><input type="checkbox" th:field="*{interessen}" value="gemeinsame-pakete">
+                        <span th:text="#{pilot.interesse.gemeinsam}">Gemeinsame Pakete mit anderen Partnern</span></label>
+                </div>
+                <p class="error" th:if="${#fields.hasErrors('interessen')}" th:errors="*{interessen}"></p>
+
+                <label for="zielgruppe" th:text="#{pilot.zielgruppe}">Wen möchtet ihr erreichen?</label>
+                <input id="zielgruppe" type="text" th:field="*{zielgruppe}" maxlength="200">
+                <label for="marktgebiet" th:text="#{pilot.marktgebiet}">Marktgebiet</label>
+                <input id="marktgebiet" type="text" th:field="*{marktgebiet}" maxlength="150">
+                <label for="programme" th:text="#{pilot.programme}">Programme (freiwillig)</label>
+                <input id="programme" type="text" th:field="*{programme}" maxlength="300">
+                <label for="uid" th:text="#{pilot.uid}">UID-Nummer (freiwillig)</label>
+                <input id="uid" type="text" th:field="*{uid}" maxlength="20">
+                <label for="funktion" th:text="#{pilot.funktion}">Funktion (freiwillig)</label>
+                <input id="funktion" type="text" th:field="*{funktion}" maxlength="100">
+                <label for="telefon" th:text="#{pilot.telefon}">Telefon (freiwillig)</label>
+                <input id="telefon" type="tel" th:field="*{telefon}" maxlength="40">
+            </fieldset>
+
+            <fieldset class="step">
+                <legend th:text="#{pilot.kontakt}">Kontakt</legend>
+                <label for="vorname" th:text="#{pilot.vorname}">Vorname</label>
+                <input id="vorname" type="text" th:field="*{vorname}" autocomplete="given-name" maxlength="80" required>
+                <p class="error" th:if="${#fields.hasErrors('vorname')}" th:errors="*{vorname}"></p>
+                <label for="nachname" th:text="#{pilot.nachname}">Nachname</label>
+                <input id="nachname" type="text" th:field="*{nachname}" autocomplete="family-name" maxlength="80" required>
+                <p class="error" th:if="${#fields.hasErrors('nachname')}" th:errors="*{nachname}"></p>
+                <label for="email" th:text="#{pilot.email}">E-Mail</label>
+                <input id="email" type="email" th:field="*{email}" autocomplete="email" maxlength="254" required>
+                <p class="error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+
+                <div class="check-row">
+                    <input id="einwilligung" type="checkbox" th:field="*{einwilligung}" required>
+                    <label for="einwilligung">
+                        <span th:text="${einwilligungBestaetigung}"></span>
+                        <a th:href="@{/datenschutz}" th:text="#{pilot.datenschutz}">Datenschutzerklärung</a>
+                        <span th:text="#{pilot.gelesen}">gelesen.</span>
+                    </label>
+                    <p class="help" th:text="${einwilligungHinweis}"></p>
+                    <p class="error" th:if="${#fields.hasErrors('einwilligungBestaetigt')}"
+                       th:errors="*{einwilligungBestaetigt}"></p>
+                </div>
+                <div class="check-row">
+                    <input id="updates" type="checkbox" th:field="*{updates}">
+                    <label for="updates" th:text="#{pilot.updates}">Haltet uns über den Pilot auf dem Laufenden (freiwillig).</label>
+                </div>
+            </fieldset>
+
+            <button class="btn btn-primary" type="submit" th:text="#{pilot.absenden}">Pilotplatz anfragen</button>
+        </form>
+    </section>
+</main>
+<footer th:replace="~{fragments/oeffentlich :: fuss}"></footer>
+</body>
+</html>

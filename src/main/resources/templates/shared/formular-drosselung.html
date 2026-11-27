@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="de-CH" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/oeffentlich :: kopf(#{formular.drosselung.titel})}"></head>
+<body>
+<a th:replace="~{fragments/oeffentlich :: sprungmarke}"></a>
+<header th:replace="~{fragments/oeffentlich :: kopfzeile}"></header>
+<main class="wrap" id="inhalt">
+    <section class="section" aria-labelledby="drosselung-titel">
+        <h1 id="drosselung-titel" th:text="#{formular.drosselung.titel}">Bitte versucht es später nochmals</h1>
+        <p class="lead" th:text="#{formular.drosselung.text}">
+            Für dieses Formular sind aktuell zu viele Eingaben eingegangen. Bitte wartet eine Weile und versucht es erneut.
+        </p>
+        <a class="btn btn-primary" th:href="@{/}" th:text="#{pilot.zurStartseite}">Zur Startseite</a>
+    </section>
+</main>
+<footer th:replace="~{fragments/oeffentlich :: fuss}"></footer>
+</body>
+</html>
