@@ -307,14 +307,14 @@
             <section class="dash-rail-section">
                 <header class="dash-rail-head">
                     <h3 th:text="#{dashboard.aufgaben.titel}">Aufgaben</h3>
-                    <a th:href="@{/aufgaben}" class="dash-rail-meta"
+                    <a th:if="${aufgabenAktiv}" th:href="@{/aufgaben}" class="dash-rail-meta"
                        style="text-decoration:none;"
                        th:text="#{dashboard.aufgaben.alleAnzeigen}">Alle anzeigen →</a>
                 </header>
 
                 <ul class="dash-todos" th:if="${!#lists.isEmpty(meineAufgaben)}">
                     <li th:each="a : ${meineAufgaben}" class="dash-todo-item">
-                        <form th:action="@{|/aufgaben/${a.id()}/erledigen|}" method="post"
+                        <form th:if="${aufgabenAktiv}" th:action="@{|/aufgaben/${a.id()}/erledigen|}" method="post"
                               class="dash-todo-check-form"
                               th:title="#{dashboard.aufgaben.erledigen}">
                             <button type="submit" class="dash-todo-check"

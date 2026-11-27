@@ -80,11 +80,27 @@ public class SecurityConfig {
     }
 
     @Bean
+    public FunktionSchalter funktionSchalter(
+            @Value("${sponsorplatz.funktion.zahlung:false}") boolean zahlung,
+            @Value("${sponsorplatz.funktion.vertrag:false}") boolean vertrag,
+            @Value("${sponsorplatz.funktion.rechnung:false}") boolean rechnung,
+            @Value("${sponsorplatz.funktion.aufgaben:false}") boolean aufgaben,
+            @Value("${sponsorplatz.funktion.matching:false}") boolean matching) {
+        return new FunktionSchalter(zahlung, vertrag, rechnung, aufgaben, matching);
+    }
+
+    @Bean
+    public FunktionSchalterFilter funktionSchalterFilter(FunktionSchalter schalter) {
+        return new FunktionSchalterFilter(schalter);
+    }
+
+    @Bean
     @Profile("dev")
     public SecurityFilterChain devFilterChain(HttpSecurity http,
             RateLimitFilter rateLimitFilter,
             LoginSperreFilter loginSperreFilter,
             LoginFailureHandler loginFailureHandler,
+            FunktionSchalterFilter funktionSchalterFilter,
             AuthenticationSuccessHandler loginSuccessHandler,
             ApiKeyFilter apiKeyFilter,
             ObjectProvider<ClientRegistrationRepository> oauth2Clients,
@@ -145,6 +161,7 @@ public class SecurityConfig {
                 // ApiKey → UsernamePassword. So ist Brute-Force gegen den
                 // API-Key über RateLimitFilter abgedeckt.
                 .addFilterBefore(loginSperreFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(funktionSchalterFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitFilter, LoginSperreFilter.class)
                 .addFilterAfter(apiKeyFilter, RateLimitFilter.class)
                 .headers(h -> {
@@ -176,6 +193,7 @@ public class SecurityConfig {
             RateLimitFilter rateLimitFilter,
             LoginSperreFilter loginSperreFilter,
             LoginFailureHandler loginFailureHandler,
+            FunktionSchalterFilter funktionSchalterFilter,
             AuthenticationSuccessHandler loginSuccessHandler,
             ApiKeyFilter apiKeyFilter,
             ObjectProvider<ClientRegistrationRepository> oauth2Clients,
@@ -233,6 +251,7 @@ public class SecurityConfig {
                 // ApiKey → UsernamePassword. So ist Brute-Force gegen den
                 // API-Key über RateLimitFilter abgedeckt.
                 .addFilterBefore(loginSperreFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(funktionSchalterFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitFilter, LoginSperreFilter.class)
                 .addFilterAfter(apiKeyFilter, RateLimitFilter.class)
                 .headers(h -> {

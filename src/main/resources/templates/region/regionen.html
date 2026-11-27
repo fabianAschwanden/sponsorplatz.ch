@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="#{admin.regionen.titel} + ' — Sponsorplatz'">Regionen — Sponsorplatz</title>
+    <th:block th:replace="~{fragments/styles :: styles}"></th:block>
+</head>
+<body>
+<div class="app-shell">
+    <aside th:replace="~{fragments/sidebar :: app-sidebar('admin-regionen', null)}"></aside>
+    <main class="app-main">
+        <header class="app-page-header">
+            <h1 th:text="#{admin.regionen.titel}">Regionen und Freischaltungen</h1>
+            <p th:text="#{admin.regionen.einleitung}">Gebiete und Stufen für den Pilot verwalten.</p>
+        </header>
+
+        <p th:if="${erfolgsMeldung}" class="app-alert app-alert-success" role="status"
+           th:text="#{${erfolgsMeldung}}">Änderung gespeichert.</p>
+        <p th:if="${fehlermeldung}" class="app-alert app-alert-error" role="alert"
+           th:text="#{${fehlermeldung}}">Die Änderung wurde nicht gespeichert.</p>
+
+        <section class="app-card">
+            <h2 th:text="#{admin.regionen.neu}">Region anlegen</h2>
+            <form th:action="@{/admin/regionen}" method="post" class="app-form">
+                <label for="code" th:text="#{admin.regionen.code}">Code</label>
+                <input id="code" name="code" required maxlength="80" pattern="[a-z0-9]+(?:-[a-z0-9]+)*">
+                <label for="name" th:text="#{admin.regionen.name}">Name</label>
+                <input id="name" name="name" required maxlength="100">
+                <button type="submit" class="app-btn" th:text="#{admin.regionen.anlegen}">Region anlegen</button>
+            </form>
+        </section>
+
+        <section th:each="region : ${regionen}" class="app-card">
+            <h2 th:text="${region.name()}">Pilot</h2>
+            <p><span th:text="#{admin.regionen.code}">Code</span>:
+                <code th:text="${region.code()}">pilot</code>
+            </p>
+
+            <form th:action="@{/admin/regionen/{id}/name(id=${region.id()})}" method="post" class="app-form">
+                <label th:for="|name-${region.id()}|" th:text="#{admin.regionen.name}">Name</label>
+                <input th:id="|name-${region.id()}|" name="name" required maxlength="100"
+                       th:value="${region.name()}">
+                <button type="submit" class="app-btn app-btn-secondary"
+                        th:text="#{admin.regionen.umbenennen}">Umbenennen</button>
+            </form>
+
+            <form th:action="@{/admin/regionen/{id}/plz(id=${region.id()})}" method="post" class="app-form">
+                <label th:for="|plz-${region.id()}|" th:text="#{admin.regionen.plzBereiche}">PLZ-Bereiche</label>
+                <textarea th:id="|plz-${region.id()}|" name="bereiche" rows="2"
+                          th:text="${region.plzBereicheText()}"></textarea>
+                <p class="app-help" th:text="#{admin.regionen.plzHilfe}">
+                    Format 1000-1999; mehrere Bereiche durch Komma oder Zeilenumbruch trennen.
+                </p>
+                <button type="submit" class="app-btn app-btn-secondary"
+                        th:text="#{admin.regionen.plzSpeichern}">PLZ-Bereiche speichern</button>
+            </form>
+
+            <h3 th:text="#{admin.regionen.stufen}">Freischaltungsstufen</h3>
+            <div th:each="stufe : ${stufen}" class="region-stufe">
+                <span th:text="${#messages.msg('admin.regionen.stufe.' + stufe.nummer())}">Angebot und Vorteile</span>
+                <form th:action="@{/admin/regionen/{id}/stufen/{nummer}(id=${region.id()},nummer=${stufe.nummer()})}"
+                      method="post">
+                    <input type="hidden" name="freigeschaltet"
+                           th:value="${!region.freigeschalteteStufen().contains(stufe)}">
+                    <button type="submit" class="app-btn app-btn-secondary"
+                            th:text="${region.freigeschalteteStufen().contains(stufe)}
+                                ? #{admin.regionen.abschalten} : #{admin.regionen.freischalten}">
+                        Freischalten
+                    </button>
+                </form>
+                <span class="region-status"
+                      th:text="${region.freigeschalteteStufen().contains(stufe)}
+                          ? #{admin.regionen.aktiv} : #{admin.regionen.inaktiv}">Inaktiv</span>
+            </div>
+        </section>
+
+        <p th:if="${#lists.isEmpty(regionen)}" class="app-empty"
+           th:text="#{admin.regionen.keine}">Es sind noch keine Regionen angelegt.</p>
+    </main>
+</div>
+<style>
+    .region-stufe { display:flex; align-items:center; gap:1rem; margin:.75rem 0; flex-wrap:wrap; }
+    .region-stufe form { margin:0; }
+    .region-status { color:var(--text-muted, #666); }
+    .app-help { margin:.25rem 0 .75rem; }
+</style>
+</body>
+</html>

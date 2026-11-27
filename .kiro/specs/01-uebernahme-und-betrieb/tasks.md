@@ -102,7 +102,7 @@ Aufgabe liefert für ihre Anforderungen den Nachweis nach `tech.md` und hakt ihr
   - _Anforderungen: 10.1, 10.3, 12.1, 12.2_
   - _Abhängig von: 1.10_
 
-- [ ] 2.2 Regionen und Schalter [Backend]
+- [x] 2.2 Regionen und Schalter [Backend]
   - Tabellen `region`, `region_plz`, `region_freischaltung`, eine Region «Pilot»; Zahlung, Vertrag und Rechnung,
     Aufgaben-Engine und Matching abgeschaltet.
   - _Anforderungen: 11.1, 11.2, 11.3, 13.1, 13.2_
