@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Repository
 public class PilotAnfrageJpaAdapter implements PilotAnfrageAblage {
@@ -21,7 +22,7 @@ public class PilotAnfrageJpaAdapter implements PilotAnfrageAblage {
 
     @Override
     @Transactional
-    public long speichereOderAktualisiere(PilotAnfrage anfrage, Einwilligung einwilligung, Instant jetzt) {
+    public UUID speichereOderAktualisiere(PilotAnfrage anfrage, Einwilligung einwilligung, Instant jetzt) {
         PilotAnfrageEntity entity = anfragen
                 .findFirstByEmailIgnoreCaseAndOrganisationsNameIgnoreCaseAndRolleAndAktualisiertAmAfterOrderByAktualisiertAmDesc(
                         anfrage.email(), anfrage.organisationsName(), anfrage.rolle(), jetzt.minusSeconds(600))

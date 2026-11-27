@@ -14,14 +14,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "pilot_anfrage")
 public class PilotAnfrageEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "rolle", nullable = false, length = 20)
@@ -99,7 +100,7 @@ public class PilotAnfrageEntity {
     private Instant aktualisiertAm;
 
     @Column(name = "einwilligung_id")
-    private Long einwilligungId;
+    private UUID einwilligungId;
 
     protected PilotAnfrageEntity() {
     }
@@ -135,8 +136,8 @@ public class PilotAnfrageEntity {
         aktualisiertAm = anfrage.aktualisiertAm();
     }
 
-    public Long getId() { return id; }
-    public void setEinwilligungId(Long einwilligungId) { this.einwilligungId = einwilligungId; }
+    public UUID getId() { return id; }
+    public void setEinwilligungId(UUID einwilligungId) { this.einwilligungId = einwilligungId; }
 
     private String leerZuNull(String wert) {
         return wert == null || wert.isBlank() ? null : wert;

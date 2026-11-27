@@ -90,6 +90,7 @@ public class PilotAnfrageFormDto {
 
     private boolean einwilligung;
     private boolean updates;
+    private String homepage;
 
     @AssertTrue(message = "{pilot.validierung.bereich}")
     public boolean isBereichOderSponsorArtGueltig() {
@@ -183,4 +184,6 @@ public class PilotAnfrageFormDto {
     public void setEinwilligung(boolean einwilligung) { this.einwilligung = einwilligung; }
     public boolean isUpdates() { return updates; }
     public void setUpdates(boolean updates) { this.updates = updates; }
+    public String getHomepage() { return homepage; }
+    public void setHomepage(String homepage) { this.homepage = homepage; }
 }

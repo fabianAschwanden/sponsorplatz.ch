@@ -2,6 +2,7 @@ package ch.sponsorplatz.e2e;
 
 import ch.sponsorplatz.pilotanfrage.domain.PilotEinwilligungstext;
 import ch.sponsorplatz.pilotanfrage.domain.PilotAnfrageRolle;
+import ch.sponsorplatz.shared.config.Formular;
 import ch.sponsorplatz.shared.config.FormularDrosselungService;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Response;
@@ -45,6 +46,15 @@ public class PilotAnfrageSteps {
     @Wenn("ich eine gültige Anfrage absende")
     public void sendeGueltigeAnfrage() {
         sendeGueltigeAnfrage(false, false);
+    }
+
+    @Wenn("ich das Anfrageformular mit ausgefülltem Honeypot absende")
+    public void sendeAnfrageMitHoneypot() {
+        String email = ctx.eindeutigeEmail("pilot");
+        fuelleFormular("Beispielverein", email, false, false);
+        ctx.getDaten().put("pilotEmail", email);
+        ctx.getPage().locator("input[name='homepage']").evaluate("(element) => { element.value = 'bot'; }");
+        sendeFormular();
     }
 
     @Wenn("ich eine Anfrage mit freiwilligen Angaben absende")
@@ -92,7 +102,7 @@ public class PilotAnfrageSteps {
 
     @Wenn("ich Drosselungseinträge für IPv4 und IPv6 erfasse")
     public void erfasseDrosselungseintraege() {
-        assertThat(formularDrosselung.erfasseEingabe("PILOT", "203.0.113.8")).isTrue();
+        assertThat(formularDrosselung.erfasseEingabe(Formular.PILOT, "203.0.113.8")).isTrue();
         String pruefwert = jdbc.queryForObject(
                 "select pruefwert from formular_drosselung where formular = 'PILOT'",
                 String.class);
@@ -100,10 +110,10 @@ public class PilotAnfrageSteps {
 
         for (int nummer = 1; nummer <= 10; nummer++) {
             String adresse = "2001:db8:0:1::" + Integer.toHexString(nummer);
-            assertThat(formularDrosselung.erfasseEingabe("PILOT", adresse)).isTrue();
+            assertThat(formularDrosselung.erfasseEingabe(Formular.PILOT, adresse)).isTrue();
         }
         ctx.getDaten().put("pilotIpv6Abgewiesen",
-                !formularDrosselung.erfasseEingabe("PILOT", "2001:db8:0:1::b"));
+                !formularDrosselung.erfasseEingabe(Formular.PILOT, "2001:db8:0:1::b"));
 
         jdbc.update("update formular_drosselung set erstellt_am = ?",
                 Timestamp.from(Instant.now().minus(Duration.ofDays(2))));
@@ -118,6 +128,15 @@ public class PilotAnfrageSteps {
                 "select count(*) from pilot_anfrage where email = ?",
                 Integer.class, ctx.<String>daten("pilotEmail"));
         assertThat(anfragen).isEqualTo(1);
+    }
+
+    @Dann("wird die Anfrage bestätigt, aber nicht gespeichert")
+    public void botAnfrageWirdNichtGespeichert() {
+        assertThat(ctx.getPage().url()).endsWith("/pilot/bestaetigung");
+        Integer anfragen = jdbc.queryForObject(
+                "select count(*) from pilot_anfrage where email = ?",
+                Integer.class, ctx.<String>daten("pilotEmail"));
+        assertThat(anfragen).isZero();
     }
 
     @Dann("sind die freiwilligen Angaben gespeichert und Updates sind abgewählt")
@@ -192,9 +211,9 @@ public class PilotAnfrageSteps {
     @Dann("das globale Limit gilt ebenfalls pro Formular")
     public void globalesLimitGiltProFormular() {
         for (int nummer = 0; nummer < 60; nummer++) {
-            assertThat(formularDrosselung.erfasseEingabe("KONTAKT", "192.0.2." + nummer)).isTrue();
+            assertThat(formularDrosselung.erfasseEingabe(Formular.KONTAKT, "192.0.2." + nummer)).isTrue();
         }
-        assertThat(formularDrosselung.erfasseEingabe("KONTAKT", "192.0.2.100")).isFalse();
+        assertThat(formularDrosselung.erfasseEingabe(Formular.KONTAKT, "192.0.2.100")).isFalse();
     }
 
     @Dann("ist nur der HMAC-Prüfwert gespeichert")

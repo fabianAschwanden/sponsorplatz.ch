@@ -1,6 +1,7 @@
 package ch.sponsorplatz.kontakt;
 
 import ch.sponsorplatz.shared.config.ModelAttributeNames;
+import ch.sponsorplatz.shared.config.Formular;
 import ch.sponsorplatz.shared.config.FormularDrosselungService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,7 +51,7 @@ public class KontaktController {
                            RedirectAttributes redirect,
                            HttpServletRequest request,
                            HttpServletResponse response) {
-        if (!formularDrosselung.erfasseEingabe("KONTAKT", request.getRemoteAddr())) {
+        if (!formularDrosselung.erfasseEingabe(Formular.KONTAKT, request.getRemoteAddr())) {
             LocaleContextHolder.setLocale(Locale.forLanguageTag("de-CH"));
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             return "shared/formular-drosselung";

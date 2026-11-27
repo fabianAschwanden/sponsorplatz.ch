@@ -10,9 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface FormularDrosselungSperreRepository extends JpaRepository<FormularDrosselungSperre, String> {
+public interface FormularDrosselungSperreRepository extends JpaRepository<FormularDrosselungSperre, Formular> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select sperre from FormularDrosselungSperre sperre where sperre.formular = :formular")
-    Optional<FormularDrosselungSperre> findeUndSperre(@Param("formular") String formular);
+    Optional<FormularDrosselungSperre> findeUndSperre(@Param("formular") Formular formular);
 }

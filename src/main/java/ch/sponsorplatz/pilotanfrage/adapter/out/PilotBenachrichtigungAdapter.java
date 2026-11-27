@@ -12,6 +12,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
+import java.util.UUID;
 
 @Component
 public class PilotBenachrichtigungAdapter implements PilotBenachrichtigungPort {
@@ -34,7 +35,7 @@ public class PilotBenachrichtigungAdapter implements PilotBenachrichtigungPort {
     }
 
     @Override
-    public void meldeNeueAnfrage(long anfrageId, PilotAnfrageRolle rolle, PilotAnfrageBereich bereich,
+    public void meldeNeueAnfrage(UUID anfrageId, PilotAnfrageRolle rolle, PilotAnfrageBereich bereich,
             PilotSponsorArt sponsorArt, String plzKreis) {
         if (empfaenger.isBlank()) {
             log.warn("Keine Empfängeradresse für Pilot-Anfragen konfiguriert (Anfrage {}).", anfrageId);
@@ -42,7 +43,7 @@ public class PilotBenachrichtigungAdapter implements PilotBenachrichtigungPort {
         }
 
         String text = """
-                Neue Pilot-Anfrage #%d
+                Neue Pilot-Anfrage #%s
 
                 Rolle: %s
                 Bereich: %s

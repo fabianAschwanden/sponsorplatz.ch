@@ -16,20 +16,20 @@ public class PilotAnfrageService {
     private static final String ZWECK = "PILOT_ANFRAGE";
     private final PilotAnfrageAblage ablage;
     private final DrosselungPort drosselung;
-    private final PilotBenachrichtigungPort benachrichtigung;
+    private final PilotAnfrageEreignisPort ereignisPort;
     private final Clock clock;
 
     public PilotAnfrageService(PilotAnfrageAblage ablage, DrosselungPort drosselung,
-            PilotBenachrichtigungPort benachrichtigung, Clock clock) {
+            PilotAnfrageEreignisPort ereignisPort, Clock clock) {
         this.ablage = ablage;
         this.drosselung = drosselung;
-        this.benachrichtigung = benachrichtigung;
+        this.ereignisPort = ereignisPort;
         this.clock = clock;
     }
 
     @Transactional
     public boolean speichere(PilotAnfrageEingabe eingabe, String clientAdresse) {
-        if (!drosselung.erfasseEingabe("PILOT", clientAdresse)) {
+        if (!drossleEingabe(clientAdresse)) {
             return false;
         }
 
@@ -61,10 +61,14 @@ public class PilotAnfrageService {
         Einwilligung einwilligung = new Einwilligung(
                 ZWECK, PilotEinwilligungstext.vollstaendig(eingabe.rolle()), jetzt);
 
-        long id = ablage.speichereOderAktualisiere(anfrage, einwilligung, jetzt);
-        benachrichtigung.meldeNeueAnfrage(
-                id, anfrage.rolle(), anfrage.bereich(), anfrage.sponsorArt(), anfrage.plz().substring(0, 2));
+        var id = ablage.speichereOderAktualisiere(anfrage, einwilligung, jetzt);
+        ereignisPort.publiziere(new PilotAnfrageBenachrichtigungEvent(
+                id, anfrage.rolle(), anfrage.bereich(), anfrage.sponsorArt(), anfrage.plz().substring(0, 2)));
         return true;
+    }
+
+    public boolean drossleEingabe(String clientAdresse) {
+        return drosselung.erfasseEingabe(clientAdresse);
     }
 
     private String sauber(String wert) {

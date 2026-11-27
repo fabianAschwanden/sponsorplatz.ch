@@ -13,12 +13,12 @@ public class FormularDrosselungBereinigung {
     private final FormularDrosselungService drosselung;
     private final Clock clock;
 
-    public FormularDrosselungBereinigung(FormularDrosselungService drosselung) {
+    public FormularDrosselungBereinigung(FormularDrosselungService drosselung, Clock clock) {
         this.drosselung = drosselung;
-        this.clock = Clock.systemUTC();
+        this.clock = clock;
     }
 
-    @Scheduled(cron = "0 0 4 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void bereinige() {
         drosselung.loescheAeltereAls(clock.instant().minus(Duration.ofDays(1)));

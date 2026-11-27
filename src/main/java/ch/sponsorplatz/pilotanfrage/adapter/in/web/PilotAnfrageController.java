@@ -58,6 +58,13 @@ public class PilotAnfrageController {
             HttpServletRequest request,
             HttpServletResponse response) {
         erzwingeDeutsch();
+        if (form.getHomepage() != null && !form.getHomepage().isBlank()) {
+            if (!pilotAnfrageService.drossleEingabe(request.getRemoteAddr())) {
+                response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+                return "shared/formular-drosselung";
+            }
+            return "redirect:/pilot/bestaetigung";
+        }
         if (binding.hasErrors()) {
             return formularMitEinwilligungstexten(form, model);
         }

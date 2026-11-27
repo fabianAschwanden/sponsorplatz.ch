@@ -15,6 +15,12 @@ Funktionalität: Pilot-Anfrage
     Wenn ich eine gültige Anfrage absende
     Dann ist die Anfrage gespeichert und die Bestätigung sichtbar
 
+  @req-1.1
+  Szenario: Ein Bot mit ausgefülltem Honeypot erhält die Bestätigung ohne Speicherung
+    Angenommen ich öffne die Pilot-Anfrage als Verein
+    Wenn ich das Anfrageformular mit ausgefülltem Honeypot absende
+    Dann wird die Anfrage bestätigt, aber nicht gespeichert
+
   @req-1.2
   Szenario: Freiwillige Angaben und abgewählte Updates werden gespeichert
     Angenommen ich öffne die Pilot-Anfrage als Verein

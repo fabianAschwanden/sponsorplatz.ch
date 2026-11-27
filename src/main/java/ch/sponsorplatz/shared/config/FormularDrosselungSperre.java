@@ -2,6 +2,8 @@ package ch.sponsorplatz.shared.config;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -10,8 +12,9 @@ import jakarta.persistence.Table;
 public class FormularDrosselungSperre {
 
     @Id
+    @Enumerated(EnumType.STRING)
     @Column(name = "formular", length = 20)
-    private String formular;
+    private Formular formular;
 
     protected FormularDrosselungSperre() {
     }

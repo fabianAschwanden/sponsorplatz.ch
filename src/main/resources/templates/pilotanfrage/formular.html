@@ -159,6 +159,10 @@
                 </div>
             </fieldset>
 
+            <div style="position:absolute; left:-9999px;" aria-hidden="true">
+                <label for="homepage">Homepage</label>
+                <input id="homepage" type="text" th:field="*{homepage}" tabindex="-1" autocomplete="off">
+            </div>
             <button class="btn btn-primary" type="submit" th:text="#{pilot.absenden}">Pilotplatz anfragen</button>
         </form>
     </section>

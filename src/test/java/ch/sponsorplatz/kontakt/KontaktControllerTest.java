@@ -2,6 +2,7 @@ package ch.sponsorplatz.kontakt;
 
 import ch.sponsorplatz.benutzer.SponsorplatzUserDetailsService;
 import ch.sponsorplatz.shared.config.FormularDrosselungService;
+import ch.sponsorplatz.shared.config.Formular;
 import ch.sponsorplatz.shared.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,7 +47,7 @@ class KontaktControllerTest {
 
     @BeforeEach
     void drosselungErlaubtEingaben() {
-        org.mockito.Mockito.when(formularDrosselung.erfasseEingabe(eq("KONTAKT"), anyString()))
+        org.mockito.Mockito.when(formularDrosselung.erfasseEingabe(eq(Formular.KONTAKT), anyString()))
                 .thenReturn(true);
     }
 
@@ -123,7 +124,7 @@ class KontaktControllerTest {
     @Test
     @DisplayName("KONT-06: Drosselung zeigt bei Überschreitung eine verständliche 429-Seite")
     void drosselungZeigt429() throws Exception {
-        org.mockito.Mockito.when(formularDrosselung.erfasseEingabe(eq("KONTAKT"), anyString()))
+        org.mockito.Mockito.when(formularDrosselung.erfasseEingabe(eq(Formular.KONTAKT), anyString()))
                 .thenReturn(false);
 
         mockMvc.perform(post("/kontakt")

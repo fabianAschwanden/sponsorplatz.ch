@@ -2,23 +2,27 @@ package ch.sponsorplatz.shared.config;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "formular_drosselung")
 public class FormularDrosselungEintrag {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "formular", nullable = false, length = 20)
-    private String formular;
+    private Formular formular;
 
     @Column(name = "pruefwert", nullable = false, length = 64)
     private String pruefwert;
@@ -29,7 +33,7 @@ public class FormularDrosselungEintrag {
     protected FormularDrosselungEintrag() {
     }
 
-    public FormularDrosselungEintrag(String formular, String pruefwert, Instant erstelltAm) {
+    public FormularDrosselungEintrag(Formular formular, String pruefwert, Instant erstelltAm) {
         this.formular = formular;
         this.pruefwert = pruefwert;
         this.erstelltAm = erstelltAm;

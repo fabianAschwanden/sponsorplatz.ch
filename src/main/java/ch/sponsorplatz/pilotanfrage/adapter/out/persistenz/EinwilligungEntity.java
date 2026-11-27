@@ -7,20 +7,21 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.UUID;
 
 @Entity
 @Table(name = "einwilligung")
 public class EinwilligungEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(name = "bezug_art", nullable = false, length = 40)
     private String bezugArt;
 
     @Column(name = "bezug_id", nullable = false)
-    private Long bezugId;
+    private UUID bezugId;
 
     @Column(name = "zweck", nullable = false, length = 50)
     private String zweck;
@@ -34,7 +35,7 @@ public class EinwilligungEntity {
     protected EinwilligungEntity() {
     }
 
-    public EinwilligungEntity(long anfrageId, Einwilligung einwilligung) {
+    public EinwilligungEntity(UUID anfrageId, Einwilligung einwilligung) {
         bezugArt = "PILOT_ANFRAGE";
         bezugId = anfrageId;
         zweck = einwilligung.zweck();
@@ -42,5 +43,5 @@ public class EinwilligungEntity {
         zeitpunkt = einwilligung.zeitpunkt();
     }
 
-    public Long getId() { return id; }
+    public UUID getId() { return id; }
 }

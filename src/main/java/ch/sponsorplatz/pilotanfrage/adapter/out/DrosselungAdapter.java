@@ -1,6 +1,7 @@
 package ch.sponsorplatz.pilotanfrage.adapter.out;
 
 import ch.sponsorplatz.pilotanfrage.application.DrosselungPort;
+import ch.sponsorplatz.shared.config.Formular;
 import ch.sponsorplatz.shared.config.FormularDrosselungService;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +15,7 @@ public class DrosselungAdapter implements DrosselungPort {
     }
 
     @Override
-    public boolean erfasseEingabe(String formular, String clientAdresse) {
-        return drosselung.erfasseEingabe(formular, clientAdresse);
+    public boolean erfasseEingabe(String clientAdresse) {
+        return drosselung.erfasseEingabe(Formular.PILOT, clientAdresse);
     }
 }

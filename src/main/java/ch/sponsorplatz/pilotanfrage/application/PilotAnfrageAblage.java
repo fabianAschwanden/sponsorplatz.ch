@@ -4,8 +4,9 @@ import ch.sponsorplatz.pilotanfrage.domain.Einwilligung;
 import ch.sponsorplatz.pilotanfrage.domain.PilotAnfrage;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public interface PilotAnfrageAblage {
 
-    long speichereOderAktualisiere(PilotAnfrage anfrage, Einwilligung einwilligung, Instant jetzt);
+    UUID speichereOderAktualisiere(PilotAnfrage anfrage, Einwilligung einwilligung, Instant jetzt);
 }

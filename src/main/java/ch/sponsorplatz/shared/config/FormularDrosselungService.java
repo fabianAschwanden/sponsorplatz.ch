@@ -30,12 +30,7 @@ public class FormularDrosselungService {
     @Autowired
     public FormularDrosselungService(FormularDrosselungRepository eintraege,
             FormularDrosselungSperreRepository sperren,
-            @Value("${sponsorplatz.drosselung.schluessel}") String schluessel) {
-        this(eintraege, sperren, schluessel, Clock.systemUTC());
-    }
-
-    FormularDrosselungService(FormularDrosselungRepository eintraege,
-            FormularDrosselungSperreRepository sperren, String schluessel, Clock clock) {
+            @Value("${sponsorplatz.drosselung.schluessel}") String schluessel, Clock clock) {
         if (schluessel == null || schluessel.length() < 32) {
             throw new IllegalStateException(
                     "Der Drosselungs-Schlüssel fehlt oder ist kürzer als 32 Zeichen; prüfe die Secret-Datei drossel_schluessel.");
@@ -47,7 +42,7 @@ public class FormularDrosselungService {
     }
 
     @Transactional
-    public boolean erfasseEingabe(String formular, String clientAdresse) {
+    public boolean erfasseEingabe(Formular formular, String clientAdresse) {
         sperren.findeUndSperre(formular)
                 .orElseThrow(() -> new IllegalStateException("Formular-Drosselung ist nicht initialisiert."));
 

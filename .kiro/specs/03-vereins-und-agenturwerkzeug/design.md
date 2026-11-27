@@ -72,9 +72,9 @@ Der HMAC-Aufruf liegt in `shared.crypto`; ARCH-23 beschränkt `javax.crypto` auf
 ## Data Models
 | Tabelle | Stand | Spalten (Auszug) |
 | --- | --- | --- |
-| `pilot_anfrage` | neu | Rolle, Organisation, Bereich bzw. Sponsor-Art, PLZ, Ort, Kontaktperson, E-Mail, freiwillige Angaben, Probepaket, Status (`NEU`, `ZUGESAGT`, `ABGELEHNT`, `VORGEMERKT`), Grund, eingeladen von (Sponsor) |
-| `einwilligung` | neu | Bezug (Art und ID), Zweck, Wortlaut, Zeitpunkt |
-| `formular_drosselung` | neu | Formular, Prüfwert, Zeitpunkt |
+| `pilot_anfrage` | neu | ID (`UUID`), Rolle, Organisation, Bereich bzw. Sponsor-Art, PLZ, Ort, Kontaktperson, E-Mail, freiwillige Angaben, Probepaket, Status (`NEU`, `ZUGESAGT`, `ABGELEHNT`, `VORGEMERKT`), Grund, eingeladen von (Sponsor), Einwilligungs-ID (`UUID`) |
+| `einwilligung` | neu | ID (`UUID`), Bezug (Art und ID `UUID`), Zweck, Wortlaut, Zeitpunkt |
+| `formular_drosselung` | neu | ID (`UUID`), Formular, Prüfwert, Zeitpunkt |
 | `gegenleistung_typ` | neu | Code, Name, `aktiv` |
 | `gegenleistung` | neu | Paket, Typ, Reichweite, Verfügbarkeit, Position |
 | `engagement` | neu | Verein, Sponsor, Paket, Laufzeit von und bis, Betrag, Status, veröffentlicht |
