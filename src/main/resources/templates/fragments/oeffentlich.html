@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="kopf(titel)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title th:text="${titel}">Sponsorplatz</title>
+    <script th:src="@{/js/farbschema.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/hallenboden.css}">
+    <link rel="icon" type="image/svg+xml" th:href="@{/images/favicon.svg}">
+</head>
+<body>
+<a class="oeffentlich-sprungmarke" th:fragment="sprungmarke" href="#inhalt">Zum Inhalt</a>
+
+<header class="oeffentlich-kopf" th:fragment="kopfzeile">
+    <div class="oeffentlich-container oeffentlich-kopf__innen">
+        <a class="oeffentlich-logo" th:href="@{/}" aria-label="Sponsorplatz – Startseite">
+            <img th:src="@{/images/logo/icon-ringe.svg}" alt="">
+            <span>Sponsorplatz</span>
+        </a>
+        <button class="oeffentlich-farbschema" type="button" data-farbschema-knopf
+                aria-label="Farbschema umschalten" title="Farbschema umschalten">
+            <span aria-hidden="true">◐</span>
+            <span>Farbschema</span>
+        </button>
+    </div>
+</header>
+
+<footer class="oeffentlich-fuss" th:fragment="fuss">
+    <div class="oeffentlich-container oeffentlich-fuss__innen">
+        <span>© Sponsorplatz</span>
+        <nav aria-label="Rechtliche Informationen">
+            <a th:href="@{/datenschutz}">Datenschutz</a>
+            <a th:href="@{/impressum}">Impressum</a>
+        </nav>
+    </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,288 @@
+@font-face {
+    font-family: "Barlow";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-400-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Barlow";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-400-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Barlow";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-400-italic-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Barlow";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-400-italic-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Barlow";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-600-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Barlow";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-600-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Barlow";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-700-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Barlow";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-700-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Barlow Condensed";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-condensed-600-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Barlow Condensed";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-condensed-600-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family: "Barlow Condensed";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-condensed-700-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: "Barlow Condensed";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("/fonts/barlow/barlow-condensed-700-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+    color-scheme: light;
+    --verein: #436b4b;
+    --sponsor: #a64f35;
+    --mitglieder: #315d78;
+    --hintergrund: #f5f1e8;
+    --oberflaeche: #fffdf8;
+    --text: #202a26;
+    --text-muted: #59645d;
+    --linie: #d7d0c3;
+    --fokus: #164e8a;
+    --radius: 0.75rem;
+    --schatten: 0 0.5rem 1.5rem rgb(32 42 38 / 10%);
+    --schrift: "Barlow", sans-serif;
+    --schrift-titel: "Barlow Condensed", "Barlow", sans-serif;
+}
+
+:root[data-farbschema="dunkel"] {
+    color-scheme: dark;
+    --verein: #9ac69e;
+    --sponsor: #f2a184;
+    --mitglieder: #8fc5e4;
+    --hintergrund: #171d1a;
+    --oberflaeche: #222b26;
+    --text: #f1f0e9;
+    --text-muted: #c0c8c0;
+    --linie: #46534b;
+    --fokus: #a8d4ff;
+    --schatten: 0 0.5rem 1.5rem rgb(0 0 0 / 28%);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-farbschema]) {
+        color-scheme: dark;
+        --verein: #9ac69e;
+        --sponsor: #f2a184;
+        --mitglieder: #8fc5e4;
+        --hintergrund: #171d1a;
+        --oberflaeche: #222b26;
+        --text: #f1f0e9;
+        --text-muted: #c0c8c0;
+        --linie: #46534b;
+        --fokus: #a8d4ff;
+        --schatten: 0 0.5rem 1.5rem rgb(0 0 0 / 28%);
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    background: var(--hintergrund);
+    color: var(--text);
+    font-family: var(--schrift);
+    line-height: 1.6;
+}
+
+a {
+    color: var(--verein);
+}
+
+a:focus-visible,
+button:focus-visible {
+    outline: 3px solid var(--fokus);
+    outline-offset: 3px;
+}
+
+.oeffentlich-container {
+    width: min(100% - 2rem, 72rem);
+    margin-inline: auto;
+}
+
+.oeffentlich-sprungmarke {
+    position: absolute;
+    z-index: 1;
+    inset-block-start: 0.5rem;
+    inset-inline-start: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    transform: translateY(-160%);
+    border-radius: var(--radius);
+    background: var(--oberflaeche);
+    color: var(--text);
+}
+
+.oeffentlich-sprungmarke:focus {
+    transform: translateY(0);
+}
+
+.oeffentlich-kopf,
+.oeffentlich-fuss {
+    background: var(--oberflaeche);
+}
+
+.oeffentlich-kopf {
+    border-block-end: 1px solid var(--linie);
+}
+
+.oeffentlich-kopf__innen,
+.oeffentlich-fuss__innen {
+    display: flex;
+    min-height: 4.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.oeffentlich-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--text);
+    font-family: var(--schrift-titel);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.oeffentlich-logo img {
+    width: 2rem;
+    height: 2rem;
+}
+
+.oeffentlich-farbschema {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--linie);
+    border-radius: var(--radius);
+    background: var(--oberflaeche);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+
+.oeffentlich-farbschema:hover {
+    border-color: var(--verein);
+}
+
+.oeffentlich-fuss {
+    margin-block-start: 3rem;
+    border-block-start: 1px solid var(--linie);
+}
+
+.oeffentlich-fuss__innen {
+    min-height: 4rem;
+    color: var(--text-muted);
+}
+
+.oeffentlich-fuss nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.oeffentlich-fuss a {
+    color: var(--text);
+}
+
+@media (max-width: 34rem) {
+    .oeffentlich-fuss__innen {
+        align-items: flex-start;
+        flex-direction: column;
+        justify-content: center;
+        padding-block: 0.75rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+}

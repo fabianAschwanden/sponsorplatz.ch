@@ -1,6 +1,7 @@
 package ch.sponsorplatz.e2e;
 
 import io.cucumber.spring.CucumberContextConfiguration;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
@@ -9,6 +10,9 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+
+import ch.sponsorplatz.home.OeffentlicheTestController;
+import ch.sponsorplatz.home.OeffentlicheTestSecurityConfig;
 
 /**
  * Aktiviert Spring-Boot mit zufaelligem Port + Postgres-Testcontainer fuer
@@ -27,7 +31,9 @@ import org.testcontainers.utility.DockerImageName;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles({"dev", "e2e"})
 @Testcontainers
-@Import({E2EPlaywrightConfig.class, E2EMailCaptureConfig.class})
+@AutoConfigureMockMvc
+@Import({E2EPlaywrightConfig.class, E2EMailCaptureConfig.class,
+        OeffentlicheTestController.class, OeffentlicheTestSecurityConfig.class})
 public class E2ESpringConfig {
 
     /**

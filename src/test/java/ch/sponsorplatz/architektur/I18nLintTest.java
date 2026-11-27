@@ -51,6 +51,7 @@ class I18nLintTest {
             "admin/",                  // Admin-Backend deutschsprachig per Konvention
             "home/datenschutz.html",   // Legal-Text, juristische DE-Pflege
             "home/impressum.html",     // Legal-Text
+            "fragments/oeffentlich.html", // U3, 26.11.2026: öffentliche Seiten vorerst nur deutsch
             "fragments/"               // Querschnitts-Fragmente
     );
 
