@@ -3,6 +3,7 @@ package ch.sponsorplatz.anfrage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import ch.sponsorplatz.organisation.OrganisationRepository;
  * für Duplikate bei wiederholten Starts.
  */
 @Component
+@ConditionalOnProperty(name = "sponsorplatz.funktion.aufgaben", havingValue = "true")
 public class AufgabenBackfillRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AufgabenBackfillRunner.class);

@@ -149,7 +149,8 @@
                         <a th:href="@{'/organisationen/' + ${a.empfaengerOrgSlug} + '/anfragen/' + ${a.id} + '/nachrichten'}"
                            class="btn btn-primary anf-action-btn"
                            th:text="#{meineAnfragen.konversation}">Konversation öffnen</a>
-                        <form th:action="@{'/organisationen/' + ${a.empfaengerOrgSlug} + '/anfragen/' + ${a.id} + '/vertrag/erstellen'}"
+                        <form th:if="${vertragAktiv}"
+                              th:action="@{'/organisationen/' + ${a.empfaengerOrgSlug} + '/anfragen/' + ${a.id} + '/vertrag/erstellen'}"
                               method="post" style="display:inline;">
                             <button type="submit" class="btn anf-action-btn"
                                     th:text="#{meineAnfragen.vertragErstellen}">Vertrag erstellen</button>

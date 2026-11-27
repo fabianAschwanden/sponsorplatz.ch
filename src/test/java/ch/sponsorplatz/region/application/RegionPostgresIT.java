@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.context.ApplicationContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -55,6 +56,8 @@ class RegionPostgresIT {
     private JdbcTemplate jdbc;
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private ApplicationContext applicationContext;
 
     private UUID adminId;
 
@@ -137,5 +140,10 @@ class RegionPostgresIT {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
                         .string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(
                                 "/admin/aufgaben-definitionen"))));
+    }
+
+    @Test
+    void aufgabenBackfillIstBeiAbgeschalteterFunktionNichtAktiv() {
+        assertThat(applicationContext.containsBean("aufgabenBackfillRunner")).isFalse();
     }
 }

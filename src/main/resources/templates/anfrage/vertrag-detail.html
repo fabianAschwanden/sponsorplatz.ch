@@ -40,7 +40,8 @@
                     <span class="confirm-msg" hidden th:text="#{vertragDetail.unterzeichnen.bestaetigung}"></span>
                     <button type="submit" class="app-btn" th:text="#{vertragDetail.unterzeichnen}">Als physisch unterzeichnet markieren</button>
                 </form>
-                <form th:action="@{'/organisationen/' + ${vertrag.orgSlug} + '/vertraege/' + ${vertrag.id} + '/rechnung/erstellen'}"
+                <form th:if="${rechnungAktiv}"
+                      th:action="@{'/organisationen/' + ${vertrag.orgSlug} + '/vertraege/' + ${vertrag.id} + '/rechnung/erstellen'}"
                       method="post">
                     <button type="submit" class="app-btn" th:text="#{vertragDetail.rechnungErstellen}">Rechnung erstellen</button>
                 </form>
