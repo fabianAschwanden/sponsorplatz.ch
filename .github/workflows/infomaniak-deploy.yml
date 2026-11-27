@@ -77,6 +77,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          DROSSEL_SCHLUESSEL: ${{ secrets.DROSSEL_SCHLUESSEL }}
           SPONSORPLATZ_ADMIN_EMAIL: ${{ vars.SPONSORPLATZ_ADMIN_EMAIL }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
         run: |
@@ -85,16 +86,19 @@ jobs:
           pruefe INFOMANIAK_SSH_KEY "$SSH_KEY"
           pruefe INFOMANIAK_KNOWN_HOSTS "$KNOWN_HOSTS"
           pruefe DB_PASSWORD "$DB_PASSWORD"
+          pruefe DROSSEL_SCHLUESSEL "$DROSSEL_SCHLUESSEL"
           # Form prüfen, nicht nur «nicht leer»: Ein falsch geformtes Secret zeigt sich sonst erst als
           # Absturzschleife auf dem Server. Werte erscheinen nie im Log.
           form() { if [ -n "$2" ] && ! printf '%s' "$2" | grep -Eq "$3"; then echo "::error::$1 hat nicht die erwartete Form ($4)"; fehlt=1; fi; }
           form DB_PASSWORD "$DB_PASSWORD" '^[A-Za-z0-9_.-]{24,128}$' '24 bis 128 Zeichen aus A–Z, a–z, 0–9, _ . -; z. B. openssl rand -hex 24'
+          # Die Anwendung verlangt mindestens 32 Zeichen (FormularDrosselungService)
+          form DROSSEL_SCHLUESSEL "$DROSSEL_SCHLUESSEL" '^[A-Za-z0-9]{32,128}$' '32 bis 128 Zeichen aus A–Z, a–z, 0–9; z. B. openssl rand -hex 32'
           if [ -n "$SPONSORPLATZ_ADMIN_EMAIL" ]; then
             pruefe ADMIN_PASSWORD "$ADMIN_PASSWORD"
             form ADMIN_PASSWORD "$ADMIN_PASSWORD" '^[^[:space:]]{16,128}$' 'mindestens 16 Zeichen ohne Leerraum'
           fi
           if [ -n "$SMTP_HOST" ]; then pruefe SMTP_PASSWORD "$SMTP_PASSWORD"; fi
-          for wert in "$DB_PASSWORD" "$ADMIN_PASSWORD" "$SMTP_PASSWORD"; do
+          for wert in "$DB_PASSWORD" "$ADMIN_PASSWORD" "$SMTP_PASSWORD" "$DROSSEL_SCHLUESSEL"; do
             if [ "$(printf '%s' "$wert" | wc -l)" -ne 0 ]; then echo "::error::Ein Secret ist mehrzeilig"; fehlt=1; fi
           done
           exit "$fehlt"
@@ -116,6 +120,7 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          DROSSEL_SCHLUESSEL: ${{ secrets.DROSSEL_SCHLUESSEL }}
           PREVIEW_PASSWORD: ${{ secrets.PREVIEW_PASSWORD }}
           PREVIEW_USER: ${{ vars.PREVIEW_USER }}
           SITE_MODE: ${{ vars.SITE_MODE }}
@@ -134,6 +139,7 @@ jobs:
           schreibe() { printf '%s' "$2" > "bundle/secrets/$1"; }
           schreibe db_password "$DB_PASSWORD"
           schreibe admin_password "$ADMIN_PASSWORD"
+          schreibe drossel_schluessel "$DROSSEL_SCHLUESSEL"
           schreibe smtp_password "$SMTP_PASSWORD"
           # .env für compose.yml: geprüfte Werte, in «vorschau» mit dem Hash des Vorschau-Passworts.
           # In «oeffentlich» zusammen mit dem Profil «demo» bricht das Skript ab.
