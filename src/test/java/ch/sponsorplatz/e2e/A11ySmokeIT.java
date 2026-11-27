@@ -55,6 +55,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>{@code /aufgaben} — Task-Inbox</li>
  *   <li>{@code /meine-anfragen} — Anfrage-Übersicht</li>
  *   <li>{@code /einstellungen} — Profil + Sicherheit + 2FA-Eingang</li>
+ *   <li>{@code /admin/regionen} — Regionen und Freischaltungsstufen</li>
  * </ul>
  *
  * <p>{@code /onboarding} wurde aus dem Auth-Suite-Coverage bewusst raus-
@@ -229,6 +230,24 @@ class A11ySmokeIT {
     }
 
     @Test
+    @DisplayName("A11Y-16: /admin/regionen (auth) hat keine kritischen WCAG-Verstösse")
+    void regionen() {
+        pruefeAuthSeite("/admin/regionen");
+    }
+
+    @Test
+    @DisplayName("A11Y-17: /admin/regionen am Handy im hellen Farbschema ist zugänglich")
+    void regionenHandyHell() {
+        pruefeAuthSeiteAmHandy("/admin/regionen", ColorScheme.LIGHT);
+    }
+
+    @Test
+    @DisplayName("A11Y-18: /admin/regionen am Handy im dunklen Farbschema ist zugänglich")
+    void regionenHandyDunkel() {
+        pruefeAuthSeiteAmHandy("/admin/regionen", ColorScheme.DARK);
+    }
+
+    @Test
     @DisplayName("A11Y-11: /vertraege-rechnungen (auth) hat keine kritischen WCAG-Verstösse")
     void vertraegeRechnungen() {
         pruefeAuthSeite("/vertraege-rechnungen");
@@ -240,6 +259,15 @@ class A11ySmokeIT {
 
     private void pruefeAuthSeite(String pfad) {
         pruefeMitContext(pfad, authContext);
+    }
+
+    private void pruefeAuthSeiteAmHandy(String pfad, ColorScheme farbschema) {
+        try (BrowserContext handy = browser.newContext(new Browser.NewContextOptions()
+                .setViewportSize(360, 800)
+                .setColorScheme(farbschema))) {
+            handy.addCookies(authContext.cookies());
+            pruefeMitContext(pfad, handy);
+        }
     }
 
     private void pruefePilotAmHandy(ColorScheme farbschema) {
