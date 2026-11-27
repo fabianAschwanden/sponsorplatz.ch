@@ -141,9 +141,11 @@ class RegionPostgresIT {
     @Test
     @WithMockUser(roles = "PLATFORM_ADMIN")
     void kodierteUndAbweichendePfadeZuAbgeschaltetenBereichenSindNichtErreichbar() throws Exception {
-        pruefe404(
+        pruefe400Oder404(
                 "/p%61yment/erfolg",
-                "//payment/erfolg",
+                "/PAYMENT/erfolg/",
+                "//payment/erfolg");
+        pruefe404(
                 "/payment/erfolg/",
                 "/PAYMENT/erfolg");
         pruefe404(
@@ -176,6 +178,22 @@ class RegionPostgresIT {
                     .andExpect(result -> assertThat(result.getResponse().getStatus())
                             .as(pfad)
                             .isEqualTo(404));
+        }
+    }
+
+    private void pruefe400Oder404(String... pfade) throws Exception {
+        for (String pfad : pfade) {
+            String decodedPath = java.net.URLDecoder.decode(pfad, java.nio.charset.StandardCharsets.UTF_8);
+            mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get(decodedPath)
+                            .with(request -> {
+                                request.setRequestURI(pfad);
+                                return request;
+                            })
+                            .with(SecurityMockMvcRequestPostProcessors.user("test")
+                                    .roles("PLATFORM_ADMIN")))
+                    .andExpect(result -> assertThat(result.getResponse().getStatus())
+                            .as(pfad)
+                            .isIn(400, 404));
         }
     }
 

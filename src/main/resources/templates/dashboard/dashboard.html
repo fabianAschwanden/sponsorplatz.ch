@@ -278,7 +278,7 @@
             </section>
 
             <!-- Matching-Empfehlungen -->
-            <section th:if="${!empfehlungen.isEmpty()}" class="dash-section" style="margin-top:2rem;">
+            <section th:if="${matchingAktiv and !empfehlungen.isEmpty()}" class="dash-section" style="margin-top:2rem;">
                 <header class="dash-section-head">
                     <h2 style="font-size:1.1rem; margin:0;" th:text="#{dashboard.empfehlungen.titel}">Empfohlene Projekte</h2>
                     <span class="dash-section-meta" th:text="#{dashboard.empfehlungen.hinweis}">basierend auf Ihrer Branche</span>

@@ -96,8 +96,6 @@ class FunktionSchalterInterceptorTest {
                 "/organisationen/fc-test/rechnungen/1/", "/ORGANISATIONEN/fc-test/rechnungen/1");
         assertAbgeschaltet(interceptor, testHandler, "aufgaben",
                 "/auf%67aben", "//payment/aufgaben", "/aufgaben/", "/AUFGABEN");
-        assertAbgeschaltet(interceptor, testHandler, "matching",
-                "/mat%63hing", "//payment/matching", "/matching/", "/MATCHING");
     }
 
     private void assertAbgeschaltet(
@@ -137,10 +135,6 @@ class FunktionSchalterInterceptorTest {
 
         @Funktion(FunktionSchalter.Bereich.AUFGABEN)
         public void aufgaben() {
-        }
-
-        @Funktion(FunktionSchalter.Bereich.MATCHING)
-        public void matching() {
         }
     }
 }

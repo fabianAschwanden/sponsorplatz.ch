@@ -10,8 +10,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.hamcrest.Matchers.containsString;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,7 @@ import ch.sponsorplatz.benutzer.AppUserService.OnboardingSnapshot;
 import ch.sponsorplatz.benutzer.SponsorplatzUserDetailsService;
 import ch.sponsorplatz.einladung.EinladungsService;
 import ch.sponsorplatz.organisation.MitgliedschaftService;
+import ch.sponsorplatz.projekt.ProjektView;
 import ch.sponsorplatz.shared.config.SecurityConfig;
 
 @WebMvcTest(controllers = DashboardController.class)
@@ -114,6 +117,24 @@ class DashboardControllerTest {
         mockMvc.perform(get("/dashboard"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("dashboard/dashboard"));
+    }
+
+    @Test
+    @WithMockUser("matching@test.ch")
+    void matchingAktivZeigtEmpfehlungenImDashboard() throws Exception {
+        UUID userId = mockUserMitOrg("matching@test.ch");
+        when(dashboardService.ladeDashboardDaten(anyString())).thenReturn(DashboardDaten.leer());
+        when(matchingService.findeEmpfehlungenAlsViews(userId))
+                .thenReturn(List.of(new ProjektView(
+                        UUID.randomUUID(), "Beispielprojekt", "beispielprojekt", null, null, null,
+                        null, null, null, null, null, null)));
+
+        mockMvc.perform(get("/dashboard"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Empfohlene Projekte")))
+                .andExpect(content().string(containsString("Beispielprojekt")));
+
+        verify(matchingService).findeEmpfehlungenAlsViews(userId);
     }
 
     /** DASH-03: Model enthält die Dashboard-Attribute. */
