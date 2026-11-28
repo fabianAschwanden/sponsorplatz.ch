@@ -72,7 +72,7 @@ Aufgabe liefert für ihre Anforderungen den Nachweis nach `tech.md` und hakt ihr
   - _Anforderungen: 3.4, 5.4, 6.1, 6.2, 6.3, 6.4, 6.5, 8.3, 9.2_
   - _Abhängig von: 1.7_
 
-- [ ] 1.9 Deploy-Key, Variablen, Secrets, Postfach [Fabian]
+- [x] 1.9 Deploy-Key, Variablen, Secrets, Postfach [Fabian]
 
 - [ ] 1.10 Erster Deploy, Rollback-Probe, Messung [Infra] [Fabian]
   - Erster Deploy auf die Vorschau-Adresse, zweiter Deploy mit Rollback-Probe, Speicher im Betrieb messen,
